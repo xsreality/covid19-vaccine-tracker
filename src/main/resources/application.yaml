@@ -1,7 +1,13 @@
 server:
   port: 8087
+
 cowin:
   apiUrl: "http://localhost:8080"
+
+topic:
+  user.requests: "user-requests"
+  vaccine.centers: "vaccine-centers"
+
 logging:
   level:
     org.apache.kafka.streams: WARN
