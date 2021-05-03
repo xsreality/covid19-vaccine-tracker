@@ -1,8 +1,5 @@
 package org.covid19.vaccinetracker.persistence;
 
-import org.covid19.vaccinetracker.model.VaccineCenters;
-import org.covid19.vaccinetracker.model.VaccineCentersSerde;
-
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
@@ -12,6 +9,11 @@ import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.Stores;
+import org.covid19.vaccinetracker.model.UserRequest;
+import org.covid19.vaccinetracker.model.UserRequestSerde;
+import org.covid19.vaccinetracker.model.VaccineCenters;
+import org.covid19.vaccinetracker.model.VaccineCentersSerde;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,6 +30,12 @@ import lombok.extern.slf4j.Slf4j;
 @EnableKafkaStreams
 @Slf4j
 public class KafkaStreamsConfig {
+    @Value("${topic.vaccine.centers}")
+    private String vaccineCentersTopic;
+
+    @Value("${topic.user.requests}")
+    private String userRequestsTopic;
+
     private final KafkaProperties kafkaProperties;
 
     public KafkaStreamsConfig(KafkaProperties kafkaProperties) {
@@ -44,12 +52,19 @@ public class KafkaStreamsConfig {
         return new KafkaStreamsConfiguration(kafkaStreamsProps);
     }
 
-
     @Bean
     public KTable<String, VaccineCenters> dailyStatsTable(StreamsBuilder streamsBuilder) {
-        return streamsBuilder.table("vaccine-centers",
+        return streamsBuilder.table(vaccineCentersTopic,
                 Materialized.<String, VaccineCenters, KeyValueStore<Bytes, byte[]>>as(
                         Stores.inMemoryKeyValueStore("vaccine-centers-store").name())
                         .withKeySerde(Serdes.String()).withValueSerde(new VaccineCentersSerde()).withCachingDisabled());
+    }
+
+    @Bean
+    public KTable<String, UserRequest> userRequestsTable(StreamsBuilder streamsBuilder) {
+        return streamsBuilder.table(userRequestsTopic,
+                Materialized.<String, UserRequest, KeyValueStore<Bytes, byte[]>>as(
+                        Stores.inMemoryKeyValueStore("user-requests-store").name())
+                        .withKeySerde(Serdes.String()).withValueSerde(new UserRequestSerde()).withCachingDisabled());
     }
 }
