@@ -1,6 +1,6 @@
 package com.abhinav.covid19.vaccinetracker.cowin;
 
-import com.abhinav.covid19.vaccinetracker.VaccineCenters;
+import com.abhinav.covid19.vaccinetracker.model.VaccineCenters;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;

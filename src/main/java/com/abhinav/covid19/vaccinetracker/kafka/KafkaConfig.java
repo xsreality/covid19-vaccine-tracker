@@ -1,6 +1,6 @@
 package com.abhinav.covid19.vaccinetracker.kafka;
 
-import com.abhinav.covid19.vaccinetracker.VaccineCenters;
+import com.abhinav.covid19.vaccinetracker.model.VaccineCenters;
 
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;

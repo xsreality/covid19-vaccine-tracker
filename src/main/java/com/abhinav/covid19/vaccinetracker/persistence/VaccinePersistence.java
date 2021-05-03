@@ -1,8 +1,8 @@
 package com.abhinav.covid19.vaccinetracker.persistence;
 
-import com.abhinav.covid19.vaccinetracker.VaccineCenters;
+import com.abhinav.covid19.vaccinetracker.model.VaccineCenters;
 
-public interface VaccineCentersPersistence {
+public interface VaccinePersistence {
     void persistVaccineCenters(String pincode, VaccineCenters vaccineCenters);
 
     VaccineCenters fetchVaccineCentersByPincode(String pincode);

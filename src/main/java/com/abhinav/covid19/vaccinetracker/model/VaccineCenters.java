@@ -1,4 +1,4 @@
-package com.abhinav.covid19.vaccinetracker;
+package com.abhinav.covid19.vaccinetracker.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
