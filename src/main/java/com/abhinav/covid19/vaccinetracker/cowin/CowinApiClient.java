@@ -21,9 +21,9 @@ public class CowinApiClient {
     public VaccineCenters fetchCentersByPincode(String pincode) {
         final Mono<VaccineCenters> response = cowinClient.get()
                 .uri(uriBuilder -> uriBuilder
-                        .queryParam("pincode", "{pinecode}")
+                        .queryParam("pincode", "{pincode}")
                         .queryParam("date", "{date}")
-                        .build(pincode, "03-05-2021"))
+                        .build(pincode, "04-05-2021"))
                 .retrieve()
                 .bodyToMono(VaccineCenters.class).log();
         return response.block();

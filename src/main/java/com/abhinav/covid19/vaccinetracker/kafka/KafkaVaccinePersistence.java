@@ -3,6 +3,7 @@ package com.abhinav.covid19.vaccinetracker.kafka;
 import com.abhinav.covid19.vaccinetracker.model.VaccineCenters;
 import com.abhinav.covid19.vaccinetracker.persistence.VaccinePersistence;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +12,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 public class KafkaVaccinePersistence implements VaccinePersistence {
+    @Value("${topic.vaccine.centers}")
+    private String vaccineCentersTopic;
+
     private final KafkaTemplate<String, VaccineCenters> kafkaTemplate;
     private final KafkaStateStores kafkaStateStores;
 
@@ -22,7 +26,7 @@ public class KafkaVaccinePersistence implements VaccinePersistence {
 
     @Override
     public void persistVaccineCenters(String pincode, VaccineCenters vaccineCenters) {
-        kafkaTemplate.send("vaccine-centers", pincode, vaccineCenters);
+        kafkaTemplate.send(vaccineCentersTopic, pincode, vaccineCenters);
     }
 
     @Override
