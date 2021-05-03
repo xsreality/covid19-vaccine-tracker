@@ -1,10 +1,9 @@
 package org.covid19.vaccinetracker.bot;
 
-import org.covid19.vaccinetracker.persistence.KafkaStateStores;
 import org.covid19.vaccinetracker.model.UserRequest;
 import org.covid19.vaccinetracker.model.VaccineCenters;
+import org.covid19.vaccinetracker.persistence.KafkaStateStores;
 import org.covid19.vaccinetracker.utils.Utils;
-
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
@@ -14,6 +13,8 @@ import org.telegram.abilitybots.api.bot.AbilityBot;
 import org.telegram.abilitybots.api.db.DBContext;
 import org.telegram.abilitybots.api.objects.Ability;
 import org.telegram.telegrambots.meta.api.objects.Update;
+
+import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -67,20 +68,27 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                 .input(0)
                 .action(ctx -> {
                     if (ctx.update().hasMessage() && ctx.update().getMessage().hasText()) {
-                        String pincode = ctx.update().getMessage().getText();
-                        if (Utils.isValidPincode(pincode)) {
-                            String chatId = getChatId(ctx.update());
-                            this.botBackend.acceptUserRequest(chatId, pincode);
-                            silent.send("Okay! I will notify you when vaccine is available in centers near your location.", ctx.chatId());
-                            // send an update to Bot channel
-                            String channelMsg = String.format("User %s (%s) requested stats for %s via text %s",
-                                    Utils.translateName(ctx.update().getMessage().getChat()), chatId, "Yesterday", pincode);
-                            silent.send(channelMsg, CHANNEL_ID);
+                        String pincodes = ctx.update().getMessage().getText();
+                        if (!Utils.allValidPincodes(pincodes)) {
+                            String msg = "Send valid pin code to receive notification when vaccine becomes available in your area.";
+                            silent.send(msg, ctx.chatId());
                             return;
                         }
+                        List<String> pincodesAsList = Utils.splitPincodes(pincodes);
+                        if (pincodesAsList.size() > 3) {
+                            String msg = "Maximum 3 pin codes can be notified.";
+                            silent.send(msg, ctx.chatId());
+                            return;
+                        }
+                        String chatId = getChatId(ctx.update());
+                        this.botBackend.acceptUserRequest(chatId, pincodesAsList);
+                        silent.send("Okay! I will notify you when vaccine is available in centers near your location.", ctx.chatId());
+
+                        // send an update to Bot channel
+                        String channelMsg = String.format("User %s (%s) requested stats for %s via text %s",
+                                Utils.translateName(ctx.update().getMessage().getChat()), chatId, "Yesterday", pincodes);
+                        silent.send(channelMsg, CHANNEL_ID);
                     }
-                    String msg = "Send valid pin code to receive notification when vaccine becomes available in your area.";
-                    silent.send(msg, ctx.chatId());
                 })
                 .build();
     }

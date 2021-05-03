@@ -1,15 +1,15 @@
 package org.covid19.vaccinetracker.bot;
 
-import org.covid19.vaccinetracker.model.UserRequest;
-
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.covid19.vaccinetracker.model.UserRequest;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.ProducerListener;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -26,8 +26,8 @@ public class BotBackend {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public void acceptUserRequest(String userId, String pincode) {
-        UserRequest request = new UserRequest(userId, pincode);
+    public void acceptUserRequest(String userId, List<String> pincodes) {
+        UserRequest request = new UserRequest(userId, pincodes, null);
         kafkaTemplate.setProducerListener(producerListener());
         try {
             kafkaTemplate.send(userRequestsTopic, userId, request).get();
