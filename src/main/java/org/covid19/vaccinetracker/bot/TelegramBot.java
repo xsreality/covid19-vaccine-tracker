@@ -1,6 +1,6 @@
 package org.covid19.vaccinetracker.bot;
 
-import org.covid19.vaccinetracker.kafka.KafkaStateStores;
+import org.covid19.vaccinetracker.persistence.KafkaStateStores;
 import org.covid19.vaccinetracker.model.UserRequest;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.utils.Utils;

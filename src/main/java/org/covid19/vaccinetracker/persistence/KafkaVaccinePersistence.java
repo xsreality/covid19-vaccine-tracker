@@ -1,7 +1,6 @@
-package org.covid19.vaccinetracker.kafka;
+package org.covid19.vaccinetracker.persistence;
 
 import org.covid19.vaccinetracker.model.VaccineCenters;
-import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
