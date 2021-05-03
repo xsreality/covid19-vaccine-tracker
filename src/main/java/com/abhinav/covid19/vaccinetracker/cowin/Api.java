@@ -12,14 +12,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/cowin")
 public class Api {
-    private final CowinService cowinService;
+    private final CowinApiClient cowinApiClient;
 
-    public Api(CowinService cowinService) {
-        this.cowinService = cowinService;
+    public Api(CowinApiClient cowinApiClient) {
+        this.cowinApiClient = cowinApiClient;
     }
 
     @GetMapping
     public ResponseEntity<VaccineCenters> vaccineCenters(@RequestParam @NonNull final String pincode) {
-        return ResponseEntity.ok(cowinService.fetchCentersByPincode(pincode));
+        return ResponseEntity.ok(cowinApiClient.fetchCentersByPincode(pincode));
     }
 }

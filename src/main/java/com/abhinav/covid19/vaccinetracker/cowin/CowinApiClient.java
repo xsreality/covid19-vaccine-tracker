@@ -2,18 +2,18 @@ package com.abhinav.covid19.vaccinetracker.cowin;
 
 import com.abhinav.covid19.vaccinetracker.VaccineCenters;
 
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import reactor.core.publisher.Mono;
 
-@Service
-public class CowinService {
+@Component
+public class CowinApiClient {
 
     private final WebClient cowinClient;
     private final CowinConfig cowinConfig;
 
-    public CowinService(CowinConfig cowinConfig) {
+    public CowinApiClient(CowinConfig cowinConfig) {
         this.cowinConfig = cowinConfig;
         this.cowinClient = WebClient.create(cowinConfig.getApiUrl());
     }
