@@ -52,4 +52,8 @@ public class KafkaStateStores {
     public VaccineCenters vaccineCentersByPincode(String pincode) {
         return vaccineCentersStore.get(pincode);
     }
+
+    public KeyValueIterator<String, UserRequest> userRequests() {
+        return userRequestsStore.all();
+    }
 }
