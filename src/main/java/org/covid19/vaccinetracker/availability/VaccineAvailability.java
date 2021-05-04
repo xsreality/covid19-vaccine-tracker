@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -84,8 +85,12 @@ public class VaccineAvailability {
     }
 
     public VaccineCenters fetchVaccineAvailabilityFromPersistenceStore(String pincode) {
-        log.info("Fetching Vaccine availability from local store");
-        // botservice.notify(...)
+        log.info("Fetching Vaccine availability from local store for pin code {}", pincode);
         return vaccinePersistence.fetchVaccineCentersByPincode(pincode);
+    }
+
+    public List<VaccineCenters> fetchVaccineAvailabilityFromPersistenceStoreAll() {
+        log.info("Fetching all centers from persistent store");
+        return vaccinePersistence.fetchAllVaccineCenters();
     }
 }

@@ -1,8 +1,12 @@
 package org.covid19.vaccinetracker.cowin;
 
 import org.covid19.vaccinetracker.availability.VaccineAvailability;
+import org.covid19.vaccinetracker.model.Center;
+import org.covid19.vaccinetracker.model.Session;
+import org.covid19.vaccinetracker.model.UserRequest;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.notifications.VaccineCentersNotification;
+import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +16,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Collections;
+import java.util.List;
+
 @RestController
 @RequestMapping("/covid19")
 public class Api {
@@ -19,12 +26,14 @@ public class Api {
     private final VaccineAvailability vaccineAvailability;
     private final VaccineCentersNotification notifications;
     private final UserRequestManager userRequestManager;
+    private final VaccinePersistence vaccinePersistence;
 
-    public Api(CowinApiClient cowinApiClient, VaccineAvailability vaccineAvailability, VaccineCentersNotification notifications, UserRequestManager userRequestManager) {
+    public Api(CowinApiClient cowinApiClient, VaccineAvailability vaccineAvailability, VaccineCentersNotification notifications, UserRequestManager userRequestManager, VaccinePersistence vaccinePersistence) {
         this.cowinApiClient = cowinApiClient;
         this.vaccineAvailability = vaccineAvailability;
         this.notifications = notifications;
         this.userRequestManager = userRequestManager;
+        this.vaccinePersistence = vaccinePersistence;
     }
 
     @GetMapping("/fetch/cowin")
@@ -32,9 +41,19 @@ public class Api {
         return ResponseEntity.ok(cowinApiClient.fetchCentersByPincode(pincode));
     }
 
-    @GetMapping("/fetch/store")
+    @GetMapping("/fetch/vaccine_centers_by_pincode")
     public ResponseEntity<VaccineCenters> vaccineCentersFromStore(@RequestParam final String pincode) {
         return ResponseEntity.ok(vaccineAvailability.fetchVaccineAvailabilityFromPersistenceStore(pincode));
+    }
+
+    @GetMapping("/fetch/vaccine_centers")
+    public ResponseEntity<List<VaccineCenters>> vaccineCentersFromStoreAll() {
+        return ResponseEntity.ok(vaccineAvailability.fetchVaccineAvailabilityFromPersistenceStoreAll());
+    }
+
+    @GetMapping("/fetch/user_request")
+    public ResponseEntity<List<UserRequest>> fetchUserRequests() {
+        return ResponseEntity.ok(userRequestManager.fetchAllUserRequests());
     }
 
     @GetMapping("/persist/cowin")
@@ -49,9 +68,20 @@ public class Api {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/user_request/add")
+    @GetMapping("/add/user_request")
     public ResponseEntity<?> addUserRequest(@RequestParam final String chatId, @RequestParam final String pincodes) {
         this.userRequestManager.acceptUserRequest(chatId, Utils.splitPincodes(pincodes));
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/add/dummy_vaccine_center")
+    public ResponseEntity<?> addUserRequest(@RequestParam final String pincode) {
+        Center center = Center.builder().centerId(123456).name("Test Vaccine Center").stateName("state").districtName("district").pincode(Integer.parseInt(pincode))
+                .sessions(Collections.singletonList(Session.builder().sessionId("xxx").date("04-05-2021").minAgeLimit(18).availableCapacity(5).build()))
+                .build();
+        VaccineCenters vaccineCenters = new VaccineCenters();
+        vaccineCenters.setCenters(Collections.singletonList(center));
+        this.vaccinePersistence.persistVaccineCenters(pincode, vaccineCenters);
         return ResponseEntity.ok().build();
     }
 
