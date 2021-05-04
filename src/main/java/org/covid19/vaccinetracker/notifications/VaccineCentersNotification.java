@@ -79,6 +79,7 @@ public class VaccineCentersNotification {
     }
 
     List<Center> eligibleVaccineCenters(VaccineCenters vaccineCenters) {
+        log.info("Checking eligible centers from {}", vaccineCenters);
         List<Center> eligibleCenters = new ArrayList<>();
         vaccineCenters.centers.forEach(center -> {
             List<Session> eligibleSessions = new ArrayList<>();

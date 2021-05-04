@@ -103,7 +103,6 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
 
     @Override
     public void notify(String userId, List<Center> eligibleCenters) {
-        // TODO: Create message and send notification
         log.info("Sending notification for {} and vaccine centers {}", userId, eligibleCenters);
         String text = Utils.buildNotificationMessage(eligibleCenters);
         SendMessage telegramMessage = SendMessage.builder()
