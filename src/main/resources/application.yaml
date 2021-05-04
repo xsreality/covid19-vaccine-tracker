@@ -8,6 +8,11 @@ topic:
   user.requests: "user-requests"
   vaccine.centers: "vaccine-centers"
 
+telegram:
+  enabled: true
+  bot.username: covid19_vaccine_tracker_bot
+  db.path: "/tmp/telegram.db"
+
 logging:
   level:
     org.apache.kafka.streams: WARN

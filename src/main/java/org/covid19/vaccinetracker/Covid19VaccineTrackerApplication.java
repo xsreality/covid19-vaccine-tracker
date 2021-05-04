@@ -34,17 +34,22 @@ public class Covid19VaccineTrackerApplication implements CommandLineRunner {
     @Value("${telegram.chat.id}")
     private String telegramChatId;
 
+    @Value("${telegram.enabled}")
+    private boolean telegramEnabled;
+
     public static void main(String[] args) {
         SpringApplication.run(Covid19VaccineTrackerApplication.class, args);
     }
 
     @Override
     public void run(String... args) {
-        try {
-            TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-            botsApi.registerBot(telegramBot());
-        } catch (TelegramApiException e) {
-            throw new IllegalStateException("Unable to register Telegram bot", e);
+        if (telegramEnabled) {
+            try {
+                TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
+                botsApi.registerBot(telegramBot());
+            } catch (TelegramApiException e) {
+                throw new IllegalStateException("Unable to register Telegram bot", e);
+            }
         }
     }
 
