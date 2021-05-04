@@ -1,6 +1,7 @@
 package org.covid19.vaccinetracker.cowin;
 
 import org.covid19.vaccinetracker.model.VaccineCenters;
+import org.covid19.vaccinetracker.utils.Utils;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -29,7 +30,7 @@ public class CowinApiClient {
                     .uri(uriBuilder -> uriBuilder
                             .queryParam("pincode", "{pincode}")
                             .queryParam("date", "{date}")
-                            .build(pincode, "04-05-2021"))
+                            .build(pincode, Utils.todayIST()))
                     .retrieve()
                     .bodyToMono(VaccineCenters.class)
                     .block();
