@@ -6,6 +6,7 @@ import org.covid19.vaccinetracker.model.UserRequest;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -30,7 +31,7 @@ public class VaccineAvailability {
         this.userRequestManager = userRequestManager;
     }
 
-    // TODO: Convert to scheduler
+    @Scheduled(cron = "0 0/30 * * * *")
     public void refreshVaccineAvailabilityFromCowin() {
         log.info("Refreshing Vaccine Availability from Cowin");
         final List<String> processedPincodes = new ArrayList<>();
