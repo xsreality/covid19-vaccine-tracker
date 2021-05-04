@@ -35,7 +35,7 @@ public class Api {
 
     @GetMapping("/persist")
     public ResponseEntity<?> tracker(@RequestParam final String pincode) {
-        vaccineAvailability.refreshVaccineAvailability(pincode);
+        vaccineAvailability.fetchVaccineAvailabilityFromCowinApi(pincode);
         return ResponseEntity.ok().build();
     }
 
