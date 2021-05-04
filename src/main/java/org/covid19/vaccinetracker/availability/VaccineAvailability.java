@@ -25,7 +25,12 @@ public class VaccineAvailability {
     }
 
     // TODO: Convert to scheduler
-    public void refreshVaccineAvailability(String pincode) {
+    public void refreshVaccineAvailabilityFromCowin() {
+        log.info("Refreshing Vaccine Availability from Cowin");
+    }
+
+
+    public void fetchVaccineAvailabilityFromCowinApi(String pincode) {
         log.info("Fetching vaccine availability for pin code {}", pincode);
         final VaccineCenters vaccineCenters = cowinApiClient.fetchCentersByPincode(pincode);
         if (!vaccineCentersProcessor.areVaccineCentersAvailable(vaccineCenters)) {
