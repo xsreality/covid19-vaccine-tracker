@@ -12,14 +12,14 @@ import java.nio.charset.StandardCharsets;
 public class UserRequestSerde extends Serdes.WrapperSerde<UserRequest> {
 
     public UserRequestSerde() {
-        super(new Serializer<UserRequest>() {
+        super(new Serializer<>() {
             private Gson gson = new GsonBuilder().serializeNulls().create();
 
             @Override
             public byte[] serialize(String s, UserRequest UserRequest) {
                 return gson.toJson(UserRequest).getBytes(StandardCharsets.UTF_8);
             }
-        }, new Deserializer<UserRequest>() {
+        }, new Deserializer<>() {
             private Gson gson = new Gson();
 
             @Override
