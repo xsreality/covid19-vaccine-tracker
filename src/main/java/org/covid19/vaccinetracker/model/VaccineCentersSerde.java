@@ -24,6 +24,9 @@ public class VaccineCentersSerde extends Serdes.WrapperSerde<VaccineCenters> {
 
             @Override
             public VaccineCenters deserialize(String s, byte[] bytes) {
+                if (bytes == null) { // handle tombstone records.
+                    return null;
+                }
                 return gson.fromJson(new String(bytes), VaccineCenters.class);
             }
         });
