@@ -1,4 +1,4 @@
-package org.covid19.vaccinetracker.bot;
+package org.covid19.vaccinetracker.userrequests;
 
 import org.covid19.vaccinetracker.model.UserRequest;
 
@@ -16,10 +16,10 @@ import java.util.Map;
 import static org.apache.kafka.clients.producer.ProducerConfig.CLIENT_ID_CONFIG;
 
 @Configuration
-public class UserRequestProducer {
+public class UserRequestProducerConfig {
     private final KafkaProperties kafkaProperties;
 
-    public UserRequestProducer(KafkaProperties kafkaProperties) {
+    public UserRequestProducerConfig(KafkaProperties kafkaProperties) {
         this.kafkaProperties = kafkaProperties;
     }
 
