@@ -1,7 +1,7 @@
 package org.covid19.vaccinetracker.bot;
 
+import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.UserRequest;
-import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.persistence.KafkaStateStores;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +12,9 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.telegram.abilitybots.api.bot.AbilityBot;
 import org.telegram.abilitybots.api.db.DBContext;
 import org.telegram.abilitybots.api.objects.Ability;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.List;
 
@@ -100,9 +102,19 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
     }
 
     @Override
-    public void notify(String userId, VaccineCenters vaccineCenters) {
+    public void notify(String userId, List<Center> eligibleCenters) {
         // TODO: Create message and send notification
-        log.info("Sending notification for {} and vaccine centers {}", userId, vaccineCenters);
+        log.info("Sending notification for {} and vaccine centers {}", userId, eligibleCenters);
+        String text = Utils.buildNotificationMessage(eligibleCenters);
+        SendMessage telegramMessage = SendMessage.builder()
+                .chatId(userId)
+                .text(text)
+                .build();
+        try {
+            this.execute(telegramMessage);
+        } catch (TelegramApiException e) {
+            log.error("Error sending telegram message to user id {}", userId);
+        }
     }
 
     @Override

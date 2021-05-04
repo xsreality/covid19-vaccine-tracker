@@ -1,13 +1,18 @@
 package org.covid19.vaccinetracker.notifications;
 
+import org.covid19.vaccinetracker.availability.VaccineCentersProcessor;
 import org.covid19.vaccinetracker.bot.BotService;
+import org.covid19.vaccinetracker.model.Center;
+import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.model.UserRequest;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.covid19.vaccinetracker.utils.Utils;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -22,12 +27,14 @@ public class VaccineCentersNotification {
     private final BotService botService;
     private final UserRequestManager userRequestManager;
     private final VaccinePersistence vaccinePersistence;
+    private final VaccineCentersProcessor vaccineCentersProcessor;
 
     public VaccineCentersNotification(BotService botService, UserRequestManager userRequestManager,
-                                      VaccinePersistence vaccinePersistence) {
+                                      VaccinePersistence vaccinePersistence, VaccineCentersProcessor vaccineCentersProcessor) {
         this.botService = botService;
         this.userRequestManager = userRequestManager;
         this.vaccinePersistence = vaccinePersistence;
+        this.vaccineCentersProcessor = vaccineCentersProcessor;
     }
 
     /*
@@ -38,7 +45,7 @@ public class VaccineCentersNotification {
      * 3. Update lastNotifiedAt and persist.
      * 4. Clear the cache after execution is completed.
      */
-    // TODO: Convert to scheduler
+    // TODO: @Scheduled(cron = "0 5/30 * * * *")
     public void checkUpdatesAndSendNotifications() {
         log.info("Starting Vaccine Tracker Notification update...");
         ConcurrentHashMap<String, VaccineCenters> cache = new ConcurrentHashMap<>();
@@ -62,12 +69,47 @@ public class VaccineCentersNotification {
                         return;
                     }
                 }
-                botService.notify(userRequest.getChatId(), vaccineCenters);
+                List<Center> eligibleCenters = eligibleVaccineCenters(vaccineCenters);
+                botService.notify(userRequest.getChatId(), eligibleCenters);
                 cache.putIfAbsent(pincode, vaccineCenters); // update local cache
                 userRequestManager.updateUserRequestLastNotifiedAt(userRequest, Utils.currentTime());
             });
         });
         cache.clear(); // clear cache
+    }
+
+    List<Center> eligibleVaccineCenters(VaccineCenters vaccineCenters) {
+        List<Center> eligibleCenters = new ArrayList<>();
+        vaccineCenters.centers.forEach(center -> {
+            List<Session> eligibleSessions = new ArrayList<>();
+            center.sessions.forEach(session -> {
+                if (vaccineCentersProcessor.has18plus(session) || vaccineCentersProcessor.hasCapacity(session)) {
+                    eligibleSessions.add(session);
+                }
+            });
+            if (!eligibleSessions.isEmpty()) {
+                Center eligibleCenter = buildCenter(center);
+                eligibleCenter.setSessions(eligibleSessions);
+                eligibleCenters.add(eligibleCenter);
+            }
+        });
+        return eligibleCenters;
+    }
+
+    private Center buildCenter(Center center) {
+        return Center.builder()
+                .centerId(center.getCenterId())
+                .name(center.getName())
+                .stateName(center.getStateName())
+                .districtName(center.getDistrictName())
+                .blockName(center.getBlockName())
+                .pincode(center.getPincode())
+                .feeType(center.getFeeType())
+                .from(center.getFrom())
+                .to(center.getTo())
+                .latitude(center.getLatitude())
+                .longitude(center.getLongitude())
+                .build();
     }
 
     /*

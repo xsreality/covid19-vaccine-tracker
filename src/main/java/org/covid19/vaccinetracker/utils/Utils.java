@@ -1,5 +1,7 @@
 package org.covid19.vaccinetracker.utils;
 
+import org.covid19.vaccinetracker.model.Center;
+import org.covid19.vaccinetracker.model.Session;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 
 import java.time.Duration;
@@ -54,5 +56,16 @@ public class Utils {
         ZonedDateTime currentTime = ZonedDateTime.now(ZoneId.of(INDIA_TIMEZONE));
         return Duration.between(notifiedAt, currentTime)
                 .compareTo(Duration.ofHours(24)) >= 0;
+    }
+
+    public static String buildNotificationMessage(List<Center> eligibleCenters) {
+        StringBuilder text = new StringBuilder();
+        for (Center center : eligibleCenters) {
+            text.append(String.format("%s (%s %s)\n", center.name, center.districtName, center.pincode));
+            for (Session session : center.sessions) {
+                text.append(String.format("%s dose(s) of %s for 18+ age group available on %s\n", session.availableCapacity, session.vaccine, session.date));
+            }
+        }
+        return text.toString();
     }
 }
