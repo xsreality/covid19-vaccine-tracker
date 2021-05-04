@@ -1,4 +1,4 @@
-package org.covid19.vaccinetracker.tracker;
+package org.covid19.vaccinetracker.availability;
 
 import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.model.VaccineCenters;
