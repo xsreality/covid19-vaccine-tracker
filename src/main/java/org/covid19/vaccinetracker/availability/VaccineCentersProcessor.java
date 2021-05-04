@@ -25,6 +25,6 @@ public class VaccineCentersProcessor {
     }
 
     private boolean has18plus(Session session) {
-        return session.getMinAgeLimit() >= 18;
+        return session.getMinAgeLimit() == 18;
     }
 }
