@@ -20,11 +20,11 @@ public class VaccineCentersProcessor {
                         .anyMatch(session -> has18plus(session) && hasCapacity(session)));
     }
 
-    private boolean hasCapacity(Session session) {
+    public boolean hasCapacity(Session session) {
         return session.availableCapacity > 0;
     }
 
-    private boolean has18plus(Session session) {
+    public boolean has18plus(Session session) {
         return session.getMinAgeLimit() == 18;
     }
 }

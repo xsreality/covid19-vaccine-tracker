@@ -25,3 +25,6 @@ hs_err_pid*
 .idea
 target
 .run
+
+src/main/resources/keystores/*.jks
+src/main/resources/application-local.yaml
