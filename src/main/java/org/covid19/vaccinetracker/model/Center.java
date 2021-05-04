@@ -5,12 +5,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Data
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class Center {
 
     @JsonProperty("center_id")
