@@ -85,8 +85,8 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                         silent.send("Okay! I will notify you when vaccine is available in centers near your location.", ctx.chatId());
 
                         // send an update to Bot channel
-                        String channelMsg = String.format("User %s (%s) requested stats for %s via text %s",
-                                Utils.translateName(ctx.update().getMessage().getChat()), chatId, "Yesterday", pincodes);
+                        String channelMsg = String.format("User %s (%s) set notification preference for pin code(s) %s",
+                                Utils.translateName(ctx.update().getMessage().getChat()), chatId, pincodes);
                         silent.send(channelMsg, CHANNEL_ID);
                     }
                 })
