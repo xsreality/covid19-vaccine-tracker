@@ -51,6 +51,12 @@ public class Utils {
         return dateTime.format(dtf);
     }
 
+    public static String todayIST() {
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        ZonedDateTime dateTime = ZonedDateTime.now(ZoneId.of(INDIA_TIMEZONE));
+        return dateTime.format(dtf);
+    }
+
     public static boolean dayOld(String lastNotifiedAt) {
         ZonedDateTime notifiedAt = dateFromString(lastNotifiedAt);
         ZonedDateTime currentTime = ZonedDateTime.now(ZoneId.of(INDIA_TIMEZONE));
