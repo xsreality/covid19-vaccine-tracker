@@ -47,10 +47,12 @@ public class VaccineAvailability {
                     final VaccineCenters vaccineCenters = cowinApiClient.fetchCentersByPincode(pincode);
                     if (!vaccineCentersProcessor.areVaccineCentersAvailable(vaccineCenters)) {
                         log.info("Found no centers for pin code {}", pincode);
+                        vaccinePersistence.persistVaccineCenters(pincode, null); // tombstone
                         return;
                     }
                     if (!vaccineCentersProcessor.areVaccineCentersAvailableFor18plus(vaccineCenters)) {
                         log.info("Vaccine centers not found for 18+ or no capacity for pin code {}", pincode);
+                        vaccinePersistence.persistVaccineCenters(pincode, null); // tombstone
                         return;
                     }
                     log.info("Persisting vaccine availability for pin code {}", pincode);
