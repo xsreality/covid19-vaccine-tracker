@@ -1,10 +1,15 @@
 package org.covid19.vaccinetracker.availability;
 
-import org.covid19.vaccinetracker.bot.BotService;
 import org.covid19.vaccinetracker.cowin.CowinApiClient;
+import org.covid19.vaccinetracker.cowin.CowinException;
+import org.covid19.vaccinetracker.model.UserRequest;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
+import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -14,35 +19,67 @@ public class VaccineAvailability {
     private final CowinApiClient cowinApiClient;
     private final VaccinePersistence vaccinePersistence;
     private final VaccineCentersProcessor vaccineCentersProcessor;
-    private final BotService botService;
+    private final UserRequestManager userRequestManager;
 
     public VaccineAvailability(CowinApiClient cowinApiClient, VaccinePersistence vaccinePersistence,
-                               VaccineCentersProcessor vaccineCentersProcessor, BotService botService) {
+                               VaccineCentersProcessor vaccineCentersProcessor,
+                               UserRequestManager userRequestManager) {
         this.cowinApiClient = cowinApiClient;
         this.vaccinePersistence = vaccinePersistence;
         this.vaccineCentersProcessor = vaccineCentersProcessor;
-        this.botService = botService;
+        this.userRequestManager = userRequestManager;
     }
 
     // TODO: Convert to scheduler
     public void refreshVaccineAvailabilityFromCowin() {
         log.info("Refreshing Vaccine Availability from Cowin");
+        final List<String> processedPincodes = new ArrayList<>();
+        final List<UserRequest> userRequests = this.userRequestManager.fetchAllUserRequests();
+        userRequests.forEach(userRequest -> {
+            final List<String> pincodes = userRequest.getPincodes();
+            pincodes.forEach(pincode -> {
+                try {
+                    if (processedPincodes.contains(pincode)) {
+                        log.info("Pincode {} processed already, skipping...", pincode);
+                        return;
+                    }
+                    final VaccineCenters vaccineCenters = cowinApiClient.fetchCentersByPincode(pincode);
+                    if (!vaccineCentersProcessor.areVaccineCentersAvailable(vaccineCenters)) {
+                        log.info("Found no centers for pin code {}", pincode);
+                        return;
+                    }
+                    if (!vaccineCentersProcessor.areVaccineCentersAvailableFor18plus(vaccineCenters)) {
+                        log.info("Vaccine centers not found for 18+ or no capacity for pin code {}", pincode);
+                        return;
+                    }
+                    log.info("Persisting vaccine availability for pin code {}", pincode);
+                    vaccinePersistence.persistVaccineCenters(pincode, vaccineCenters);
+                    processedPincodes.add(pincode);
+                } catch (CowinException ce) {
+                    log.error("Error fetching centers for pincode {}, got status code {}", pincode, ce.getStatusCode());
+                }
+            });
+        });
+        processedPincodes.clear(); // clear cache
     }
 
-
     public void fetchVaccineAvailabilityFromCowinApi(String pincode) {
-        log.info("Fetching vaccine availability for pin code {}", pincode);
-        final VaccineCenters vaccineCenters = cowinApiClient.fetchCentersByPincode(pincode);
-        if (!vaccineCentersProcessor.areVaccineCentersAvailable(vaccineCenters)) {
-            log.info("Found no centers for pin code {}", pincode);
-            return;
+        try {
+            log.info("Fetching vaccine availability for pin code {}", pincode);
+            final VaccineCenters vaccineCenters = cowinApiClient.fetchCentersByPincode(pincode);
+            if (!vaccineCentersProcessor.areVaccineCentersAvailable(vaccineCenters)) {
+                log.info("Found no centers for pin code {}", pincode);
+                return;
+            }
+            if (!vaccineCentersProcessor.areVaccineCentersAvailableFor18plus(vaccineCenters)) {
+                log.info("Vaccine centers not found for 18+ or no capacity for pin code {}", pincode);
+                return;
+            }
+            log.info("Persisting vaccine availability for pin code {}", pincode);
+            vaccinePersistence.persistVaccineCenters(pincode, vaccineCenters);
+        } catch (CowinException ce) {
+            log.error("Error fetching centers for pincode {}, got status code {}", pincode, ce.getStatusCode());
         }
-        if (!vaccineCentersProcessor.areVaccineCentersAvailableFor18plus(vaccineCenters)) {
-            log.info("Vaccine centers not for 18+ or no capacity for pin code {}", pincode);
-            return;
-        }
-        log.info("Persisting vaccine availability for pin code {}", pincode);
-        vaccinePersistence.persistVaccineCenters(pincode, vaccineCenters);
     }
 
     public VaccineCenters fetchVaccineAvailabilityFromPersistenceStore(String pincode) {
@@ -50,5 +87,4 @@ public class VaccineAvailability {
         // botservice.notify(...)
         return vaccinePersistence.fetchVaccineCentersByPincode(pincode);
     }
-
 }
