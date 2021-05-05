@@ -110,7 +110,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                 .chatId(userId)
                 .text(text)
                 .build();
-        log.info("Sending notification for {} with text {}", userId, text);
+        log.info("Sending notification to {} with text \"{}\"", userId, text);
         try {
             this.execute(telegramMessage);
             return true;
