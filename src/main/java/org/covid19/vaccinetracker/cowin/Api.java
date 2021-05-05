@@ -68,6 +68,12 @@ public class Api {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/notify/cowin")
+    public ResponseEntity<?> triggerNotificationsFromCowinApi() {
+        this.notifications.checkUpdatesDirectlyWithCowinAndSendNotifications();
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/add/user_request")
     public ResponseEntity<?> addUserRequest(@RequestParam final String chatId, @RequestParam final String pincodes) {
         this.userRequestManager.acceptUserRequest(chatId, Utils.splitPincodes(pincodes));
@@ -77,7 +83,7 @@ public class Api {
     @GetMapping("/add/dummy_vaccine_center")
     public ResponseEntity<?> addUserRequest(@RequestParam final String pincode) {
         Center center = Center.builder().centerId(123456).name("Test Vaccine Center").stateName("state").districtName("district").pincode(Integer.parseInt(pincode))
-                .sessions(Collections.singletonList(Session.builder().sessionId("xxx").date("04-05-2021").minAgeLimit(18).availableCapacity(5).build()))
+                .sessions(Collections.singletonList(Session.builder().vaccine("COVISHIELD").sessionId("xxx").date("04-05-2021").minAgeLimit(18).availableCapacity(5).build()))
                 .build();
         VaccineCenters vaccineCenters = new VaccineCenters();
         vaccineCenters.setCenters(Collections.singletonList(center));

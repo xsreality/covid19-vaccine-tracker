@@ -2,6 +2,7 @@ package org.covid19.vaccinetracker.notifications;
 
 import org.covid19.vaccinetracker.availability.VaccineCentersProcessor;
 import org.covid19.vaccinetracker.bot.BotService;
+import org.covid19.vaccinetracker.cowin.CowinApiClient;
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.model.UserRequest;
@@ -28,13 +29,15 @@ public class VaccineCentersNotification {
     private final UserRequestManager userRequestManager;
     private final VaccinePersistence vaccinePersistence;
     private final VaccineCentersProcessor vaccineCentersProcessor;
+    private final CowinApiClient cowinApiClient;
 
     public VaccineCentersNotification(BotService botService, UserRequestManager userRequestManager,
-                                      VaccinePersistence vaccinePersistence, VaccineCentersProcessor vaccineCentersProcessor) {
+                                      VaccinePersistence vaccinePersistence, VaccineCentersProcessor vaccineCentersProcessor, CowinApiClient cowinApiClient) {
         this.botService = botService;
         this.userRequestManager = userRequestManager;
         this.vaccinePersistence = vaccinePersistence;
         this.vaccineCentersProcessor = vaccineCentersProcessor;
+        this.cowinApiClient = cowinApiClient;
     }
 
     /*
@@ -76,6 +79,45 @@ public class VaccineCentersNotification {
             });
         });
         cache.clear(); // clear cache
+    }
+
+    @Scheduled(cron = "0 5/30 * * * *")
+    public void checkUpdatesDirectlyWithCowinAndSendNotifications() {
+        log.info("Starting Vaccine Availability via Cowin API Notification...");
+        ConcurrentHashMap<String, VaccineCenters> cache = new ConcurrentHashMap<>();
+        final List<UserRequest> userRequests = userRequestManager.fetchAllUserRequests();
+        userRequests.forEach(userRequest -> {
+            final String lastNotifiedAt = userRequest.getLastNotifiedAt();
+            if (userWasNotifiedRecently(lastNotifiedAt)) {
+                log.info("Skipping sending notification to {} as they were notified already on {}", userRequest.getChatId(), lastNotifiedAt);
+                return;
+            }
+            // process pin codes of each user
+            userRequest.getPincodes().forEach(pincode -> {
+                VaccineCenters vaccineCenters;
+                if (cache.containsKey(pincode)) {
+                    log.info("Found vaccine centers in local cache for pin code {}", pincode);
+                    vaccineCenters = cache.get(pincode);
+                } else {
+                    // fetch from Cowin API
+                    vaccineCenters = cowinApiClient.fetchCentersByPincode(pincode);
+                    if (isNull(vaccineCenters) || vaccineCenters.centers.isEmpty()) {
+                        log.info("No centers found for pin code {} in persistence store.", pincode);
+                        return;
+                    }
+                }
+                cache.putIfAbsent(pincode, vaccineCenters); // update local cache
+                List<Center> eligibleCenters = eligibleVaccineCenters(vaccineCenters);
+                if (eligibleCenters.isEmpty()) {
+                    log.info("No eligible vaccine centers found for pin code {}", pincode);
+                    return;
+                }
+                if (botService.notify(userRequest.getChatId(), eligibleCenters)) {
+                    userRequestManager.updateUserRequestLastNotifiedAt(userRequest, Utils.currentTime());
+                }
+            });
+        });
+        cache.clear();
     }
 
     List<Center> eligibleVaccineCenters(VaccineCenters vaccineCenters) {

@@ -35,7 +35,12 @@ public class CowinApiClient {
                     .bodyToMono(VaccineCenters.class)
                     .block();
         } catch (WebClientResponseException we) {
-            throw new CowinException(we.getMessage(), we.getRawStatusCode());
+            log.error("Error from Cowin API status code {}, message {}", we.getRawStatusCode(), we.getMessage());
+            return null;
+//            throw new CowinException(we.getMessage(), we.getRawStatusCode());
+        } catch (CowinException we) {
+            log.error("Error from Cowin API status code {}, message {}", we.getStatusCode(), we.getMessage());
+            return null;
         }
     }
 }
