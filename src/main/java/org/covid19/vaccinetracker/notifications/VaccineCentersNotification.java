@@ -87,11 +87,11 @@ public class VaccineCentersNotification {
         ConcurrentHashMap<String, VaccineCenters> cache = new ConcurrentHashMap<>();
         final List<UserRequest> userRequests = userRequestManager.fetchAllUserRequests();
         userRequests.forEach(userRequest -> {
-            final String lastNotifiedAt = userRequest.getLastNotifiedAt();
+            /*final String lastNotifiedAt = userRequest.getLastNotifiedAt();
             if (userWasNotifiedRecently(lastNotifiedAt)) {
                 log.info("Skipping sending notification to {} as they were notified already on {}", userRequest.getChatId(), lastNotifiedAt);
                 return;
-            }
+            }*/
             // process pin codes of each user
             userRequest.getPincodes().forEach(pincode -> {
                 VaccineCenters vaccineCenters;
@@ -121,12 +121,11 @@ public class VaccineCentersNotification {
     }
 
     List<Center> eligibleVaccineCenters(VaccineCenters vaccineCenters) {
-        log.info("Checking eligible centers from {}", vaccineCenters);
         List<Center> eligibleCenters = new ArrayList<>();
         vaccineCenters.centers.forEach(center -> {
             List<Session> eligibleSessions = new ArrayList<>();
             center.sessions.forEach(session -> {
-                if (vaccineCentersProcessor.has18plus(session) || vaccineCentersProcessor.hasCapacity(session)) {
+                if (vaccineCentersProcessor.has18plus(session) && vaccineCentersProcessor.hasCapacity(session)) {
                     eligibleSessions.add(session);
                 }
             });
