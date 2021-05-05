@@ -81,7 +81,7 @@ public class VaccineCentersNotification {
         cache.clear(); // clear cache
     }
 
-    @Scheduled(cron = "0 5/30 * * * *")
+    @Scheduled(cron = "0 0/15 * * * *")
     public void checkUpdatesDirectlyWithCowinAndSendNotifications() {
         log.info("Starting Vaccine Availability via Cowin API Notification...");
         ConcurrentHashMap<String, VaccineCenters> cache = new ConcurrentHashMap<>();
