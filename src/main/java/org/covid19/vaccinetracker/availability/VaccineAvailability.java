@@ -32,7 +32,7 @@ public class VaccineAvailability {
         this.userRequestManager = userRequestManager;
     }
 
-    @Scheduled(cron = "0 0/30 * * * *")
+//    @Scheduled(cron = "0 0/30 * * * *")
     public void refreshVaccineAvailabilityFromCowin() {
         log.info("Refreshing Vaccine Availability from Cowin");
         final List<String> processedPincodes = new ArrayList<>();
