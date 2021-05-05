@@ -91,6 +91,7 @@ public class VaccineCentersNotification {
         log.info("Starting Vaccine Availability via Cowin API Notification...");
         AtomicInteger failedCowinApiCalls = new AtomicInteger(0);
         AtomicInteger notificationsSent = new AtomicInteger(0);
+        AtomicInteger processedPincodes = new AtomicInteger(0);
 
         ConcurrentHashMap<String, VaccineCenters> cache = new ConcurrentHashMap<>();
         final List<UserRequest> userRequests = userRequestManager.fetchAllUserRequests();
@@ -103,12 +104,14 @@ public class VaccineCentersNotification {
             // process pin codes of each user
             userRequest.getPincodes().forEach(pincode -> {
                 VaccineCenters vaccineCenters;
+                processedPincodes.incrementAndGet();
                 if (cache.containsKey(pincode)) {
                     log.info("Found vaccine centers in local cache for pin code {}", pincode);
                     vaccineCenters = cache.get(pincode);
                 } else {
                     // fetch from Cowin API
                     vaccineCenters = cowinApiClient.fetchCentersByPincode(pincode);
+                    introduceDelay(); // to respect API rate limits
                     if (isNull(vaccineCenters) || vaccineCenters.centers.isEmpty()) {
                         if (isNull(vaccineCenters)) {
                             failedCowinApiCalls.incrementAndGet();
@@ -118,7 +121,6 @@ public class VaccineCentersNotification {
                     }
                 }
                 cache.putIfAbsent(pincode, vaccineCenters); // update local cache
-                introduceDelayEvery50ApiCalls(cache.size()); // to respect API rate limits
                 List<Center> eligibleCenters = eligibleVaccineCenters(userRequest.getChatId(), vaccineCenters);
                 if (eligibleCenters.isEmpty()) {
                     log.info("No eligible vaccine centers found for pin code {}", pincode);
@@ -130,17 +132,15 @@ public class VaccineCentersNotification {
                 }
             });
         });
-        botService.summary(cache.size(), failedCowinApiCalls, notificationsSent);
+        botService.summary(processedPincodes, failedCowinApiCalls, notificationsSent);
         cache.clear();
     }
 
-    private void introduceDelayEvery50ApiCalls(int cacheSize) {
-        if (cacheSize % 50 == 0) {
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                // eat
-            }
+    private void introduceDelay() {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            // eat
         }
     }
 
