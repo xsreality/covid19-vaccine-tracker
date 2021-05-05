@@ -17,14 +17,18 @@ public class VaccineCentersProcessor {
                 .stream()
                 .anyMatch(center -> center.sessions
                         .stream()
-                        .anyMatch(session -> has18plus(session) && hasCapacity(session)));
+                        .anyMatch(session -> ageLimitExactly18(session) && hasCapacity(session)));
     }
 
     public boolean hasCapacity(Session session) {
         return session.availableCapacity > 0;
     }
 
-    public boolean has18plus(Session session) {
+    public boolean ageLimitExactly18(Session session) {
         return session.getMinAgeLimit() == 18;
+    }
+
+    public boolean ageLimit18AndAbove(Session session) {
+        return session.getMinAgeLimit() >= 18;
     }
 }

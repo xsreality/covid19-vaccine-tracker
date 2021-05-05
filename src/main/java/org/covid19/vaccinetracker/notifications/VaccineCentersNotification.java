@@ -10,6 +10,7 @@ import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.covid19.vaccinetracker.utils.Utils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,9 @@ import static java.util.Objects.nonNull;
 @Slf4j
 @Service
 public class VaccineCentersNotification {
+    @Value("${users.over45}")
+    private List<String> usersOver45;
+
     private final BotService botService;
     private final UserRequestManager userRequestManager;
     private final VaccinePersistence vaccinePersistence;
@@ -73,7 +77,7 @@ public class VaccineCentersNotification {
                         return;
                     }
                 }
-                List<Center> eligibleCenters = eligibleVaccineCenters(vaccineCenters);
+                List<Center> eligibleCenters = eligibleVaccineCenters(userRequest.getChatId(), vaccineCenters);
                 botService.notify(userRequest.getChatId(), eligibleCenters);
                 cache.putIfAbsent(pincode, vaccineCenters); // update local cache
                 userRequestManager.updateUserRequestLastNotifiedAt(userRequest, Utils.currentTime());
@@ -114,7 +118,7 @@ public class VaccineCentersNotification {
                     }
                 }
                 cache.putIfAbsent(pincode, vaccineCenters); // update local cache
-                List<Center> eligibleCenters = eligibleVaccineCenters(vaccineCenters);
+                List<Center> eligibleCenters = eligibleVaccineCenters(userRequest.getChatId(), vaccineCenters);
                 if (eligibleCenters.isEmpty()) {
                     log.info("No eligible vaccine centers found for pin code {}", pincode);
                     return;
@@ -129,13 +133,19 @@ public class VaccineCentersNotification {
         botService.summary(failedCowinApiCalls, notificationsSent);
     }
 
-    List<Center> eligibleVaccineCenters(VaccineCenters vaccineCenters) {
+    List<Center> eligibleVaccineCenters(String userId, VaccineCenters vaccineCenters) {
         List<Center> eligibleCenters = new ArrayList<>();
         vaccineCenters.centers.forEach(center -> {
             List<Session> eligibleSessions = new ArrayList<>();
             center.sessions.forEach(session -> {
-                if (vaccineCentersProcessor.has18plus(session) && vaccineCentersProcessor.hasCapacity(session)) {
-                    eligibleSessions.add(session);
+                if (usersOver45.contains(userId)) { // some users should be alerted for 45 too
+                    if (vaccineCentersProcessor.ageLimit18AndAbove(session) && vaccineCentersProcessor.hasCapacity(session)) {
+                        eligibleSessions.add(session);
+                    }
+                } else {
+                    if (vaccineCentersProcessor.ageLimitExactly18(session) && vaccineCentersProcessor.hasCapacity(session)) {
+                        eligibleSessions.add(session);
+                    }
                 }
             });
             if (!eligibleSessions.isEmpty()) {

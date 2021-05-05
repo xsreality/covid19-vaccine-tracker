@@ -16,3 +16,5 @@ telegram:
 logging:
   level:
     org.apache.kafka.streams: INFO
+
+users.over45: ""
