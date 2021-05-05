@@ -69,7 +69,7 @@ public class Utils {
         for (Center center : eligibleCenters) {
             text.append(String.format("%s (%s %s)\n", center.name, center.districtName, center.pincode));
             for (Session session : center.sessions) {
-                text.append(String.format("%s dose(s) of %s for 18+ age group available on %s\n", session.availableCapacity, session.vaccine, session.date));
+                text.append(String.format("%s dose(s) of %s for %s+ age group available on %s\n", session.availableCapacity, session.vaccine, session.minAgeLimit, session.date));
             }
         }
         return text.toString();
