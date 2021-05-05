@@ -17,6 +17,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -84,7 +85,8 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                         }
                         String chatId = getChatId(ctx.update());
                         this.botBackend.acceptUserRequest(chatId, pincodesAsList);
-                        silent.send("Okay! I will notify you when vaccine is available in centers near your location.", ctx.chatId());
+                        silent.send("Okay! I will notify you when vaccine is available in centers near your location.\n\n" +
+                                "You can set multiple pin codes by sending them together separated by comma (,). Maximum 3 pin codes are allowed.", ctx.chatId());
 
                         // send an update to Bot channel
                         String channelMsg = String.format("User %s (%s) set notification preference for pin code(s) %s",
@@ -115,6 +117,21 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
         } catch (TelegramApiException e) {
             log.error("Error sending telegram message to user id {}, error message: {}", userId, e.getMessage());
             return false;
+        }
+    }
+
+    @Override
+    public void summary(AtomicInteger failedCalls, AtomicInteger notificationsSent) {
+        log.info("Sending summary notification");
+        String text = String.format("Failed Cowin API calls: %d, Notifications sent: %d", failedCalls.get(), notificationsSent.get());
+        SendMessage message = SendMessage.builder()
+                .chatId(String.valueOf(CHANNEL_ID))
+                .text(text)
+                .build();
+        try {
+            this.execute(message);
+        } catch (TelegramApiException e) {
+            log.error("Error sending summary notification error message: {}", e.getMessage());
         }
     }
 
