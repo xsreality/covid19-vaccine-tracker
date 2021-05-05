@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -84,6 +85,9 @@ public class VaccineCentersNotification {
     @Scheduled(cron = "0 0/15 * * * *")
     public void checkUpdatesDirectlyWithCowinAndSendNotifications() {
         log.info("Starting Vaccine Availability via Cowin API Notification...");
+        AtomicInteger failedCowinApiCalls = new AtomicInteger(0);
+        AtomicInteger notificationsSent = new AtomicInteger(0);
+
         ConcurrentHashMap<String, VaccineCenters> cache = new ConcurrentHashMap<>();
         final List<UserRequest> userRequests = userRequestManager.fetchAllUserRequests();
         userRequests.forEach(userRequest -> {
@@ -102,6 +106,9 @@ public class VaccineCentersNotification {
                     // fetch from Cowin API
                     vaccineCenters = cowinApiClient.fetchCentersByPincode(pincode);
                     if (isNull(vaccineCenters) || vaccineCenters.centers.isEmpty()) {
+                        if (isNull(vaccineCenters)) {
+                            failedCowinApiCalls.incrementAndGet();
+                        }
                         log.info("No centers found for pin code {} in persistence store.", pincode);
                         return;
                     }
@@ -113,11 +120,13 @@ public class VaccineCentersNotification {
                     return;
                 }
                 if (botService.notify(userRequest.getChatId(), eligibleCenters)) {
+                    notificationsSent.incrementAndGet();
                     userRequestManager.updateUserRequestLastNotifiedAt(userRequest, Utils.currentTime());
                 }
             });
         });
         cache.clear();
+        botService.summary(failedCowinApiCalls, notificationsSent);
     }
 
     List<Center> eligibleVaccineCenters(VaccineCenters vaccineCenters) {
