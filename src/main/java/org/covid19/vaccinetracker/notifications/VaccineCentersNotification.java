@@ -118,6 +118,7 @@ public class VaccineCentersNotification {
                     }
                 }
                 cache.putIfAbsent(pincode, vaccineCenters); // update local cache
+                introduceDelayEvery50ApiCalls(cache.size()); // to respect API rate limits
                 List<Center> eligibleCenters = eligibleVaccineCenters(userRequest.getChatId(), vaccineCenters);
                 if (eligibleCenters.isEmpty()) {
                     log.info("No eligible vaccine centers found for pin code {}", pincode);
@@ -131,6 +132,16 @@ public class VaccineCentersNotification {
         });
         botService.summary(cache.size(), failedCowinApiCalls, notificationsSent);
         cache.clear();
+    }
+
+    private void introduceDelayEvery50ApiCalls(int cacheSize) {
+        if (cacheSize % 50 == 0) {
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                // eat
+            }
+        }
     }
 
     List<Center> eligibleVaccineCenters(String userId, VaccineCenters vaccineCenters) {
