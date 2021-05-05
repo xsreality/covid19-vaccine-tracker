@@ -102,7 +102,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
     }
 
     @Override
-    public void notify(String userId, List<Center> eligibleCenters) {
+    public boolean notify(String userId, List<Center> eligibleCenters) {
         log.info("Sending notification for {} and vaccine centers {}", userId, eligibleCenters);
         String text = Utils.buildNotificationMessage(eligibleCenters);
         SendMessage telegramMessage = SendMessage.builder()
@@ -111,8 +111,10 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                 .build();
         try {
             this.execute(telegramMessage);
+            return true;
         } catch (TelegramApiException e) {
-            log.error("Error sending telegram message to user id {}", userId);
+            log.error("Error sending telegram message to user id {}, error message: {}", userId, e.getMessage());
+            return false;
         }
     }
 
