@@ -95,11 +95,11 @@ public class VaccineCentersNotification {
         ConcurrentHashMap<String, VaccineCenters> cache = new ConcurrentHashMap<>();
         final List<UserRequest> userRequests = userRequestManager.fetchAllUserRequests();
         userRequests.forEach(userRequest -> {
-            /*final String lastNotifiedAt = userRequest.getLastNotifiedAt();
+            final String lastNotifiedAt = userRequest.getLastNotifiedAt();
             if (userWasNotifiedRecently(lastNotifiedAt)) {
                 log.info("Skipping sending notification to {} as they were notified already on {}", userRequest.getChatId(), lastNotifiedAt);
                 return;
-            }*/
+            }
             // process pin codes of each user
             userRequest.getPincodes().forEach(pincode -> {
                 VaccineCenters vaccineCenters;
@@ -188,6 +188,6 @@ public class VaccineCentersNotification {
      * Return true if user was notified within last 24 hours.
      */
     private boolean userWasNotifiedRecently(String lastNotifiedAt) {
-        return nonNull(lastNotifiedAt) && !Utils.dayOld(lastNotifiedAt);
+        return nonNull(lastNotifiedAt) && !Utils.pastHalfHour(lastNotifiedAt);
     }
 }
