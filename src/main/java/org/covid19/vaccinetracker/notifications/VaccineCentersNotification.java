@@ -106,7 +106,7 @@ public class VaccineCentersNotification {
                 VaccineCenters vaccineCenters;
                 processedPincodes.incrementAndGet();
                 if (cache.containsKey(pincode)) {
-                    log.info("Found vaccine centers in local cache for pin code {}", pincode);
+                    log.debug("Found vaccine centers in local cache for pin code {}", pincode);
                     vaccineCenters = cache.get(pincode);
                 } else {
                     // fetch from Cowin API
@@ -116,14 +116,14 @@ public class VaccineCentersNotification {
                         if (isNull(vaccineCenters)) {
                             failedCowinApiCalls.incrementAndGet();
                         }
-                        log.info("No centers found for pin code {} in persistence store.", pincode);
+                        log.debug("No centers found for pin code {}", pincode);
                         return;
                     }
                 }
                 cache.putIfAbsent(pincode, vaccineCenters); // update local cache
                 List<Center> eligibleCenters = eligibleVaccineCenters(userRequest.getChatId(), vaccineCenters);
                 if (eligibleCenters.isEmpty()) {
-                    log.info("No eligible vaccine centers found for pin code {}", pincode);
+                    log.debug("No eligible vaccine centers found for pin code {}", pincode);
                     return;
                 }
                 if (botService.notify(userRequest.getChatId(), eligibleCenters)) {
