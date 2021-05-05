@@ -129,8 +129,8 @@ public class VaccineCentersNotification {
                 }
             });
         });
+        botService.summary(cache.size(), failedCowinApiCalls, notificationsSent);
         cache.clear();
-        botService.summary(failedCowinApiCalls, notificationsSent);
     }
 
     List<Center> eligibleVaccineCenters(String userId, VaccineCenters vaccineCenters) {
