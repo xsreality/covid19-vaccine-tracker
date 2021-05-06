@@ -8,5 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public interface BotService {
     boolean notify(String userId, List<Center> vaccineCenters);
 
+    void notifyOwner(String message);
+
     void summary(AtomicInteger processedPincodes, AtomicInteger failedCalls, AtomicInteger notificationsSent);
 }

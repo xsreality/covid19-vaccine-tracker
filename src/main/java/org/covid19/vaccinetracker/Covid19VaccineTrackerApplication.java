@@ -1,7 +1,6 @@
 package org.covid19.vaccinetracker;
 
 import org.covid19.vaccinetracker.bot.TelegramBot;
-
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.springframework.beans.factory.annotation.Value;

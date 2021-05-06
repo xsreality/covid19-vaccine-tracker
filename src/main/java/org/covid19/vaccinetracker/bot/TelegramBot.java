@@ -2,7 +2,6 @@ package org.covid19.vaccinetracker.bot;
 
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.UserRequest;
-import org.covid19.vaccinetracker.persistence.KafkaStateStores;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.BeansException;
@@ -13,10 +12,12 @@ import org.telegram.abilitybots.api.bot.AbilityBot;
 import org.telegram.abilitybots.api.db.DBContext;
 import org.telegram.abilitybots.api.objects.Ability;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +33,6 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
     private static Long CHANNEL_ID;
     private BotBackend botBackend;
     private KafkaTemplate<String, UserRequest> userRequestKafkaTemplate;
-    private KafkaStateStores stateStores;
 
     public TelegramBot(String botToken, String botUsername, DBContext db, String creatorId, String channelId) {
         super(botToken, botUsername, db);
@@ -129,6 +129,11 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
     }
 
     @Override
+    public void notifyOwner(String text) {
+        final Optional<Message> send = silent.send(text, CHANNEL_ID);
+    }
+
+    @Override
     public void summary(AtomicInteger processedPincodes, AtomicInteger failedCalls, AtomicInteger notificationsSent) {
         log.debug("Sending summary notification");
         String text = String.format("Processed pin codes: %d, Failed Cowin API calls: %d, Notifications sent: %d", processedPincodes.get(), failedCalls.get(), notificationsSent.get());
@@ -145,7 +150,6 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
 
     @Override
     public void setApplicationContext(@NotNull ApplicationContext applicationContext) throws BeansException {
-        this.stateStores = (KafkaStateStores) applicationContext.getBean("kafkaStateStores");
         this.botBackend = (BotBackend) applicationContext.getBean("botBackend");
     }
 }
