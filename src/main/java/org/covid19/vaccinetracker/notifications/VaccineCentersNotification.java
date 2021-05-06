@@ -132,6 +132,7 @@ public class VaccineCentersNotification {
                 }
             });
         });
+        log.info("Processed pincodes: {}, Failed Cowin API Calls: {}, Notifications sent: {}", processedPincodes, failedCowinApiCalls, notificationsSent);
         botService.summary(processedPincodes, failedCowinApiCalls, notificationsSent);
         cache.clear();
     }

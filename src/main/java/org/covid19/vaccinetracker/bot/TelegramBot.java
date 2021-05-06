@@ -122,7 +122,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
 
     @Override
     public void summary(AtomicInteger processedPincodes, AtomicInteger failedCalls, AtomicInteger notificationsSent) {
-        log.info("Sending summary notification");
+        log.debug("Sending summary notification");
         String text = String.format("Processed pin codes: %d, Failed Cowin API calls: %d, Notifications sent: %d", processedPincodes.get(), failedCalls.get(), notificationsSent.get());
         SendMessage message = SendMessage.builder()
                 .chatId(String.valueOf(CHANNEL_ID))

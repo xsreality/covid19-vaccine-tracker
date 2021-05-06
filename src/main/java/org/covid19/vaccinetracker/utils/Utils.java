@@ -78,6 +78,7 @@ public class Utils {
             for (Session session : center.sessions) {
                 text.append(String.format("%s dose(s) of %s for %s+ age group available on %s\n", session.availableCapacity, session.vaccine, session.minAgeLimit, session.date));
             }
+            text.append("\n");
         }
         return text.toString();
     }
