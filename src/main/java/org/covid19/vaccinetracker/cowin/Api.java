@@ -25,15 +25,15 @@ public class Api {
     private final CowinApiClient cowinApiClient;
     private final VaccineAvailability vaccineAvailability;
     private final VaccineCentersNotification notifications;
-    private final UserRequestManager userRequestManager;
     private final VaccinePersistence vaccinePersistence;
+    private final UserRequestManager userRequestManager;
 
-    public Api(CowinApiClient cowinApiClient, VaccineAvailability vaccineAvailability, VaccineCentersNotification notifications, UserRequestManager userRequestManager, VaccinePersistence vaccinePersistence) {
+    public Api(CowinApiClient cowinApiClient, VaccineAvailability vaccineAvailability, VaccineCentersNotification notifications, VaccinePersistence vaccinePersistence, UserRequestManager userRequestManager) {
         this.cowinApiClient = cowinApiClient;
         this.vaccineAvailability = vaccineAvailability;
         this.notifications = notifications;
-        this.userRequestManager = userRequestManager;
         this.vaccinePersistence = vaccinePersistence;
+        this.userRequestManager = userRequestManager;
     }
 
     @GetMapping("/fetch/cowin")
@@ -44,11 +44,6 @@ public class Api {
     @GetMapping("/fetch/vaccine_centers_by_pincode")
     public ResponseEntity<VaccineCenters> vaccineCentersFromStore(@RequestParam final String pincode) {
         return ResponseEntity.ok(vaccineAvailability.fetchVaccineAvailabilityFromPersistenceStore(pincode));
-    }
-
-    @GetMapping("/fetch/vaccine_centers")
-    public ResponseEntity<List<VaccineCenters>> vaccineCentersFromStoreAll() {
-        return ResponseEntity.ok(vaccineAvailability.fetchVaccineAvailabilityFromPersistenceStoreAll());
     }
 
     @GetMapping("/fetch/user_request")
