@@ -38,7 +38,7 @@ public class UtilsTest {
     public void testNotificationText() {
         String expected = "Premlok Park Disp- 2(18-44) (Pune 411033)\n" +
                 "3 dose(s) of COVISHIELD for 18+ age group available on 04-05-2021\n" +
-                "12 dose(s) of COVAXIN for 18+ age group available on 05-05-2021\n";
+                "12 dose(s) of COVAXIN for 18+ age group available on 05-05-2021\n\n";
         List<Center> centers = new ArrayList<>();
         List<Session> sessions = new ArrayList<>();
         sessions.add(Session.builder().availableCapacity(3).minAgeLimit(18).date("04-05-2021").vaccine("COVISHIELD").build());
