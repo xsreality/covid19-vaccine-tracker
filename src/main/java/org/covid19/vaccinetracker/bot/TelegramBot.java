@@ -54,9 +54,11 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                 .privacy(PUBLIC)
                 .input(0)
                 .action(ctx -> {
-                    String message = "Welcome to COVID19 Vaccine Tracker!\n\n" +
-                            "To automatically receive notification when Vaccine becomes available near you, send your pin code.\n\n" +
-                            "Stay safe and keep social distancing!";
+                    String message = "Welcome to COVID19 Vaccine Tracker! कोविड-19 वैक्सीन ट्रैकर में आपका स्वागत है!\n\n" +
+                            "To automatically receive notification when Vaccine becomes available near you, send your pin code.\n" +
+                            "जब आपके पास वैक्सीन उपलब्ध हो जाता है तो अपने आप ही सूचना प्राप्त करने के लिए अपना पिन कोड भेजें।\n\n" +
+                            "Stay safe, wear masks and keep social distancing!\n" +
+                            "सुरक्षित रहें, मास्क पहनें और सामाजिक दूरी बनाए रखें!";
                     silent.send(message, ctx.chatId());
                 })
                 .build();
@@ -73,20 +75,26 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                     if (ctx.update().hasMessage() && ctx.update().getMessage().hasText()) {
                         String pincodes = ctx.update().getMessage().getText();
                         if (!Utils.allValidPincodes(pincodes)) {
-                            String msg = "Send valid pin code to receive notification when vaccine becomes available in your area.";
+                            String msg = "Send valid pin code to receive notification when vaccine becomes available in your area.\n\n" +
+                                    "जब आपके क्षेत्र में वैक्सीन उपलब्ध हो जाए तो अधिसूचना प्राप्त करने के लिए पिन कोड भेजें।";
                             silent.send(msg, ctx.chatId());
                             return;
                         }
                         List<String> pincodesAsList = Utils.splitPincodes(pincodes);
                         if (pincodesAsList.size() > 3) {
-                            String msg = "Maximum 3 pin codes can be notified.";
+                            String msg = "Maximum 3 pin codes can be notified.\n\n" +
+                                    "अधिकतम 3 पिन कोड अधिसूचित किए जा सकते हैं।";
                             silent.send(msg, ctx.chatId());
                             return;
                         }
                         String chatId = getChatId(ctx.update());
                         this.botBackend.acceptUserRequest(chatId, pincodesAsList);
-                        silent.send("Okay! I will notify you when vaccine is available in centers near your location.\n\n" +
-                                "You can set multiple pin codes by sending them together separated by comma (,). Maximum 3 pin codes are allowed.", ctx.chatId());
+                        silent.send("Okay! I will notify you when vaccine is available in centers near your location.\n" +
+                                "You can set multiple pin codes by sending them together separated by comma (,). Maximum 3 pin codes are allowed.\n" +
+                                "Make sure notification is turned on for this bot so you don't miss any alerts!\n\n" +
+                                "ठीक है! जब आपके स्थान के पास के केंद्रों में टीका उपलब्ध होगा तो मैं आपको सूचित करूँगा।\n" +
+                                "आप कई पिन कोड कॉमा (,) द्वारा अलग-अलग सेट कर सकते हैं। अधिकतम 3 पिन कोड की अनुमति है।\n" +
+                                "सुनिश्चित करें कि अधिसूचना इस बॉट के लिए चालू है ताकि आप किसी भी अलर्ट को न भूलें!", ctx.chatId());
 
                         // send an update to Bot channel
                         String channelMsg = String.format("User %s (%s, %s) set notification preference for pin code(s) %s",
