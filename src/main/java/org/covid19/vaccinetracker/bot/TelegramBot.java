@@ -89,8 +89,8 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                                 "You can set multiple pin codes by sending them together separated by comma (,). Maximum 3 pin codes are allowed.", ctx.chatId());
 
                         // send an update to Bot channel
-                        String channelMsg = String.format("User %s (%s) set notification preference for pin code(s) %s",
-                                Utils.translateName(ctx.update().getMessage().getChat()), chatId, pincodes);
+                        String channelMsg = String.format("User %s (%s, %s) set notification preference for pin code(s) %s",
+                                Utils.translateName(ctx.update().getMessage().getChat()), chatId, ctx.user().getUserName(), pincodes);
                         silent.send(channelMsg, CHANNEL_ID);
                     }
                 })
