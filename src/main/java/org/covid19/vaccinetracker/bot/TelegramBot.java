@@ -75,14 +75,14 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                     if (ctx.update().hasMessage() && ctx.update().getMessage().hasText()) {
                         String pincodes = ctx.update().getMessage().getText();
                         if (!Utils.allValidPincodes(pincodes)) {
-                            String msg = "Send valid pin code to receive notification when vaccine becomes available in your area.\n\n" +
+                            String msg = "Send valid pincode to receive notification when vaccine becomes available in your area.\n\n" +
                                     "जब आपके क्षेत्र में वैक्सीन उपलब्ध हो जाए तो अधिसूचना प्राप्त करने के लिए पिन कोड भेजें।";
                             silent.send(msg, ctx.chatId());
                             return;
                         }
                         List<String> pincodesAsList = Utils.splitPincodes(pincodes);
                         if (pincodesAsList.size() > 3) {
-                            String msg = "Maximum 3 pin codes can be notified.\n\n" +
+                            String msg = "Maximum 3 pincodes can be notified.\n\n" +
                                     "अधिकतम 3 पिन कोड अधिसूचित किए जा सकते हैं।";
                             silent.send(msg, ctx.chatId());
                             return;
@@ -90,7 +90,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                         String chatId = getChatId(ctx.update());
                         this.botBackend.acceptUserRequest(chatId, pincodesAsList);
                         silent.send("Okay! I will notify you when vaccine is available in centers near your location.\n" +
-                                "You can set multiple pin codes by sending them together separated by comma (,). Maximum 3 pin codes are allowed.\n" +
+                                "You can set multiple pincodes by sending them together separated by comma (,). Maximum 3 pincodes are allowed.\n" +
                                 "Make sure notification is turned on for this bot so you don't miss any alerts!\n\n" +
                                 "ठीक है! जब आपके स्थान के पास के केंद्रों में टीका उपलब्ध होगा तो मैं आपको सूचित करूँगा।\n" +
                                 "आप कई पिन कोड कॉमा (,) द्वारा अलग-अलग सेट कर सकते हैं। अधिकतम 3 पिन कोड की अनुमति है।\n" +

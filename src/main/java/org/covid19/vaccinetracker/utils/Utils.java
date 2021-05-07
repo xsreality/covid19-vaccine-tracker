@@ -81,6 +81,7 @@ public class Utils {
             }
             text.append("\n");
         }
+        text.append("For registration, please visit https://selfregistration.cowin.gov.in/\n");
         return text.toString();
     }
 }

@@ -86,7 +86,7 @@ public class VaccineCentersNotification {
         cache.clear(); // clear cache
     }
 
-    @Scheduled(cron = "0 0/15 7-23 * * *", zone = "IST")
+    @Scheduled(cron = "0 0/15 6-23 * * *", zone = "IST")
     public void checkUpdatesDirectlyWithCowinAndSendNotifications() {
         log.info("Starting Vaccine Availability via Cowin API Notification...");
         AtomicInteger failedCowinApiCalls = new AtomicInteger(0);
