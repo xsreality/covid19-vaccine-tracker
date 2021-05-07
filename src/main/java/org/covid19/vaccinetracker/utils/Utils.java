@@ -76,7 +76,8 @@ public class Utils {
         for (Center center : eligibleCenters) {
             text.append(String.format("%s (%s %s)\n", center.name, center.districtName, center.pincode));
             for (Session session : center.sessions) {
-                text.append(String.format("%s dose(s) of %s for %s+ age group available on %s\n", session.availableCapacity, session.vaccine, session.minAgeLimit, session.date));
+                text.append(String.format("%s dose(s) of %s for %s+ age group available on %s", session.availableCapacity, session.vaccine, session.minAgeLimit, session.date));
+                text.append(String.format(" (%s+ आयु वर्ग के लिए %s की %s खुराकें %s को उपलब्ध हैं)\n", session.minAgeLimit, session.vaccine, session.availableCapacity, session.date));
             }
             text.append("\n");
         }
