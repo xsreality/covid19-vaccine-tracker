@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,14 +34,17 @@ public class VaccineCentersNotification {
     private final VaccinePersistence vaccinePersistence;
     private final VaccineCentersProcessor vaccineCentersProcessor;
     private final CowinApiClient cowinApiClient;
+    private final NotificationStats notificationStats;
 
     public VaccineCentersNotification(BotService botService, UserRequestManager userRequestManager,
-                                      VaccinePersistence vaccinePersistence, VaccineCentersProcessor vaccineCentersProcessor, CowinApiClient cowinApiClient) {
+                                      VaccinePersistence vaccinePersistence, VaccineCentersProcessor vaccineCentersProcessor,
+                                      CowinApiClient cowinApiClient, NotificationStats notificationStats) {
         this.botService = botService;
         this.userRequestManager = userRequestManager;
         this.vaccinePersistence = vaccinePersistence;
         this.vaccineCentersProcessor = vaccineCentersProcessor;
         this.cowinApiClient = cowinApiClient;
+        this.notificationStats = notificationStats;
     }
 
     /*
@@ -89,10 +91,7 @@ public class VaccineCentersNotification {
     @Scheduled(cron = "0 0/15 6-23 * * *", zone = "IST")
     public void checkUpdatesDirectlyWithCowinAndSendNotifications() {
         log.info("Starting Vaccine Availability via Cowin API Notification...");
-        AtomicInteger failedCowinApiCalls = new AtomicInteger(0);
-        AtomicInteger notificationsSent = new AtomicInteger(0);
-        AtomicInteger processedPincodes = new AtomicInteger(0);
-
+        notificationStats.reset();
         ConcurrentHashMap<String, VaccineCenters> cache = new ConcurrentHashMap<>();
         final List<UserRequest> userRequests = userRequestManager.fetchAllUserRequests();
         userRequests.forEach(userRequest -> {
@@ -104,17 +103,17 @@ public class VaccineCentersNotification {
             // process pin codes of each user
             userRequest.getPincodes().forEach(pincode -> {
                 VaccineCenters vaccineCenters;
-                processedPincodes.incrementAndGet();
                 if (cache.containsKey(pincode)) {
                     log.debug("Found vaccine centers in local cache for pin code {}", pincode);
                     vaccineCenters = cache.get(pincode);
                 } else {
+                    notificationStats.incrementProcessedPincodes();
                     // fetch from Cowin API
                     vaccineCenters = cowinApiClient.fetchCentersByPincode(pincode);
                     introduceDelay(); // to respect API rate limits
                     if (isNull(vaccineCenters) || vaccineCenters.centers.isEmpty()) {
                         if (isNull(vaccineCenters)) {
-                            failedCowinApiCalls.incrementAndGet();
+                            notificationStats.incrementfailedApiCalls();
                         }
                         log.debug("No centers found for pin code {}", pincode);
                         return;
@@ -127,13 +126,15 @@ public class VaccineCentersNotification {
                     return;
                 }
                 if (botService.notify(userRequest.getChatId(), eligibleCenters)) {
-                    notificationsSent.incrementAndGet();
+                    notificationStats.incrementNotificationsSent();
                     userRequestManager.updateUserRequestLastNotifiedAt(userRequest, Utils.currentTime());
                 }
             });
         });
-        log.info("Processed pincodes: {}, Failed Cowin API Calls: {}, Notifications sent: {}", processedPincodes, failedCowinApiCalls, notificationsSent);
-        botService.summary(processedPincodes, failedCowinApiCalls, notificationsSent);
+        log.info("Processed pincodes: {}, Failed Cowin API Calls: {}, Notifications sent: {}",
+                notificationStats.processedPincodes(), notificationStats.failedApiCalls(), notificationStats.notificationsSent());
+        botService.notifyOwner(String.format("Processed pincodes: %d, Failed Cowin API Calls: %d, Notifications sent: %d",
+                notificationStats.processedPincodes(), notificationStats.failedApiCalls(), notificationStats.notificationsSent()));
         cache.clear();
     }
 

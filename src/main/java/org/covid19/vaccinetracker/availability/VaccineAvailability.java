@@ -41,7 +41,7 @@ public class VaccineAvailability {
         this.botService = botService;
     }
 
-    @Scheduled(cron = "0 10 * * * *")
+//    @Scheduled(cron = "0 10 * * * *")
     public void refreshVaccineAvailabilityFromCowin() {
         log.info("Refreshing Vaccine Availability from Cowin API");
         final List<String> processedPincodes = new ArrayList<>();
