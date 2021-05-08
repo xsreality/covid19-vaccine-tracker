@@ -10,15 +10,47 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import javax.validation.constraints.NotNull;
 
+import static java.util.Map.entry;
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 public class Utils {
     private static final String PINCODE_REGEX_PATTERN = "^[1-9][0-9]{5}$";
     private static final String INDIA_TIMEZONE = "Asia/Kolkata";
     private static final DateTimeFormatter dtf = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+
+    private static final Map<String, String> STATE_LANGUAGES = Map.ofEntries(
+            entry("Andhra Pradesh", "Telugu"),
+            entry("Gujarat", "Gujarati"),
+            entry("Karnataka", "Kannada"),
+            entry("Kerala", "Malayalam"),
+            entry("Lakshadweep", "Malayalam"),
+            entry("Maharashtra", "Marathi"),
+            entry("Odisha", "Odia"),
+            entry("Puducherry", "Tamil"),
+            entry("Punjab", "Punjabi"),
+            entry("Tamil Nadu", "Tamil"),
+            entry("Telangana", "Telugu"),
+            entry("Tripura", "Bengali"),
+            entry("West Bengal", "Bengali")
+    );
+
+    private static final Map<String, String> LOCALIZED_NOTIFICATION_TEXT = Map.ofEntries(
+            entry("Hindi", "(%s+ आयु वर्ग के लिए %s की %s खुराकें %s को उपलब्ध हैं)"),
+            entry("Telugu", "(%s+ ఏళ్ళ వయస్సు గల %s మోతాదుల %s %s న లభిస్తుంది)"),
+            entry("Gujarati", "(%s+ વયના લોકો માટે %s ના %s ડોઝ %s પર ઉપલબ્ધ છે)"),
+            entry("Kannada", "(%s+ ವರ್ಷ ವಯಸ್ಸಿನವರಿಗೆ %s ಡೋಸ್ %s %s ರಂದು ಲಭ್ಯವಿದೆ)"),
+            entry("Malayalam", "(%s+ വയസ്സിനിടയിൽ, %s ന്റെ %s ഡോസുകൾ %s ന് ലഭ്യമാണ്)"),
+            entry("Marathi", "(%s+ वयोगटातील %s %s डोस %s रोजी उपलब्ध आहेत)"),
+            entry("Odia", "(%s+ ବୟସ ବର୍ଗ ପାଇଁ %s ର %s ଡୋଜ୍ %s ରେ ଉପଲବ୍ଧ |)"),
+            entry("Tamil", "(%s+ வயதிற்குட்பட்ட %s இன் %s டோஸ் %s அன்று கிடைக்கிறது)"),
+            entry("Punjabi", "(%s+ ਸਾਲ ਦੀ ਉਮਰ ਦੇ ਲਈ %s ਦੀਆਂ %s ਖੁਰਾਕਾਂ %s 'ਤੇ ਉਪਲਬਧ ਹਨ)"),
+            entry("Bengali", "(%s+ বয়সের গোষ্ঠীর জন্য %s এর %s টি ডোজ %s এ উপলব্ধ)")
+    );
 
     public static boolean allValidPincodes(@NotNull String pincodes) {
         return Arrays
@@ -76,12 +108,20 @@ public class Utils {
         for (Center center : eligibleCenters) {
             text.append(String.format("%s (%s %s)\n", center.name, center.districtName, center.pincode));
             for (Session session : center.sessions) {
-                text.append(String.format("%s dose(s) of %s for %s+ age group available on %s", session.availableCapacity, session.vaccine, session.minAgeLimit, session.date));
-                text.append(String.format(" (%s+ आयु वर्ग के लिए %s की %s खुराकें %s को उपलब्ध हैं)\n", session.minAgeLimit, session.vaccine, session.availableCapacity, session.date));
+                text.append(String.format("%s dose(s) of %s for %s+ age group available on %s ", session.availableCapacity, session.vaccine, session.minAgeLimit, session.date));
+                text.append(String.format(localizedText(center.getStateName()) + "\n", session.minAgeLimit, session.vaccine, session.availableCapacity, session.date));
             }
             text.append("\n");
         }
         text.append("For registration, please visit https://selfregistration.cowin.gov.in/\n");
         return text.toString();
+    }
+
+    public static String localizedText(String stateName) {
+        if (isNull(stateName)) {
+            return LOCALIZED_NOTIFICATION_TEXT.get("Hindi");
+        }
+        String language = STATE_LANGUAGES.getOrDefault(stateName, "Hindi");
+        return LOCALIZED_NOTIFICATION_TEXT.get(language);
     }
 }
