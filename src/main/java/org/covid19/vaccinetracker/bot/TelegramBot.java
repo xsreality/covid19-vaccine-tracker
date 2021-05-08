@@ -92,7 +92,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                         String chatId = getChatId(ctx.update());
                         this.botBackend.acceptUserRequest(chatId, pincodesAsList);
                         State state = this.stateRepository.findByPincode(pincodesAsList.get(0));
-                        String localizedAckMessage = Utils.localizedAckText(state.getStateName());
+                        String localizedAckMessage = Utils.localizedAckText(state);
                         silent.send("Okay! I will notify you when vaccine is available in centers near your location.\n" +
                                 "You can set multiple pincodes by sending them together separated by comma (,). Maximum 3 pincodes are allowed.\n" +
                                 "Make sure notification is turned on for this bot so you don't miss any alerts!\n\n" +
