@@ -24,7 +24,10 @@ public class Utils {
     private static final DateTimeFormatter dtf = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
     private static final Map<String, String> STATE_LANGUAGES = Map.ofEntries(
+            entry("Andaman and Nicobar Islands", "Bengali"),
             entry("Andhra Pradesh", "Telugu"),
+            entry("Dadra and Nagar Haveli", "Gujarati"),
+            entry("Daman and Diu", "Gujarati"),
             entry("Gujarat", "Gujarati"),
             entry("Karnataka", "Kannada"),
             entry("Kerala", "Malayalam"),
