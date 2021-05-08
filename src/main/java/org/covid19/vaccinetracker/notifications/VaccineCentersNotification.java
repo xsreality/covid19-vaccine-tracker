@@ -47,7 +47,6 @@ public class VaccineCentersNotification {
         this.notificationStats = notificationStats;
     }
 
-    @Scheduled(cron = "0 5/15 6-23 * * *", zone = "IST")
     public void checkUpdatesAndSendNotifications() {
         log.info("Starting Vaccine Tracker Notification update...");
         notificationStats.reset();
