@@ -95,6 +95,7 @@ public class VaccineCentersNotification {
         ConcurrentHashMap<String, VaccineCenters> cache = new ConcurrentHashMap<>();
         final List<UserRequest> userRequests = userRequestManager.fetchAllUserRequests();
         userRequests.forEach(userRequest -> {
+            notificationStats.incrementUserRequests();
             final String lastNotifiedAt = userRequest.getLastNotifiedAt();
             if (userWasNotifiedRecently(lastNotifiedAt)) {
                 log.info("Skipping sending notification to {} as they were notified already on {}", userRequest.getChatId(), lastNotifiedAt);
@@ -131,10 +132,10 @@ public class VaccineCentersNotification {
                 }
             });
         });
-        log.info("Processed pincodes: {}, Failed Cowin API Calls: {}, Notifications sent: {}",
-                notificationStats.processedPincodes(), notificationStats.failedApiCalls(), notificationStats.notificationsSent());
-        botService.notifyOwner(String.format("Processed pincodes: %d, Failed Cowin API Calls: %d, Notifications sent: %d",
-                notificationStats.processedPincodes(), notificationStats.failedApiCalls(), notificationStats.notificationsSent()));
+        log.info("User requests: {}, Processed pincodes: {}, Failed Cowin API Calls: {}, Notifications sent: {}",
+                notificationStats.userRequests(), notificationStats.processedPincodes(), notificationStats.failedApiCalls(), notificationStats.notificationsSent());
+        botService.notifyOwner(String.format("User requests: %d, Processed pincodes: %d, Failed Cowin API Calls: %d, Notifications sent: %d",
+                notificationStats.userRequests(), notificationStats.processedPincodes(), notificationStats.failedApiCalls(), notificationStats.notificationsSent()));
         cache.clear();
     }
 
