@@ -43,7 +43,7 @@ public class VaccineAvailability {
         this.botService = botService;
     }
 
-    @Scheduled(cron = "0 0/15 6-23 * * *", zone = "IST")
+    @Scheduled(cron = "0 0/10 6-23 * * *", zone = "IST")
     public void refreshVaccineAvailabilityFromCowinAndTriggerNotifications() {
         Executors.newSingleThreadExecutor().submit(() -> {
             this.refreshVaccineAvailabilityFromCowin(userRequestManager.fetchAllUserRequests());
