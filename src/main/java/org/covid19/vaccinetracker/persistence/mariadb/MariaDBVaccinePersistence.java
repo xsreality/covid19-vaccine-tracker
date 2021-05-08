@@ -9,6 +9,7 @@ import org.covid19.vaccinetracker.persistence.mariadb.entity.SessionEntity;
 import org.covid19.vaccinetracker.persistence.mariadb.repository.CenterRepository;
 import org.covid19.vaccinetracker.persistence.mariadb.repository.DistrictRepository;
 import org.covid19.vaccinetracker.persistence.mariadb.repository.PincodeRepository;
+import org.covid19.vaccinetracker.persistence.mariadb.repository.SessionRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
@@ -21,12 +22,14 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class MariaDBVaccinePersistence implements VaccinePersistence {
     private final CenterRepository centerRepository;
+    private final SessionRepository sessionRepository;
     private final DistrictRepository districtRepository;
     private final PincodeRepository pincodeRepository;
 
-    public MariaDBVaccinePersistence(CenterRepository centerRepository, DistrictRepository districtRepository,
+    public MariaDBVaccinePersistence(CenterRepository centerRepository, SessionRepository sessionRepository, DistrictRepository districtRepository,
                                      PincodeRepository pincodeRepository) {
         this.centerRepository = centerRepository;
+        this.sessionRepository = sessionRepository;
         this.districtRepository = districtRepository;
         this.pincodeRepository = pincodeRepository;
     }
@@ -58,6 +61,7 @@ public class MariaDBVaccinePersistence implements VaccinePersistence {
                     .availableCapacity(session.availableCapacity)
                     .minAgeLimit(session.minAgeLimit)
                     .build()));
+            sessionRepository.saveAll(sessionEntities);
             centerEntities.add(CenterEntity.builder()
                     .id(center.getCenterId())
                     .name(center.getName())
@@ -68,7 +72,6 @@ public class MariaDBVaccinePersistence implements VaccinePersistence {
                     .pincode(String.valueOf(center.getPincode()))
                     .build());
         });
-
         centerRepository.saveAll(centerEntities);
     }
 

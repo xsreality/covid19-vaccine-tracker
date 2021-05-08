@@ -49,21 +49,21 @@ public class VaccineAvailability {
         userRequests.forEach(userRequest -> {
             final List<String> pincodes = userRequest.getPincodes();
             pincodes.forEach(pincode -> {
-                log.info("Processing pincode {}", pincode);
+                log.debug("Processing pincode {}", pincode);
                 if (processedPincodes.contains(pincode)) {
-                    log.info("Pincode {} processed already, skipping...", pincode);
+                    log.debug("Pincode {} processed already, skipping...", pincode);
                     return;
                 }
                 final List<District> districtsOfPincode = vaccinePersistence.fetchDistrictsByPincode(pincode);
                 if (districtsOfPincode.isEmpty()) {
-                    log.warn("No districts found for pincode {} in DB. Data needs re-work.", pincode);
+                    log.warn("No districts found for pincode {} in DB. Needs reconciliation.", pincode);
                     availabilityStats.incrementUnknownPincodes();
                 } else {
                     availabilityStats.incrementProcessedPincodes();
                 }
                 districtsOfPincode.forEach(district -> {
                     if (processedDistricts.contains(district)) {
-                        log.info("District {} processed already, skipping...", district.getDistrictName());
+                        log.debug("District {} processed already, skipping...", district.getDistrictName());
                         return;
                     }
                     availabilityStats.incrementProcessedDistricts();
@@ -77,20 +77,21 @@ public class VaccineAvailability {
                     }
                     introduceDelay();
                     if (!vaccineCentersProcessor.areVaccineCentersAvailable(vaccineCenters)) {
-                        log.info("Found no centers for district {} triggered by pincode {}", district.getDistrictName(), pincode);
+                        log.debug("Found no centers for district {} triggered by pincode {}", district.getDistrictName(), pincode);
+                        processedDistricts.add(district);
                         return;
                     }
                     if (!vaccineCentersProcessor.areVaccineCentersAvailableFor18plus(vaccineCenters)) {
+                        log.debug("Vaccine centers not found for 18+ or no capacity for district {} triggered by pincode {}", district.getDistrictName(), pincode);
                         processedDistricts.add(district);
-                        log.info("Vaccine centers not found for 18+ or no capacity for district {} triggered by pincode {}", district.getDistrictName(), pincode);
                         return;
                     }
-                    log.info("Persisting vaccine availability for district {} triggered by pincode {}", district.getDistrictName(), pincode);
+                    log.debug("Persisting vaccine availability for district {} triggered by pincode {}", district.getDistrictName(), pincode);
                     vaccinePersistence.persistVaccineCenters(vaccineCenters);
                     processedDistricts.add(district);
                 });
                 processedPincodes.add(pincode);
-                log.info("Processing of pincode {} completed", pincode);
+                log.debug("Processing of pincode {} completed", pincode);
             });
         });
         log.info("Refreshed pincodes: {}, Refreshed districts: {}, Failed API calls: {}, Unknown pincodes: {}",

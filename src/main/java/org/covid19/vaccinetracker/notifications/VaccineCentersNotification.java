@@ -144,7 +144,7 @@ public class VaccineCentersNotification {
 
     private void introduceDelay() {
         try {
-            Thread.sleep(1000);
+            Thread.sleep(500);
         } catch (InterruptedException e) {
             // eat
         }
