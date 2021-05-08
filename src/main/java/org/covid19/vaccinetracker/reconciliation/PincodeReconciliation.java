@@ -7,6 +7,8 @@ import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.District;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.Pincode;
+import org.covid19.vaccinetracker.userrequests.UserRequestManager;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -22,13 +24,22 @@ public class PincodeReconciliation {
     private final VaccinePersistence vaccinePersistence;
     private final CowinApiClient cowinApiClient;
     private final ReconciliationStats reconciliationStats;
+    private final UserRequestManager userRequestManager;
     private final BotService botService;
 
-    public PincodeReconciliation(VaccinePersistence vaccinePersistence, CowinApiClient cowinApiClient, ReconciliationStats reconciliationStats, BotService botService) {
+    public PincodeReconciliation(VaccinePersistence vaccinePersistence, CowinApiClient cowinApiClient,
+                                 ReconciliationStats reconciliationStats, UserRequestManager userRequestManager,
+                                 BotService botService) {
         this.vaccinePersistence = vaccinePersistence;
         this.cowinApiClient = cowinApiClient;
         this.reconciliationStats = reconciliationStats;
+        this.userRequestManager = userRequestManager;
         this.botService = botService;
+    }
+
+    @Scheduled(cron = "0 5/15 6-23 * * *", zone = "IST")
+    public void pincodesReconciliationJob() {
+        this.reconcilePincodesFromCowin(userRequestManager.fetchAllUserRequests());
     }
 
     public void reconcilePincodesFromCowin(List<UserRequest> userRequests) {
@@ -54,7 +65,7 @@ public class PincodeReconciliation {
                 final VaccineCenters vaccineCenters = cowinApiClient.fetchCentersByPincode(pincode);
                 introduceDelay();
                 if (isNull(vaccineCenters) || vaccineCenters.centers.isEmpty()) {
-                    log.warn("Failed reconciliation for pincode {}", pincode);
+                    log.debug("Failed reconciliation for pincode {}", pincode);
                     reconciliationStats.incrementFailedReconciliations();
                     return;
                 }
@@ -84,7 +95,7 @@ public class PincodeReconciliation {
 
     private void introduceDelay() {
         try {
-            Thread.sleep(1000);
+            Thread.sleep(500);
         } catch (InterruptedException e) {
             // eat
         }

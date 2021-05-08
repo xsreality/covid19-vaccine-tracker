@@ -99,7 +99,7 @@ public class Api {
 
     @PostMapping("/trigger/update")
     public ResponseEntity<?> triggerCowinUpdates() {
-        Executors.newSingleThreadExecutor().submit(this.vaccineAvailability::refreshVaccineAvailabilityFromCowin);
+        Executors.newSingleThreadExecutor().submit(() -> this.vaccineAvailability.refreshVaccineAvailabilityFromCowin(userRequestManager.fetchAllUserRequests()));
         return ResponseEntity.ok().build();
     }
 
