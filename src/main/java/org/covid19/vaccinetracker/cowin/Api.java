@@ -74,6 +74,12 @@ public class Api {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/notify/db")
+    public ResponseEntity<?> triggerNotificationsFromDB() {
+        this.notifications.checkUpdatesAndSendNotifications();
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/add/user_request")
     public ResponseEntity<?> addUserRequest(@RequestParam final String chatId, @RequestParam final String pincodes) {
         this.userRequestManager.acceptUserRequest(chatId, Utils.splitPincodes(pincodes));

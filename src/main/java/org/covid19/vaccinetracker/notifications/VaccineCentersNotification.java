@@ -58,33 +58,48 @@ public class VaccineCentersNotification {
     // TODO: @Scheduled(cron = "0 5/30 * * * *")
     public void checkUpdatesAndSendNotifications() {
         log.info("Starting Vaccine Tracker Notification update...");
+        notificationStats.reset();
+        notificationStats.noteStartTime();
         ConcurrentHashMap<String, VaccineCenters> cache = new ConcurrentHashMap<>();
         final List<UserRequest> userRequests = userRequestManager.fetchAllUserRequests();
         userRequests.forEach(userRequest -> {
-            final String lastNotifiedAt = userRequest.getLastNotifiedAt();
-            if (userWasNotifiedRecently(lastNotifiedAt)) {
-                log.info("Skipping sending notification to {} as they were notified already on {}", userRequest.getChatId(), lastNotifiedAt);
-                return;
-            }
+            notificationStats.incrementUserRequests();
+//            final String lastNotifiedAt = userRequest.getLastNotifiedAt();
+//            if (userWasNotifiedRecently(lastNotifiedAt)) {
+//                log.info("Skipping sending notification to {} as they were notified already on {}", userRequest.getChatId(), lastNotifiedAt);
+//                return;
+//            }
             // process pin codes of each user
             userRequest.getPincodes().forEach(pincode -> {
                 VaccineCenters vaccineCenters;
                 if (cache.containsKey(pincode)) {
                     vaccineCenters = cache.get(pincode);
                 } else {
-                    // fetch from kafka store
+                    notificationStats.incrementProcessedPincodes();
                     vaccineCenters = vaccinePersistence.fetchVaccineCentersByPincode(pincode);
                     if (isNull(vaccineCenters) || vaccineCenters.centers.isEmpty()) {
                         log.info("No centers found for pin code {} in persistence store.", pincode);
                         return;
                     }
                 }
-                List<Center> eligibleCenters = eligibleVaccineCenters(userRequest.getChatId(), vaccineCenters);
-                botService.notify(userRequest.getChatId(), eligibleCenters);
                 cache.putIfAbsent(pincode, vaccineCenters); // update local cache
-                userRequestManager.updateUserRequestLastNotifiedAt(userRequest, Utils.currentTime());
+                List<Center> eligibleCenters = eligibleVaccineCenters(userRequest.getChatId(), vaccineCenters);
+                if (eligibleCenters.isEmpty()) {
+                    log.info("No eligible vaccine centers found for pin code {}", pincode);
+                    return;
+                }
+                if (botService.notify(userRequest.getChatId(), eligibleCenters)) {
+                    introduceDelay(10);
+                    notificationStats.incrementNotificationsSent();
+                    userRequestManager.updateUserRequestLastNotifiedAt(userRequest, Utils.currentTime());
+                }
             });
         });
+        notificationStats.noteEndTime();
+        log.info("User requests: {}, Processed pincodes: {}, Notifications sent: {}, Time taken: {}",
+                notificationStats.userRequests(), notificationStats.processedPincodes(), notificationStats.notificationsSent(), notificationStats.timeTaken());
+        botService.notifyOwner(String.format("User requests: %d, Processed pincodes: %d, Notifications sent: %d, Time taken: %s",
+                notificationStats.userRequests(), notificationStats.processedPincodes(), notificationStats.notificationsSent(), notificationStats.timeTaken()));
         cache.clear(); // clear cache
     }
 
@@ -112,13 +127,13 @@ public class VaccineCentersNotification {
                     notificationStats.incrementProcessedPincodes();
                     // fetch from Cowin API
                     vaccineCenters = cowinApiClient.fetchCentersByPincode(pincode);
-                    introduceDelay(); // to respect API rate limits
+                    introduceDelay(500); // to respect API rate limits
                     if (isNull(vaccineCenters) || vaccineCenters.centers.isEmpty()) {
                         if (isNull(vaccineCenters)) {
                             notificationStats.incrementfailedApiCalls();
                         }
                         log.debug("No centers found for pin code {}", pincode);
-                        cache.putIfAbsent(pincode, vaccineCenters); // update local cache
+                        cache.putIfAbsent(pincode, new VaccineCenters()); // update local cache
                         return;
                     }
                 }
@@ -142,9 +157,9 @@ public class VaccineCentersNotification {
         cache.clear();
     }
 
-    private void introduceDelay() {
+    private void introduceDelay(long millis) {
         try {
-            Thread.sleep(500);
+            Thread.sleep(millis);
         } catch (InterruptedException e) {
             // eat
         }
