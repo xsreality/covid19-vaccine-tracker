@@ -47,15 +47,7 @@ public class VaccineCentersNotification {
         this.notificationStats = notificationStats;
     }
 
-    /*
-     * 1. For each user, if vaccine centers exist and last notified
-     * is beyond 24 hours, send bot message.
-     * 2. Cache the bot message in a local cache temporarily to
-     * send same alert faster for other users with same pin code.
-     * 3. Update lastNotifiedAt and persist.
-     * 4. Clear the cache after execution is completed.
-     */
-    // TODO: @Scheduled(cron = "0 5/30 * * * *")
+    @Scheduled(cron = "0 5/15 6-23 * * *", zone = "IST")
     public void checkUpdatesAndSendNotifications() {
         log.info("Starting Vaccine Tracker Notification update...");
         notificationStats.reset();
@@ -78,14 +70,17 @@ public class VaccineCentersNotification {
                     notificationStats.incrementProcessedPincodes();
                     vaccineCenters = vaccinePersistence.fetchVaccineCentersByPincode(pincode);
                     if (isNull(vaccineCenters) || vaccineCenters.centers.isEmpty()) {
-                        log.info("No centers found for pin code {} in persistence store.", pincode);
+                        log.debug("No centers found for pin code {} in persistence store.", pincode);
+                        VaccineCenters empty = new VaccineCenters();
+                        empty.setCenters(new ArrayList<>());
+                        cache.putIfAbsent(pincode, empty); // update local cache
                         return;
                     }
                 }
                 cache.putIfAbsent(pincode, vaccineCenters); // update local cache
                 List<Center> eligibleCenters = eligibleVaccineCenters(userRequest.getChatId(), vaccineCenters);
                 if (eligibleCenters.isEmpty()) {
-                    log.info("No eligible vaccine centers found for pin code {}", pincode);
+                    log.debug("No eligible vaccine centers found for pin code {}", pincode);
                     return;
                 }
                 if (botService.notify(userRequest.getChatId(), eligibleCenters)) {
@@ -103,7 +98,7 @@ public class VaccineCentersNotification {
         cache.clear(); // clear cache
     }
 
-    @Scheduled(cron = "0 0/15 6-23 * * *", zone = "IST")
+    //    @Scheduled(cron = "0 0/15 6-23 * * *", zone = "IST")
     public void checkUpdatesDirectlyWithCowinAndSendNotifications() {
         log.info("Starting Vaccine Availability via Cowin API Notification...");
         notificationStats.reset();
@@ -133,7 +128,9 @@ public class VaccineCentersNotification {
                             notificationStats.incrementfailedApiCalls();
                         }
                         log.debug("No centers found for pin code {}", pincode);
-                        cache.putIfAbsent(pincode, new VaccineCenters()); // update local cache
+                        VaccineCenters empty = new VaccineCenters();
+                        empty.setCenters(new ArrayList<>());
+                        cache.putIfAbsent(pincode, empty); // update local cache
                         return;
                     }
                 }

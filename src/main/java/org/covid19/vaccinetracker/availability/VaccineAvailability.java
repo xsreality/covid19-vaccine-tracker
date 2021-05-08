@@ -39,7 +39,7 @@ public class VaccineAvailability {
         this.botService = botService;
     }
 
-    @Scheduled(cron = "0 10 * * * *")
+    @Scheduled(cron = "0 0/15 6-23 * * *")
     public void refreshVaccineAvailabilityFromCowin() {
         log.info("Refreshing Vaccine Availability from Cowin API");
         final List<String> processedPincodes = new ArrayList<>();
@@ -56,7 +56,7 @@ public class VaccineAvailability {
                 }
                 final List<District> districtsOfPincode = vaccinePersistence.fetchDistrictsByPincode(pincode);
                 if (districtsOfPincode.isEmpty()) {
-                    log.warn("No districts found for pincode {} in DB. Needs reconciliation.", pincode);
+                    log.debug("No districts found for pincode {} in DB. Needs reconciliation.", pincode);
                     availabilityStats.incrementUnknownPincodes();
                 } else {
                     availabilityStats.incrementProcessedPincodes();
@@ -134,7 +134,7 @@ public class VaccineAvailability {
 
     private void introduceDelay() {
         try {
-            Thread.sleep(1000);
+            Thread.sleep(500);
         } catch (InterruptedException e) {
             // eat
         }
