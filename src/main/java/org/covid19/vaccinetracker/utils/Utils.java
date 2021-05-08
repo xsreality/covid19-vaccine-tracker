@@ -2,6 +2,7 @@ package org.covid19.vaccinetracker.utils;
 
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
+import org.covid19.vaccinetracker.persistence.mariadb.entity.State;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 
 import java.time.Duration;
@@ -161,11 +162,11 @@ public class Utils {
         return LOCALIZED_NOTIFICATION_TEXT.get(language);
     }
 
-    public static String localizedAckText(String stateName) {
-        if (isNull(stateName)) {
+    public static String localizedAckText(State state) {
+        if (isNull(state)) {
             return LOCALIZED_ACK_TEXT.get("Hindi");
         }
-        String language = STATE_LANGUAGES.getOrDefault(stateName, "Hindi");
+        String language = STATE_LANGUAGES.getOrDefault(state.getStateName(), "Hindi");
         return LOCALIZED_ACK_TEXT.get(language);
     }
 }
