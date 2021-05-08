@@ -1,4 +1,4 @@
-package org.covid19.vaccinetracker.persistence;
+package org.covid19.vaccinetracker.persistence.kafka;
 
 import org.covid19.vaccinetracker.model.VaccineCenters;
 

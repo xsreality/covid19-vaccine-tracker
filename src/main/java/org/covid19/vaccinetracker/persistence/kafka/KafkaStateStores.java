@@ -1,4 +1,4 @@
-package org.covid19.vaccinetracker.persistence;
+package org.covid19.vaccinetracker.persistence.kafka;
 
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StoreQueryParameters;
