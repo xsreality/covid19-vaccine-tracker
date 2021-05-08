@@ -18,7 +18,6 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -131,21 +130,6 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
     @Override
     public void notifyOwner(String text) {
         final Optional<Message> send = silent.send(text, CHANNEL_ID);
-    }
-
-    @Override
-    public void summary(AtomicInteger processedPincodes, AtomicInteger failedCalls, AtomicInteger notificationsSent) {
-        log.debug("Sending summary notification");
-        String text = String.format("Processed pin codes: %d, Failed Cowin API calls: %d, Notifications sent: %d", processedPincodes.get(), failedCalls.get(), notificationsSent.get());
-        SendMessage message = SendMessage.builder()
-                .chatId(String.valueOf(CHANNEL_ID))
-                .text(text)
-                .build();
-        try {
-            this.execute(message);
-        } catch (TelegramApiException e) {
-            log.error("Error sending summary notification error message: {}", e.getMessage());
-        }
     }
 
     @Override
