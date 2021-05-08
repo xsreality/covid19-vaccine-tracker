@@ -2,6 +2,8 @@ package org.covid19.vaccinetracker.bot;
 
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.UserRequest;
+import org.covid19.vaccinetracker.persistence.mariadb.entity.State;
+import org.covid19.vaccinetracker.persistence.mariadb.repository.StateRepository;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.BeansException;
@@ -32,6 +34,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
     private static Long CHANNEL_ID;
     private BotBackend botBackend;
     private KafkaTemplate<String, UserRequest> userRequestKafkaTemplate;
+    private StateRepository stateRepository;
 
     public TelegramBot(String botToken, String botUsername, DBContext db, String creatorId, String channelId) {
         super(botToken, botUsername, db);
@@ -88,12 +91,12 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                         }
                         String chatId = getChatId(ctx.update());
                         this.botBackend.acceptUserRequest(chatId, pincodesAsList);
+                        State state = this.stateRepository.findByPincode(pincodesAsList.get(0));
+                        String localizedAckMessage = Utils.localizedAckText(state.getStateName());
                         silent.send("Okay! I will notify you when vaccine is available in centers near your location.\n" +
                                 "You can set multiple pincodes by sending them together separated by comma (,). Maximum 3 pincodes are allowed.\n" +
                                 "Make sure notification is turned on for this bot so you don't miss any alerts!\n\n" +
-                                "ठीक है! जब आपके स्थान के पास के केंद्रों में टीका उपलब्ध होगा तो मैं आपको सूचित करूँगा।\n" +
-                                "आप कई पिन कोड कॉमा (,) द्वारा अलग-अलग सेट कर सकते हैं। अधिकतम 3 पिन कोड की अनुमति है।\n" +
-                                "सुनिश्चित करें कि अधिसूचना इस बॉट के लिए चालू है ताकि आप किसी भी अलर्ट को न भूलें!", ctx.chatId());
+                                localizedAckMessage, ctx.chatId());
 
                         // send an update to Bot channel
                         String channelMsg = String.format("User %s (%s, %s) set notification preference for pin code(s) %s",
@@ -135,5 +138,6 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
     @Override
     public void setApplicationContext(@NotNull ApplicationContext applicationContext) throws BeansException {
         this.botBackend = (BotBackend) applicationContext.getBean("botBackend");
+        this.stateRepository = (StateRepository) applicationContext.getBean("stateRepository");
     }
 }

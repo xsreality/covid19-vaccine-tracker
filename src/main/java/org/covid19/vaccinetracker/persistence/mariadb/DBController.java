@@ -32,6 +32,11 @@ public class DBController {
         return ResponseEntity.ok(this.stateRepository.findAll());
     }
 
+    @GetMapping("/states/byPincode")
+    public ResponseEntity<?> fetchStateByPincode(@RequestParam String pincode) {
+        return ResponseEntity.ok(this.stateRepository.findByPincode(pincode));
+    }
+
     @GetMapping("/districts/all")
     public ResponseEntity<?> fetchAllDistricts() {
         return ResponseEntity.ok(this.districtRepository.findAll());
