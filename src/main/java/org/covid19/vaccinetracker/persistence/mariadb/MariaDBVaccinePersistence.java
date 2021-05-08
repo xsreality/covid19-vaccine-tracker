@@ -1,5 +1,7 @@
 package org.covid19.vaccinetracker.persistence.mariadb;
 
+import org.covid19.vaccinetracker.model.Center;
+import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.CenterEntity;
@@ -12,6 +14,7 @@ import org.covid19.vaccinetracker.persistence.mariadb.repository.PincodeReposito
 import org.covid19.vaccinetracker.persistence.mariadb.repository.SessionRepository;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,8 +29,8 @@ public class MariaDBVaccinePersistence implements VaccinePersistence {
     private final DistrictRepository districtRepository;
     private final PincodeRepository pincodeRepository;
 
-    public MariaDBVaccinePersistence(CenterRepository centerRepository, SessionRepository sessionRepository, DistrictRepository districtRepository,
-                                     PincodeRepository pincodeRepository) {
+    public MariaDBVaccinePersistence(CenterRepository centerRepository, SessionRepository sessionRepository,
+                                     DistrictRepository districtRepository, PincodeRepository pincodeRepository) {
         this.centerRepository = centerRepository;
         this.sessionRepository = sessionRepository;
         this.districtRepository = districtRepository;
@@ -36,7 +39,33 @@ public class MariaDBVaccinePersistence implements VaccinePersistence {
 
     @Override
     public VaccineCenters fetchVaccineCentersByPincode(String pincode) {
-        return null;
+        final List<CenterEntity> centerEntities = this.centerRepository.findCenterEntityByPincode(pincode);
+        return toVaccineCenters(centerEntities);
+    }
+
+    private VaccineCenters toVaccineCenters(List<CenterEntity> centerEntities) {
+        final List<Center> centers = new ArrayList<>();
+        centerEntities.forEach(centerEntity -> {
+            final List<Session> sessions = new ArrayList<>();
+            centerEntity.getSessions().forEach(sessionEntity -> sessions.add(Session.builder()
+                    .vaccine(sessionEntity.getVaccine())
+                    .date(sessionEntity.getDate())
+                    .availableCapacity(sessionEntity.getAvailableCapacity())
+                    .minAgeLimit(sessionEntity.getMinAgeLimit())
+                    .build()));
+            centers.add(Center.builder()
+                    .pincode(Integer.valueOf(centerEntity.getPincode()))
+                    .name(centerEntity.getName())
+                    .districtName(centerEntity.getDistrictName())
+                    .stateName(centerEntity.getStateName())
+                    .centerId((int) centerEntity.getId())
+                    .feeType(centerEntity.getFeeType())
+                    .sessions(sessions)
+                    .build());
+        });
+        VaccineCenters vaccineCenters = new VaccineCenters();
+        vaccineCenters.setCenters(centers);
+        return vaccineCenters;
     }
 
     @Override
