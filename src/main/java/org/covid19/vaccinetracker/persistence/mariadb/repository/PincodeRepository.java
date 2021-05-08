@@ -10,4 +10,6 @@ import java.util.List;
 @Repository
 public interface PincodeRepository extends CrudRepository<Pincode, String> {
     List<Pincode> findPincodeByDistrictId(int districtId);
+
+    boolean existsByPincode(String pincode);
 }

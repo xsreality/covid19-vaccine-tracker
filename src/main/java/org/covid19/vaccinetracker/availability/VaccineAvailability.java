@@ -10,7 +10,6 @@ import org.covid19.vaccinetracker.persistence.mariadb.entity.District;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +20,6 @@ import static java.util.Objects.isNull;
 
 @Slf4j
 @Service
-@Transactional
 public class VaccineAvailability {
     private final CowinApiClient cowinApiClient;
     private final VaccinePersistence vaccinePersistence;
@@ -41,7 +39,7 @@ public class VaccineAvailability {
         this.botService = botService;
     }
 
-//    @Scheduled(cron = "0 10 * * * *")
+    @Scheduled(cron = "0 10 * * * *")
     public void refreshVaccineAvailabilityFromCowin() {
         log.info("Refreshing Vaccine Availability from Cowin API");
         final List<String> processedPincodes = new ArrayList<>();
@@ -56,11 +54,12 @@ public class VaccineAvailability {
                     log.info("Pincode {} processed already, skipping...", pincode);
                     return;
                 }
-                availabilityStats.incrementProcessedPincodes();
                 final List<District> districtsOfPincode = vaccinePersistence.fetchDistrictsByPincode(pincode);
                 if (districtsOfPincode.isEmpty()) {
                     log.warn("No districts found for pincode {} in DB. Data needs re-work.", pincode);
                     availabilityStats.incrementUnknownPincodes();
+                } else {
+                    availabilityStats.incrementProcessedPincodes();
                 }
                 districtsOfPincode.forEach(district -> {
                     if (processedDistricts.contains(district)) {
