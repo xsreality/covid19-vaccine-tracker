@@ -11,10 +11,12 @@ import lombok.extern.slf4j.Slf4j;
 public class AvailabilityStats {
     private final AtomicInteger processedPincodes = new AtomicInteger(0);
     private final AtomicInteger processedDistricts = new AtomicInteger(0);
+    private final AtomicInteger failedApiCalls = new AtomicInteger(0);
 
     public void reset() {
         processedPincodes.set(0);
         processedDistricts.set(0);
+        failedApiCalls.set(0);
     }
 
     public void incrementProcessedPincodes() {
@@ -25,11 +27,19 @@ public class AvailabilityStats {
         processedDistricts.incrementAndGet();
     }
 
+    public void incrementFailedApiCalls() {
+        failedApiCalls.incrementAndGet();
+    }
+
     public int processedPincodes() {
         return processedPincodes.get();
     }
 
     public int processedDistricts() {
         return processedDistricts.get();
+    }
+
+    public int failedApiCalls() {
+        return failedApiCalls.get();
     }
 }

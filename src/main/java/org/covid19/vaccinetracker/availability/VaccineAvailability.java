@@ -17,6 +17,8 @@ import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
 
+import static java.util.Objects.isNull;
+
 @Slf4j
 @Service
 @Transactional
@@ -66,6 +68,13 @@ public class VaccineAvailability {
                     }
                     availabilityStats.incrementProcessedDistricts();
                     final VaccineCenters vaccineCenters = cowinApiClient.fetchSessionsByDistrict(district.getId());
+                    if (isNull(vaccineCenters) || vaccineCenters.centers.isEmpty()) {
+                        if (isNull(vaccineCenters)) {
+                            availabilityStats.incrementFailedApiCalls();
+                        }
+                        log.debug("No centers found for district {} triggered by pincode {}", district, pincode);
+                        return;
+                    }
                     introduceDelay();
                     if (!vaccineCentersProcessor.areVaccineCentersAvailable(vaccineCenters)) {
                         log.info("Found no centers for district {} triggered by pincode {}", district.getDistrictName(), pincode);
