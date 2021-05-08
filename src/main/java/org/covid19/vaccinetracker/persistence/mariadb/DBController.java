@@ -47,6 +47,11 @@ public class DBController {
         return ResponseEntity.ok(this.pincodeRepository.findAll());
     }
 
+    @GetMapping("/pincodes/exists")
+    public ResponseEntity<?> pincodeExist(@RequestParam String pincode) {
+        return ResponseEntity.ok(this.pincodeRepository.existsByPincode(pincode));
+    }
+
     @GetMapping("/pincodes/byDistrictId")
     public ResponseEntity<?> fetchPincodesByDistrict(@RequestParam int districtId) {
         return ResponseEntity.ok(this.pincodeRepository.findPincodeByDistrictId(districtId));

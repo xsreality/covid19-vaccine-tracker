@@ -7,6 +7,7 @@ import org.covid19.vaccinetracker.model.UserRequest;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.notifications.VaccineCentersNotification;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
+import org.covid19.vaccinetracker.reconciliation.PincodeReconciliation;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.springframework.http.ResponseEntity;
@@ -28,13 +29,16 @@ public class Api {
     private final VaccineCentersNotification notifications;
     private final VaccinePersistence vaccinePersistence;
     private final UserRequestManager userRequestManager;
+    private final PincodeReconciliation pincodeReconciliation;
 
-    public Api(CowinApiClient cowinApiClient, VaccineAvailability vaccineAvailability, VaccineCentersNotification notifications, VaccinePersistence vaccinePersistence, UserRequestManager userRequestManager) {
+    public Api(CowinApiClient cowinApiClient, VaccineAvailability vaccineAvailability, VaccineCentersNotification notifications,
+               VaccinePersistence vaccinePersistence, UserRequestManager userRequestManager, PincodeReconciliation pincodeReconciliation) {
         this.cowinApiClient = cowinApiClient;
         this.vaccineAvailability = vaccineAvailability;
         this.notifications = notifications;
         this.vaccinePersistence = vaccinePersistence;
         this.userRequestManager = userRequestManager;
+        this.pincodeReconciliation = pincodeReconciliation;
     }
 
     @GetMapping("/fetch/cowin")
@@ -90,6 +94,12 @@ public class Api {
     @PostMapping("/trigger/update")
     public ResponseEntity<?> triggerCowinUpdates() {
         Executors.newSingleThreadExecutor().submit(this.vaccineAvailability::refreshVaccineAvailabilityFromCowin);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/trigger/reconcile")
+    public ResponseEntity<?> triggerPincodesReconciliation() {
+        Executors.newSingleThreadExecutor().submit(() -> this.pincodeReconciliation.reconcilePincodesFromCowin(userRequestManager.fetchAllUserRequests()));
         return ResponseEntity.ok().build();
     }
 }

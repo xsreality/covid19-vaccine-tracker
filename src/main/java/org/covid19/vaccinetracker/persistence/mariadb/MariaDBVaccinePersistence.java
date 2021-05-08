@@ -4,9 +4,11 @@ import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.CenterEntity;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.District;
+import org.covid19.vaccinetracker.persistence.mariadb.entity.Pincode;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.SessionEntity;
 import org.covid19.vaccinetracker.persistence.mariadb.repository.CenterRepository;
 import org.covid19.vaccinetracker.persistence.mariadb.repository.DistrictRepository;
+import org.covid19.vaccinetracker.persistence.mariadb.repository.PincodeRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
@@ -20,10 +22,13 @@ import lombok.extern.slf4j.Slf4j;
 public class MariaDBVaccinePersistence implements VaccinePersistence {
     private final CenterRepository centerRepository;
     private final DistrictRepository districtRepository;
+    private final PincodeRepository pincodeRepository;
 
-    public MariaDBVaccinePersistence(CenterRepository centerRepository, DistrictRepository districtRepository) {
+    public MariaDBVaccinePersistence(CenterRepository centerRepository, DistrictRepository districtRepository,
+                                     PincodeRepository pincodeRepository) {
         this.centerRepository = centerRepository;
         this.districtRepository = districtRepository;
+        this.pincodeRepository = pincodeRepository;
     }
 
     @Override
@@ -65,5 +70,20 @@ public class MariaDBVaccinePersistence implements VaccinePersistence {
         });
 
         centerRepository.saveAll(centerEntities);
+    }
+
+    @Override
+    public boolean pincodeExists(String pincode) {
+        return this.pincodeRepository.existsByPincode(pincode);
+    }
+
+    @Override
+    public District fetchDistrictByName(String districtName) {
+        return this.districtRepository.findDistrictByDistrictName(districtName);
+    }
+
+    @Override
+    public void persistPincode(Pincode pincode) {
+        this.pincodeRepository.save(pincode);
     }
 }

@@ -12,6 +12,8 @@ import java.util.List;
 public interface DistrictRepository extends CrudRepository<District, Integer> {
     List<District> findDistrictByState(State state);
 
+    District findDistrictByDistrictName(String name);
+
     @Query("SELECT p.district FROM Pincode p WHERE p.pincode = :pincode")
     List<District> findDistrictByPincode(String pincode);
 }
