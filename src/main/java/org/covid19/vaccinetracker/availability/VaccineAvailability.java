@@ -60,6 +60,7 @@ public class VaccineAvailability {
                 final List<District> districtsOfPincode = vaccinePersistence.fetchDistrictsByPincode(pincode);
                 if (districtsOfPincode.isEmpty()) {
                     log.warn("No districts found for pincode {} in DB. Data needs re-work.", pincode);
+                    availabilityStats.incrementUnknownPincodes();
                 }
                 districtsOfPincode.forEach(district -> {
                     if (processedDistricts.contains(district)) {
@@ -93,9 +94,10 @@ public class VaccineAvailability {
                 log.info("Processing of pincode {} completed", pincode);
             });
         });
-        log.info("Refreshed pincodes: {}, Refreshed districts: {}", availabilityStats.processedPincodes(), availabilityStats.processedDistricts());
-        botService.notifyOwner(String.format("Refreshed pincodes: %d, Refreshed districts: %d",
-                availabilityStats.processedPincodes(), availabilityStats.processedDistricts()));
+        log.info("Refreshed pincodes: {}, Refreshed districts: {}, Failed API calls: {}, Unknown pincodes: {}",
+                availabilityStats.processedPincodes(), availabilityStats.processedDistricts(), availabilityStats.failedApiCalls(), availabilityStats.unknownPincodes());
+        botService.notifyOwner(String.format("Refreshed pincodes: %d, Refreshed districts: %d, Failed API calls: %d, Unknown pincodes: %d",
+                availabilityStats.processedPincodes(), availabilityStats.processedDistricts(), availabilityStats.failedApiCalls(), availabilityStats.unknownPincodes()));
         // clear cache
         processedDistricts.clear();
         processedPincodes.clear();

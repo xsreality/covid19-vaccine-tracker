@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 @RestController
 @RequestMapping("/covid19")
@@ -88,7 +89,7 @@ public class Api {
 
     @PostMapping("/trigger/update")
     public ResponseEntity<?> triggerCowinUpdates() {
-        this.vaccineAvailability.refreshVaccineAvailabilityFromCowin();
+        Executors.newSingleThreadExecutor().submit(this.vaccineAvailability::refreshVaccineAvailabilityFromCowin);
         return ResponseEntity.ok().build();
     }
 }
