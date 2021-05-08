@@ -92,6 +92,7 @@ public class VaccineCentersNotification {
     public void checkUpdatesDirectlyWithCowinAndSendNotifications() {
         log.info("Starting Vaccine Availability via Cowin API Notification...");
         notificationStats.reset();
+        notificationStats.noteStartTime();
         ConcurrentHashMap<String, VaccineCenters> cache = new ConcurrentHashMap<>();
         final List<UserRequest> userRequests = userRequestManager.fetchAllUserRequests();
         userRequests.forEach(userRequest -> {
@@ -117,6 +118,7 @@ public class VaccineCentersNotification {
                             notificationStats.incrementfailedApiCalls();
                         }
                         log.debug("No centers found for pin code {}", pincode);
+                        cache.putIfAbsent(pincode, vaccineCenters); // update local cache
                         return;
                     }
                 }
@@ -132,10 +134,11 @@ public class VaccineCentersNotification {
                 }
             });
         });
-        log.info("User requests: {}, Processed pincodes: {}, Failed Cowin API Calls: {}, Notifications sent: {}",
-                notificationStats.userRequests(), notificationStats.processedPincodes(), notificationStats.failedApiCalls(), notificationStats.notificationsSent());
-        botService.notifyOwner(String.format("User requests: %d, Processed pincodes: %d, Failed Cowin API Calls: %d, Notifications sent: %d",
-                notificationStats.userRequests(), notificationStats.processedPincodes(), notificationStats.failedApiCalls(), notificationStats.notificationsSent()));
+        notificationStats.noteEndTime();
+        log.info("User requests: {}, Processed pincodes: {}, Failed Cowin API Calls: {}, Notifications sent: {}, Time taken: {}",
+                notificationStats.userRequests(), notificationStats.processedPincodes(), notificationStats.failedApiCalls(), notificationStats.notificationsSent(), notificationStats.timeTaken());
+        botService.notifyOwner(String.format("User requests: %d, Processed pincodes: %d, Failed Cowin API Calls: %d, Notifications sent: %d, Time taken: %s",
+                notificationStats.userRequests(), notificationStats.processedPincodes(), notificationStats.failedApiCalls(), notificationStats.notificationsSent(), notificationStats.timeTaken()));
         cache.clear();
     }
 
