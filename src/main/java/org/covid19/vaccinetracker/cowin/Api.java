@@ -7,6 +7,7 @@ import org.covid19.vaccinetracker.model.UserRequest;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.notifications.VaccineCentersNotification;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
+import org.covid19.vaccinetracker.reconciliation.PincodeReconciliation;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 @RestController
 @RequestMapping("/covid19")
@@ -25,15 +27,18 @@ public class Api {
     private final CowinApiClient cowinApiClient;
     private final VaccineAvailability vaccineAvailability;
     private final VaccineCentersNotification notifications;
-    private final UserRequestManager userRequestManager;
     private final VaccinePersistence vaccinePersistence;
+    private final UserRequestManager userRequestManager;
+    private final PincodeReconciliation pincodeReconciliation;
 
-    public Api(CowinApiClient cowinApiClient, VaccineAvailability vaccineAvailability, VaccineCentersNotification notifications, UserRequestManager userRequestManager, VaccinePersistence vaccinePersistence) {
+    public Api(CowinApiClient cowinApiClient, VaccineAvailability vaccineAvailability, VaccineCentersNotification notifications,
+               VaccinePersistence vaccinePersistence, UserRequestManager userRequestManager, PincodeReconciliation pincodeReconciliation) {
         this.cowinApiClient = cowinApiClient;
         this.vaccineAvailability = vaccineAvailability;
         this.notifications = notifications;
-        this.userRequestManager = userRequestManager;
         this.vaccinePersistence = vaccinePersistence;
+        this.userRequestManager = userRequestManager;
+        this.pincodeReconciliation = pincodeReconciliation;
     }
 
     @GetMapping("/fetch/cowin")
@@ -44,11 +49,6 @@ public class Api {
     @GetMapping("/fetch/vaccine_centers_by_pincode")
     public ResponseEntity<VaccineCenters> vaccineCentersFromStore(@RequestParam final String pincode) {
         return ResponseEntity.ok(vaccineAvailability.fetchVaccineAvailabilityFromPersistenceStore(pincode));
-    }
-
-    @GetMapping("/fetch/vaccine_centers")
-    public ResponseEntity<List<VaccineCenters>> vaccineCentersFromStoreAll() {
-        return ResponseEntity.ok(vaccineAvailability.fetchVaccineAvailabilityFromPersistenceStoreAll());
     }
 
     @GetMapping("/fetch/user_request")
@@ -74,6 +74,12 @@ public class Api {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/notify/db")
+    public ResponseEntity<?> triggerNotificationsFromDB() {
+        this.notifications.checkUpdatesAndSendNotifications();
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/add/user_request")
     public ResponseEntity<?> addUserRequest(@RequestParam final String chatId, @RequestParam final String pincodes) {
         this.userRequestManager.acceptUserRequest(chatId, Utils.splitPincodes(pincodes));
@@ -93,7 +99,13 @@ public class Api {
 
     @PostMapping("/trigger/update")
     public ResponseEntity<?> triggerCowinUpdates() {
-        this.vaccineAvailability.refreshVaccineAvailabilityFromCowin();
+        Executors.newSingleThreadExecutor().submit(() -> this.vaccineAvailability.refreshVaccineAvailabilityFromCowin(userRequestManager.fetchAllUserRequests()));
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/trigger/reconcile")
+    public ResponseEntity<?> triggerPincodesReconciliation() {
+        Executors.newSingleThreadExecutor().submit(() -> this.pincodeReconciliation.reconcilePincodesFromCowin(userRequestManager.fetchAllUserRequests()));
         return ResponseEntity.ok().build();
     }
 }

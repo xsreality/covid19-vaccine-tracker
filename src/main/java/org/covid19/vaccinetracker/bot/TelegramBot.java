@@ -2,7 +2,8 @@ package org.covid19.vaccinetracker.bot;
 
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.UserRequest;
-import org.covid19.vaccinetracker.persistence.KafkaStateStores;
+import org.covid19.vaccinetracker.persistence.mariadb.entity.State;
+import org.covid19.vaccinetracker.persistence.mariadb.repository.StateRepository;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.BeansException;
@@ -13,11 +14,12 @@ import org.telegram.abilitybots.api.bot.AbilityBot;
 import org.telegram.abilitybots.api.db.DBContext;
 import org.telegram.abilitybots.api.objects.Ability;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,7 +34,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
     private static Long CHANNEL_ID;
     private BotBackend botBackend;
     private KafkaTemplate<String, UserRequest> userRequestKafkaTemplate;
-    private KafkaStateStores stateStores;
+    private StateRepository stateRepository;
 
     public TelegramBot(String botToken, String botUsername, DBContext db, String creatorId, String channelId) {
         super(botToken, botUsername, db);
@@ -89,12 +91,12 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                         }
                         String chatId = getChatId(ctx.update());
                         this.botBackend.acceptUserRequest(chatId, pincodesAsList);
+                        State state = this.stateRepository.findByPincode(pincodesAsList.get(0));
+                        String localizedAckMessage = Utils.localizedAckText(state.getStateName());
                         silent.send("Okay! I will notify you when vaccine is available in centers near your location.\n" +
                                 "You can set multiple pincodes by sending them together separated by comma (,). Maximum 3 pincodes are allowed.\n" +
                                 "Make sure notification is turned on for this bot so you don't miss any alerts!\n\n" +
-                                "ठीक है! जब आपके स्थान के पास के केंद्रों में टीका उपलब्ध होगा तो मैं आपको सूचित करूँगा।\n" +
-                                "आप कई पिन कोड कॉमा (,) द्वारा अलग-अलग सेट कर सकते हैं। अधिकतम 3 पिन कोड की अनुमति है।\n" +
-                                "सुनिश्चित करें कि अधिसूचना इस बॉट के लिए चालू है ताकि आप किसी भी अलर्ट को न भूलें!", ctx.chatId());
+                                localizedAckMessage, ctx.chatId());
 
                         // send an update to Bot channel
                         String channelMsg = String.format("User %s (%s, %s) set notification preference for pin code(s) %s",
@@ -129,23 +131,13 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
     }
 
     @Override
-    public void summary(AtomicInteger processedPincodes, AtomicInteger failedCalls, AtomicInteger notificationsSent) {
-        log.debug("Sending summary notification");
-        String text = String.format("Processed pin codes: %d, Failed Cowin API calls: %d, Notifications sent: %d", processedPincodes.get(), failedCalls.get(), notificationsSent.get());
-        SendMessage message = SendMessage.builder()
-                .chatId(String.valueOf(CHANNEL_ID))
-                .text(text)
-                .build();
-        try {
-            this.execute(message);
-        } catch (TelegramApiException e) {
-            log.error("Error sending summary notification error message: {}", e.getMessage());
-        }
+    public void notifyOwner(String text) {
+        final Optional<Message> send = silent.send(text, CHANNEL_ID);
     }
 
     @Override
     public void setApplicationContext(@NotNull ApplicationContext applicationContext) throws BeansException {
-        this.stateStores = (KafkaStateStores) applicationContext.getBean("kafkaStateStores");
         this.botBackend = (BotBackend) applicationContext.getBean("botBackend");
+        this.stateRepository = (StateRepository) applicationContext.getBean("stateRepository");
     }
 }

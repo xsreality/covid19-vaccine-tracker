@@ -19,6 +19,7 @@ public class CowinApiClient {
         this.cowinClient = WebClient
                 .builder()
                 .baseUrl(cowinConfig.getApiUrl())
+                .codecs(clientCodecConfigurer -> clientCodecConfigurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024))
                 .filter(WebClientFilter.logRequest())
                 .filter(WebClientFilter.logResponse())
                 .build();
@@ -28,6 +29,7 @@ public class CowinApiClient {
         try {
             return cowinClient.get()
                     .uri(uriBuilder -> uriBuilder
+                            .pathSegment("calendarByPin")
                             .queryParam("pincode", "{pincode}")
                             .queryParam("date", "{date}")
                             .build(pincode, Utils.todayIST()))
@@ -35,11 +37,27 @@ public class CowinApiClient {
                     .bodyToMono(VaccineCenters.class)
                     .block();
         } catch (WebClientResponseException we) {
-            log.error("Error from Cowin API status code {}, message {}", we.getRawStatusCode(), we.getMessage());
+            log.error("Error from Cowin API for pincode {} status code {}, message {}", pincode, we.getRawStatusCode(), we.getMessage());
             return null;
-//            throw new CowinException(we.getMessage(), we.getRawStatusCode());
         } catch (CowinException we) {
-            log.error("Error from Cowin API status code {}, message {}", we.getStatusCode(), we.getMessage());
+            log.error("Error from Cowin API for pincode {} status code {}, message {}", pincode, we.getStatusCode(), we.getMessage());
+            return null;
+        }
+    }
+
+    public VaccineCenters fetchSessionsByDistrict(int districtId) {
+        try {
+            return cowinClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .pathSegment("calendarByDistrict")
+                            .queryParam("district_id", "{district_id}")
+                            .queryParam("date", "{date}")
+                            .build(districtId, Utils.todayIST()))
+                    .retrieve()
+                    .bodyToMono(VaccineCenters.class)
+                    .block();
+        } catch (CowinException we) {
+            log.error("Error from Cowin API for district {} status code {}, message {}", districtId, we.getStatusCode(), we.getMessage());
             return null;
         }
     }

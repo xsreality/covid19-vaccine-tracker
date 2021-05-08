@@ -1,4 +1,4 @@
-package org.covid19.vaccinetracker.persistence;
+package org.covid19.vaccinetracker.persistence.kafka;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
@@ -11,8 +11,6 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.Stores;
 import org.covid19.vaccinetracker.model.UserRequest;
 import org.covid19.vaccinetracker.model.UserRequestSerde;
-import org.covid19.vaccinetracker.model.VaccineCenters;
-import org.covid19.vaccinetracker.model.VaccineCentersSerde;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
@@ -30,9 +28,6 @@ import lombok.extern.slf4j.Slf4j;
 @EnableKafkaStreams
 @Slf4j
 public class KafkaStreamsConfig {
-    @Value("${topic.vaccine.centers}")
-    private String vaccineCentersTopic;
-
     @Value("${topic.user.requests}")
     private String userRequestsTopic;
 
@@ -46,18 +41,10 @@ public class KafkaStreamsConfig {
     public KafkaStreamsConfiguration kStreamsConfig() {
         Map<String, Object> kafkaStreamsProps = new HashMap<>(kafkaProperties.buildStreamsProperties());
         kafkaStreamsProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        kafkaStreamsProps.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, 8);
+        kafkaStreamsProps.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, 2);
         kafkaStreamsProps.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 10 * 1000);
         kafkaStreamsProps.put(StreamsConfig.TOPOLOGY_OPTIMIZATION, StreamsConfig.OPTIMIZE);
         return new KafkaStreamsConfiguration(kafkaStreamsProps);
-    }
-
-    @Bean
-    public KTable<String, VaccineCenters> dailyStatsTable(StreamsBuilder streamsBuilder) {
-        return streamsBuilder.table(vaccineCentersTopic,
-                Materialized.<String, VaccineCenters, KeyValueStore<Bytes, byte[]>>as(
-                        Stores.inMemoryKeyValueStore("vaccine-centers-store").name())
-                        .withKeySerde(Serdes.String()).withValueSerde(new VaccineCentersSerde()).withCachingDisabled());
     }
 
     @Bean

@@ -5,7 +5,7 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.covid19.vaccinetracker.model.UserRequest;
-import org.covid19.vaccinetracker.persistence.KafkaStateStores;
+import org.covid19.vaccinetracker.persistence.kafka.KafkaStateStores;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;

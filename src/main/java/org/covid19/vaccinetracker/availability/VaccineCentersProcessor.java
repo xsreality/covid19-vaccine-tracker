@@ -17,7 +17,7 @@ public class VaccineCentersProcessor {
                 .stream()
                 .anyMatch(center -> center.sessions
                         .stream()
-                        .anyMatch(session -> ageLimitExactly18(session) && hasCapacity(session)));
+                        .anyMatch(session -> ageLimit18AndAbove(session) && hasCapacity(session)));
     }
 
     public boolean hasCapacity(Session session) {
