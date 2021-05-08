@@ -45,6 +45,7 @@ public class ReconciliationStats {
     public void noteEndTime() {
         endTime = Instant.now();
     }
+
     public int unknownPincodes() {
         return unknownPincodes.get();
     }
