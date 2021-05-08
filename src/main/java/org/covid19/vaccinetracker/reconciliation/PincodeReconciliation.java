@@ -33,27 +33,28 @@ public class PincodeReconciliation {
 
     public void reconcilePincodesFromCowin(List<UserRequest> userRequests) {
         log.info("Starting reconciliation of missing pincodes from Cowin API");
-        reconciliationStats.reset();
         final List<String> processedPincodes = new ArrayList<>();
+        reconciliationStats.reset();
+        reconciliationStats.noteStartTime();
         userRequests.forEach(userRequest -> {
             final List<String> pincodes = userRequest.getPincodes();
             pincodes.forEach(pincode -> {
-                log.info("Processing pincode {}", pincode);
+                log.debug("Processing pincode {}", pincode);
                 if (processedPincodes.contains(pincode)) {
-                    log.info("Pincode {} processed already, skipping...", pincode);
+                    log.debug("Pincode {} processed already, skipping...", pincode);
                     return;
                 }
                 processedPincodes.add(pincode);
                 if (vaccinePersistence.pincodeExists(pincode)) {    // no reconciliation needed
-                    log.info("No reconciliation needed for pincode {}", pincode);
+                    log.debug("No reconciliation needed for pincode {}", pincode);
                     return;
                 }
-                log.warn("Pincode {} not found in DB. Reconiliing...", pincode);
+                log.debug("Pincode {} not found in DB. Reconciling...", pincode);
                 reconciliationStats.incrementUnknownPincodes();
                 final VaccineCenters vaccineCenters = cowinApiClient.fetchCentersByPincode(pincode);
                 introduceDelay();
                 if (isNull(vaccineCenters) || vaccineCenters.centers.isEmpty()) {
-                    log.info("Failed reconciliation for pincode {}", pincode);
+                    log.warn("Failed reconciliation for pincode {}", pincode);
                     reconciliationStats.incrementFailedReconciliations();
                     return;
                 }
@@ -72,12 +73,13 @@ public class PincodeReconciliation {
                 reconciliationStats.incrementSuccessfulReconciliations();
             });
         });
-        log.info("Pincode reconciliation = Unknown: {}, Failed: {}, Missing district: {}, Successful: {}",
+        reconciliationStats.noteEndTime();
+        log.info("Pincode reconciliation = Unknown: {}, Failed: {}, Missing district: {}, Successful: {}, Time taken: {}",
                 reconciliationStats.unknownPincodes(), reconciliationStats.failedReconciliations(),
-                reconciliationStats.failedWithUnknownDistrict(), reconciliationStats.successfulReconciliations());
-        botService.notifyOwner(String.format("Pincode reconciliation = Unknown: %d, Failed: %d, Missing district: %d, Successful: %d",
+                reconciliationStats.failedWithUnknownDistrict(), reconciliationStats.successfulReconciliations(), reconciliationStats.timeTaken());
+        botService.notifyOwner(String.format("Pincode reconciliation = Unknown: %d, Failed: %d, Missing district: %d, Successful: %d, Time taken: %s",
                 reconciliationStats.unknownPincodes(), reconciliationStats.failedReconciliations(),
-                reconciliationStats.failedWithUnknownDistrict(), reconciliationStats.successfulReconciliations()));
+                reconciliationStats.failedWithUnknownDistrict(), reconciliationStats.successfulReconciliations(), reconciliationStats.timeTaken()));
     }
 
     private void introduceDelay() {
