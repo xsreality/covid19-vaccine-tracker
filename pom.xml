@@ -12,7 +12,7 @@
 
     <groupId>com.abhinav.covid19</groupId>
     <artifactId>covid19-vaccine-tracker</artifactId>
-    <version>0.1.6-SNAPSHOT</version>
+    <version>0.1.7-SNAPSHOT</version>
     <name>covid19-vaccine-tracker</name>
     <description>Demo project for Spring Boot</description>
     <properties>
@@ -71,6 +71,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>mockwebserver</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
