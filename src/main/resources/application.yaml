@@ -18,3 +18,12 @@ logging:
     org.apache.kafka.streams: INFO
 
 users.over45: ""
+
+spring:
+  kafka:
+    streams:
+      application-id: "org.covid19.vaccine-tracker"
+      client-id: "org.covid19.vaccine-tracker"
+    properties:
+      "application.id": "org.covid19.vaccine-tracker"
+      "client.id": "org.covid19.vaccine-tracker"
