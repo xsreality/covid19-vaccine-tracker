@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -144,6 +145,19 @@ public class VaccineAvailability {
     public VaccineCenters fetchVaccineAvailabilityFromPersistenceStore(String pincode) {
         log.info("Fetching Vaccine availability from local store for pin code {}", pincode);
         return vaccinePersistence.fetchVaccineCentersByPincode(pincode);
+    }
+
+    /**
+     * Return pincodes that are requested by users but not available in DB.
+     *
+     * @return List of pincodes
+     */
+    public List<String> missingPincodes() {
+        return userRequestManager.fetchAllUserRequests()
+                .stream()
+                .flatMap(userRequest -> userRequest.getPincodes().stream())
+                .filter(pincode -> !vaccinePersistence.pincodeExists(pincode))
+                .collect(Collectors.toList());
     }
 
     private void introduceDelay() {
