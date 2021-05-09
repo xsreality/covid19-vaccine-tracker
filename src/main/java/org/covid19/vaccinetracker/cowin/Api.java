@@ -56,6 +56,11 @@ public class Api {
         return ResponseEntity.ok(userRequestManager.fetchAllUserRequests());
     }
 
+    @GetMapping("/fetch/missingPincodes")
+    public ResponseEntity<List<String>> fetchMissingPincodes() {
+        return ResponseEntity.ok(vaccineAvailability.missingPincodes());
+    }
+
     @GetMapping("/persist/cowin")
     public ResponseEntity<?> tracker(@RequestParam final String pincode) {
         vaccineAvailability.fetchVaccineAvailabilityFromCowinApi(pincode);
