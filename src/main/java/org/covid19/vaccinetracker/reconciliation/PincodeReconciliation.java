@@ -70,7 +70,8 @@ public class PincodeReconciliation {
                     return;
                 }
                 String districtName = vaccineCenters.getCenters().get(0).getDistrictName();
-                District district = vaccinePersistence.fetchDistrictByName(districtName);
+                String stateName = vaccineCenters.getCenters().get(0).getStateName();
+                District district = vaccinePersistence.fetchDistrictByNameAndState(districtName, stateName);
                 if (isNull(district)) {
                     log.warn("No district found in DB for name {}", districtName);
                     reconciliationStats.incrementFailedWithUnknownDistrict();

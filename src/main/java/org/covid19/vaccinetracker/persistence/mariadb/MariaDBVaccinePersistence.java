@@ -110,8 +110,8 @@ public class MariaDBVaccinePersistence implements VaccinePersistence {
     }
 
     @Override
-    public District fetchDistrictByName(String districtName) {
-        return this.districtRepository.findDistrictByDistrictName(districtName);
+    public District fetchDistrictByNameAndState(String districtName, String stateName) {
+        return this.districtRepository.findDistrictByDistrictNameAndState(districtName, stateName);
     }
 
     @Override

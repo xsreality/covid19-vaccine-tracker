@@ -98,10 +98,9 @@ public class UserRequestManagerIT {
         assertThat(userRequests.size(), is(greaterThanOrEqualTo(1)));
         assertTrue(userRequests
                 .stream()
-                .anyMatch(
-                        userRequest -> "456789".equals(userRequest.getChatId())
-                                && userRequest.getPincodes().containsAll(asList("360005", "110085"))
-                                && isNull(userRequest.getLastNotifiedAt())));
+                .anyMatch(userRequest -> "456789".equals(userRequest.getChatId())
+                        && userRequest.getPincodes().containsAll(asList("360005", "110085"))
+                        && isNull(userRequest.getLastNotifiedAt())));
     }
 
     private <K, V> Consumer<K, V> buildConsumer(String groupId) {
