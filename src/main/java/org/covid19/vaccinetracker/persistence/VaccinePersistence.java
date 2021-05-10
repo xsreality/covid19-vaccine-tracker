@@ -20,7 +20,7 @@ public interface VaccinePersistence {
 
     boolean pincodeExists(String pincode);
 
-    District fetchDistrictByName(String districtName);
+    District fetchDistrictByNameAndState(String districtName, String stateName);
 
     VaccineCenters fetchVaccineCentersByPincode(String pincode);
 
