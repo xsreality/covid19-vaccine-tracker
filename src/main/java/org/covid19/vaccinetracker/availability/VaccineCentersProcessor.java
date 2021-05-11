@@ -1,8 +1,12 @@
 package org.covid19.vaccinetracker.availability;
 
+import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static java.util.Objects.nonNull;
 
@@ -30,5 +34,45 @@ public class VaccineCentersProcessor {
 
     public boolean ageLimit18AndAbove(Session session) {
         return session.getMinAgeLimit() >= 18;
+    }
+
+    public List<Center> eligibleVaccineCenters(VaccineCenters vaccineCenters, boolean shouldAlertAbove45) {
+        List<Center> eligibleCenters = new ArrayList<>();
+        vaccineCenters.centers.forEach(center -> {
+            List<Session> eligibleSessions = new ArrayList<>();
+            center.sessions.forEach(session -> {
+                if (shouldAlertAbove45) { // some users should be alerted for 45 too
+                    if (this.ageLimit18AndAbove(session) && this.hasCapacity(session)) {
+                        eligibleSessions.add(session);
+                    }
+                } else {
+                    if (this.ageLimitExactly18(session) && this.hasCapacity(session)) {
+                        eligibleSessions.add(session);
+                    }
+                }
+            });
+            if (!eligibleSessions.isEmpty()) {
+                Center eligibleCenter = buildCenter(center);
+                eligibleCenter.setSessions(eligibleSessions);
+                eligibleCenters.add(eligibleCenter);
+            }
+        });
+        return eligibleCenters;
+    }
+
+    private Center buildCenter(Center center) {
+        return Center.builder()
+                .centerId(center.getCenterId())
+                .name(center.getName())
+                .stateName(center.getStateName())
+                .districtName(center.getDistrictName())
+                .blockName(center.getBlockName())
+                .pincode(center.getPincode())
+                .feeType(center.getFeeType())
+                .from(center.getFrom())
+                .to(center.getTo())
+                .latitude(center.getLatitude())
+                .longitude(center.getLongitude())
+                .build();
     }
 }
