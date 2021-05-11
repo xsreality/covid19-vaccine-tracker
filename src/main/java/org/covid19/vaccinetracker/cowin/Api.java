@@ -5,6 +5,7 @@ import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.model.UserRequest;
 import org.covid19.vaccinetracker.model.VaccineCenters;
+import org.covid19.vaccinetracker.notifications.DistrictNotifications;
 import org.covid19.vaccinetracker.notifications.VaccineCentersNotification;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.reconciliation.PincodeReconciliation;
@@ -30,15 +31,17 @@ public class Api {
     private final VaccinePersistence vaccinePersistence;
     private final UserRequestManager userRequestManager;
     private final PincodeReconciliation pincodeReconciliation;
+    private final DistrictNotifications districtNotifications;
 
     public Api(CowinApiClient cowinApiClient, VaccineAvailability vaccineAvailability, VaccineCentersNotification notifications,
-               VaccinePersistence vaccinePersistence, UserRequestManager userRequestManager, PincodeReconciliation pincodeReconciliation) {
+               VaccinePersistence vaccinePersistence, UserRequestManager userRequestManager, PincodeReconciliation pincodeReconciliation, DistrictNotifications districtNotifications) {
         this.cowinApiClient = cowinApiClient;
         this.vaccineAvailability = vaccineAvailability;
         this.notifications = notifications;
         this.vaccinePersistence = vaccinePersistence;
         this.userRequestManager = userRequestManager;
         this.pincodeReconciliation = pincodeReconciliation;
+        this.districtNotifications = districtNotifications;
     }
 
     @GetMapping("/fetch/cowin")
@@ -82,6 +85,12 @@ public class Api {
     @PostMapping("/notify/db")
     public ResponseEntity<?> triggerNotificationsFromDB() {
         this.notifications.checkUpdatesAndSendNotifications();
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/notify/district")
+    public ResponseEntity<?> triggerDistrictNotifications() {
+        this.districtNotifications.sendDistrictNotifications();
         return ResponseEntity.ok().build();
     }
 

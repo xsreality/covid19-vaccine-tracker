@@ -4,14 +4,12 @@ import org.covid19.vaccinetracker.availability.VaccineCentersProcessor;
 import org.covid19.vaccinetracker.bot.BotService;
 import org.covid19.vaccinetracker.cowin.CowinApiClient;
 import org.covid19.vaccinetracker.model.Center;
-import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.model.UserRequest;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -77,7 +75,7 @@ public class VaccineCentersNotification {
                     }
                 }
                 cache.putIfAbsent(pincode, vaccineCenters); // update local cache
-                List<Center> eligibleCenters = eligibleVaccineCenters(userRequest.getChatId(), vaccineCenters);
+                List<Center> eligibleCenters = vaccineCentersProcessor.eligibleVaccineCenters(vaccineCenters, usersOver45.contains(userRequest.getChatId()));
                 if (eligibleCenters.isEmpty()) {
                     log.debug("No eligible vaccine centers found for pin code {}", pincode);
                     return;
@@ -134,7 +132,7 @@ public class VaccineCentersNotification {
                     }
                 }
                 cache.putIfAbsent(pincode, vaccineCenters); // update local cache
-                List<Center> eligibleCenters = eligibleVaccineCenters(userRequest.getChatId(), vaccineCenters);
+                List<Center> eligibleCenters = vaccineCentersProcessor.eligibleVaccineCenters(vaccineCenters, usersOver45.contains(userRequest.getChatId()));
                 if (eligibleCenters.isEmpty()) {
                     log.debug("No eligible vaccine centers found for pin code {}", pincode);
                     return;
@@ -159,46 +157,6 @@ public class VaccineCentersNotification {
         } catch (InterruptedException e) {
             // eat
         }
-    }
-
-    List<Center> eligibleVaccineCenters(String userId, VaccineCenters vaccineCenters) {
-        List<Center> eligibleCenters = new ArrayList<>();
-        vaccineCenters.centers.forEach(center -> {
-            List<Session> eligibleSessions = new ArrayList<>();
-            center.sessions.forEach(session -> {
-                if (usersOver45.contains(userId)) { // some users should be alerted for 45 too
-                    if (vaccineCentersProcessor.ageLimit18AndAbove(session) && vaccineCentersProcessor.hasCapacity(session)) {
-                        eligibleSessions.add(session);
-                    }
-                } else {
-                    if (vaccineCentersProcessor.ageLimitExactly18(session) && vaccineCentersProcessor.hasCapacity(session)) {
-                        eligibleSessions.add(session);
-                    }
-                }
-            });
-            if (!eligibleSessions.isEmpty()) {
-                Center eligibleCenter = buildCenter(center);
-                eligibleCenter.setSessions(eligibleSessions);
-                eligibleCenters.add(eligibleCenter);
-            }
-        });
-        return eligibleCenters;
-    }
-
-    private Center buildCenter(Center center) {
-        return Center.builder()
-                .centerId(center.getCenterId())
-                .name(center.getName())
-                .stateName(center.getStateName())
-                .districtName(center.getDistrictName())
-                .blockName(center.getBlockName())
-                .pincode(center.getPincode())
-                .feeType(center.getFeeType())
-                .from(center.getFrom())
-                .to(center.getTo())
-                .latitude(center.getLatitude())
-                .longitude(center.getLongitude())
-                .build();
     }
 
     /*
