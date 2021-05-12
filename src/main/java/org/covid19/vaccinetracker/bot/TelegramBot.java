@@ -32,6 +32,7 @@ import static org.telegram.abilitybots.api.objects.Privacy.PUBLIC;
 public class TelegramBot extends AbilityBot implements BotService, ApplicationContextAware {
     private static Long CHAT_ID;
     private static Long CHANNEL_ID;
+    private TelegramConfig telegramConfig;
     private BotBackend botBackend;
     private KafkaTemplate<String, UserRequest> userRequestKafkaTemplate;
     private StateRepository stateRepository;
@@ -74,6 +75,10 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                 .privacy(PUBLIC).locality(ALL)
                 .input(0)
                 .action(ctx -> {
+                    if (telegramConfig.getBlackListUsers().contains(getChatId(ctx.update()))) {
+                        log.info("Ignoring message from blacklisted user {}", getChatId(ctx.update()));
+                        return;
+                    }
                     if (ctx.update().hasMessage() && ctx.update().getMessage().hasText()) {
                         String pincodes = ctx.update().getMessage().getText();
                         if (!Utils.allValidPincodes(pincodes)) {
@@ -139,5 +144,6 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
     public void setApplicationContext(@NotNull ApplicationContext applicationContext) throws BeansException {
         this.botBackend = (BotBackend) applicationContext.getBean("botBackend");
         this.stateRepository = (StateRepository) applicationContext.getBean("stateRepository");
+        this.telegramConfig = (TelegramConfig) applicationContext.getBean("telegramConfig");
     }
 }
