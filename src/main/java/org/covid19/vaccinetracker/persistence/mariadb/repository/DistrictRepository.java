@@ -12,7 +12,11 @@ import java.util.List;
 public interface DistrictRepository extends CrudRepository<District, Integer> {
     List<District> findDistrictByState(State state);
 
-    District findDistrictByDistrictName(String name);
+    @Query("SELECT d FROM District d " +
+            "INNER JOIN State s ON d.state = s " +
+            "WHERE d.districtName = :name " +
+            "AND s.stateName = :stateName")
+    District findDistrictByDistrictNameAndState(String name, String stateName);
 
     @Query("SELECT p.district FROM Pincode p WHERE p.pincode = :pincode")
     List<District> findDistrictByPincode(String pincode);

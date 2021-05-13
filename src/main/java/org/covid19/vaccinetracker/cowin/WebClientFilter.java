@@ -29,7 +29,7 @@ public class WebClientFilter {
 
     private static void logStatus(ClientResponse response) {
         HttpStatus status = response.statusCode();
-        log.debug("Returned staus code {} ({})", status.value(), status.getReasonPhrase());
+        log.debug("Returned status code {} ({})", status.value(), status.getReasonPhrase());
     }
 
 
