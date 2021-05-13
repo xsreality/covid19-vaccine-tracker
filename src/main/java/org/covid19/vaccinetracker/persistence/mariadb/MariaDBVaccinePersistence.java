@@ -12,8 +12,10 @@ import org.covid19.vaccinetracker.persistence.mariadb.repository.CenterRepositor
 import org.covid19.vaccinetracker.persistence.mariadb.repository.DistrictRepository;
 import org.covid19.vaccinetracker.persistence.mariadb.repository.PincodeRepository;
 import org.covid19.vaccinetracker.persistence.mariadb.repository.SessionRepository;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -39,7 +41,7 @@ public class MariaDBVaccinePersistence implements VaccinePersistence {
 
     @Override
     public VaccineCenters fetchVaccineCentersByPincode(String pincode) {
-        final List<CenterEntity> centerEntities = this.centerRepository.findCenterEntityByPincode(pincode);
+        final List<CenterEntity> centerEntities = this.centerRepository.findCenterEntityByPincodeAndSessionsProcessedAtIsNull(pincode);
         return toVaccineCenters(centerEntities);
     }
 
@@ -48,6 +50,7 @@ public class MariaDBVaccinePersistence implements VaccinePersistence {
         centerEntities.forEach(centerEntity -> {
             final List<Session> sessions = new ArrayList<>();
             centerEntity.getSessions().forEach(sessionEntity -> sessions.add(Session.builder()
+                    .sessionId(sessionEntity.getId())
                     .vaccine(sessionEntity.getVaccine())
                     .date(sessionEntity.getDate())
                     .availableCapacity(sessionEntity.getAvailableCapacity())
@@ -80,6 +83,27 @@ public class MariaDBVaccinePersistence implements VaccinePersistence {
 
     @Override
     public void persistVaccineCenters(VaccineCenters vaccineCenters) {
+        centerRepository.saveAll(toCenterEntities(vaccineCenters, null));
+    }
+
+    @Override
+    public void markProcessed(VaccineCenters vaccineCenters) {
+        vaccineCenters.getCenters().forEach(center -> {
+            Set<SessionEntity> sessionEntities = new HashSet<>();
+            center.getSessions().forEach(session -> sessionEntities.add(SessionEntity.builder()
+                    .id(session.sessionId)
+                    .date(session.date)
+                    .vaccine(session.vaccine)
+                    .availableCapacity(session.availableCapacity)
+                    .minAgeLimit(session.minAgeLimit)
+                    .processedAt(LocalDateTime.now())
+                    .build()));
+            sessionRepository.saveAll(sessionEntities);
+        });
+    }
+
+    @NotNull
+    private Set<CenterEntity> toCenterEntities(VaccineCenters vaccineCenters, @SuppressWarnings("SameParameterValue") LocalDateTime processedAt) {
         Set<CenterEntity> centerEntities = new HashSet<>();
         vaccineCenters.getCenters().forEach(center -> {
             Set<SessionEntity> sessionEntities = new HashSet<>();
@@ -89,6 +113,7 @@ public class MariaDBVaccinePersistence implements VaccinePersistence {
                     .vaccine(session.vaccine)
                     .availableCapacity(session.availableCapacity)
                     .minAgeLimit(session.minAgeLimit)
+                    .processedAt(processedAt)
                     .build()));
             sessionRepository.saveAll(sessionEntities);
             centerEntities.add(CenterEntity.builder()
@@ -101,7 +126,7 @@ public class MariaDBVaccinePersistence implements VaccinePersistence {
                     .pincode(String.valueOf(center.getPincode()))
                     .build());
         });
-        centerRepository.saveAll(centerEntities);
+        return centerEntities;
     }
 
     @Override

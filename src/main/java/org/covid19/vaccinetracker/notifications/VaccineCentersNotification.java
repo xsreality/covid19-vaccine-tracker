@@ -85,6 +85,7 @@ public class VaccineCentersNotification {
                     notificationStats.incrementNotificationsSent();
                     userRequestManager.updateUserRequestLastNotifiedAt(userRequest, Utils.currentTime());
                 }
+                vaccinePersistence.markProcessed(vaccineCenters); // mark processed
             });
         });
         notificationStats.noteEndTime();

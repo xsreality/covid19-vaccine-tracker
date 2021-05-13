@@ -1,0 +1,9 @@
+SET
+SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET
+time_zone = "+00:00";
+
+ALTER TABLE `sessions`
+    ADD COLUMN IF NOT EXISTS `processed_at` DATETIME
+    COLLATE utf8mb4_unicode_ci DEFAULT NULL;

@@ -1,5 +1,7 @@
 package org.covid19.vaccinetracker.persistence.mariadb.entity;
 
+import java.time.LocalDateTime;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -33,4 +35,7 @@ public class SessionEntity {
     private int minAgeLimit;
 
     private String vaccine;
+
+    @Column(name = "processed_at")
+    private LocalDateTime processedAt;
 }
