@@ -13,6 +13,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.telegram.abilitybots.api.bot.AbilityBot;
 import org.telegram.abilitybots.api.db.DBContext;
 import org.telegram.abilitybots.api.objects.Ability;
+import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -124,6 +125,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
         SendMessage telegramMessage = SendMessage.builder()
                 .chatId(userId)
                 .text(text)
+                .parseMode(ParseMode.HTML)
                 .build();
         log.info("Sending notification to {} with text \"{}\"", userId, text);
         try {

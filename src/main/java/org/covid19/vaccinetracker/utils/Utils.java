@@ -143,14 +143,14 @@ public class Utils {
     public static String buildNotificationMessage(List<Center> eligibleCenters) {
         StringBuilder text = new StringBuilder();
         for (Center center : eligibleCenters) {
-            text.append(String.format("%s (%s %s)\n", center.name, center.districtName, center.pincode));
+            text.append(String.format("<b>%s (%s %s)</b>\n<pre>\n", center.name, center.districtName, center.pincode));
             for (Session session : center.sessions) {
                 text.append(String.format("%s dose(s) of %s for %s+ age group available on %s ", session.availableCapacity, session.vaccine, session.minAgeLimit, session.date));
                 text.append(String.format(localizedNotificationText(center.getStateName()) + "\n", session.minAgeLimit, session.vaccine, session.availableCapacity, session.date));
             }
-            text.append("\n");
+            text.append("</pre>\n");
         }
-        text.append("For registration, please visit https://selfregistration.cowin.gov.in/\n");
+        text.append("For registration, please visit <a href=\"https://selfregistration.cowin.gov.in/\">CoWIN Website</a>\n");
         return text.toString();
     }
 
