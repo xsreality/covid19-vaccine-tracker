@@ -94,7 +94,7 @@ public class KafkaStreamsConfig {
         userRequestsTable(streamsBuilder).toStream()
                 .flatMapValues((userId, userRequest) -> userRequest.getPincodes())
                 .flatMapValues((userId, pincode) -> vaccinePersistence.fetchDistrictsByPincode(pincode))
-                .transform(() -> new DeduplicationTransformer<>(Duration.ofDays(365L).toMillis(), (key, value) -> value, UNIQUE_DISTRICTS_STORE), UNIQUE_DISTRICTS_STORE)
+                .transform(() -> new DeduplicationTransformer<>(windowSize.toMillis(), (key, value) -> value, UNIQUE_DISTRICTS_STORE), UNIQUE_DISTRICTS_STORE)
                 .map((userId, district) -> new KeyValue<>(district.getId(), district))
                 .to(userDistrictsTopic, Produced.with(Serdes.Integer(), new DistrictSerde()));
 
