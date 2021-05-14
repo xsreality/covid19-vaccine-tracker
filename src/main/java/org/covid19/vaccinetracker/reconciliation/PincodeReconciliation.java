@@ -96,7 +96,7 @@ public class PincodeReconciliation {
 
     private void introduceDelay() {
         try {
-            Thread.sleep(500);
+            Thread.sleep(50);
         } catch (InterruptedException e) {
             // eat
         }
