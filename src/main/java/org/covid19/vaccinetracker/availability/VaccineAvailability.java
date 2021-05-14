@@ -3,17 +3,14 @@ package org.covid19.vaccinetracker.availability;
 import org.covid19.vaccinetracker.bot.BotService;
 import org.covid19.vaccinetracker.cowin.CowinApiClient;
 import org.covid19.vaccinetracker.cowin.CowinException;
-import org.covid19.vaccinetracker.model.UserRequest;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.notifications.VaccineCentersNotification;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
-import org.covid19.vaccinetracker.persistence.mariadb.entity.District;
 import org.covid19.vaccinetracker.reconciliation.PincodeReconciliation;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -50,7 +47,6 @@ public class VaccineAvailability {
     @Scheduled(cron = "0 0/5 6-23 * * *", zone = "IST")
     public void refreshVaccineAvailabilityFromCowinAndTriggerNotifications() {
         Executors.newSingleThreadExecutor().submit(() -> {
-//            this.refreshVaccineAvailabilityFromCowin(userRequestManager.fetchAllUserRequests());
             this.refreshVaccineAvailabilityFromCowinViaKafka();
             this.vaccineCentersNotification.checkUpdatesAndSendNotifications();
             this.pincodeReconciliation.reconcilePincodesFromCowin(userRequestManager.fetchAllUserRequests());
@@ -83,73 +79,6 @@ public class VaccineAvailability {
                 availabilityStats.failedApiCalls(), availabilityStats.timeTaken());
         log.info(message);
         botService.notifyOwner(message);
-    }
-
-    public void refreshVaccineAvailabilityFromCowin(List<UserRequest> userRequests) {
-        log.info("Refreshing Vaccine Availability from Cowin API");
-        final List<String> processedPincodes = new ArrayList<>();
-        final List<District> processedDistricts = new ArrayList<>();
-        availabilityStats.reset();
-        availabilityStats.noteStartTime();
-        userRequests.forEach(userRequest -> {
-            final List<String> pincodes = userRequest.getPincodes();
-            pincodes.forEach(pincode -> {
-                log.debug("Processing pincode {}", pincode);
-                if (processedPincodes.contains(pincode)) {
-                    log.debug("Pincode {} processed already, skipping...", pincode);
-                    return;
-                }
-                final List<District> districtsOfPincode = vaccinePersistence.fetchDistrictsByPincode(pincode);
-                if (districtsOfPincode.isEmpty()) {
-                    log.debug("No districts found for pincode {} in DB. Needs reconciliation.", pincode);
-                    availabilityStats.incrementUnknownPincodes();
-                } else {
-                    availabilityStats.incrementProcessedPincodes();
-                }
-                districtsOfPincode.forEach(district -> {
-                    if (processedDistricts.contains(district)) {
-                        log.debug("District {} processed already, skipping...", district.getDistrictName());
-                        return;
-                    }
-                    availabilityStats.incrementProcessedDistricts();
-                    final VaccineCenters vaccineCenters = cowinApiClient.fetchSessionsByDistrict(district.getId());
-                    availabilityStats.incrementTotalApiCalls();
-                    if (isNull(vaccineCenters) || vaccineCenters.centers.isEmpty()) {
-                        if (isNull(vaccineCenters)) {
-                            availabilityStats.incrementFailedApiCalls();
-                        }
-                        log.debug("No centers found for district {} triggered by pincode {}", district, pincode);
-                        return;
-                    }
-                    introduceDelay();
-                    if (!vaccineCentersProcessor.areVaccineCentersAvailable(vaccineCenters)) {
-                        log.debug("Found no centers for district {} triggered by pincode {}", district.getDistrictName(), pincode);
-                        processedDistricts.add(district);
-                        return;
-                    }
-                    if (!vaccineCentersProcessor.areVaccineCentersAvailableFor18plus(vaccineCenters)) {
-                        log.debug("Vaccine centers not found for 18+ or no capacity for district {} triggered by pincode {}", district.getDistrictName(), pincode);
-                        processedDistricts.add(district);
-                        return;
-                    }
-                    log.debug("Persisting vaccine availability for district {} triggered by pincode {}", district.getDistrictName(), pincode);
-                    vaccinePersistence.persistVaccineCenters(vaccineCenters);
-                    processedDistricts.add(district);
-                });
-                processedPincodes.add(pincode);
-                log.debug("Processing of pincode {} completed", pincode);
-            });
-        });
-        availabilityStats.noteEndTime();
-        log.info("[AVAILABILITY] Pincodes: {}, Districts: {}, Total API calls: {}, Failed API calls: {}, Unknown pincodes: {}, Time taken: {}",
-                availabilityStats.processedPincodes(), availabilityStats.processedDistricts(),
-                availabilityStats.totalApiCalls(), availabilityStats.failedApiCalls(), availabilityStats.unknownPincodes(), availabilityStats.timeTaken());
-        botService.notifyOwner(String.format("[AVAILABILITY] Pincodes: %d, Districts: %d, Total API calls: %d, Failed API calls: %d, Unknown pincodes: %d, Time taken: %s",
-                availabilityStats.processedPincodes(), availabilityStats.processedDistricts(),
-                availabilityStats.totalApiCalls(), availabilityStats.failedApiCalls(), availabilityStats.unknownPincodes(), availabilityStats.timeTaken()));
-        // clear cache
-        processedDistricts.clear();
-        processedPincodes.clear();
     }
 
     public void refreshVaccineAvailabilityFromCowinApi(int districtId) {

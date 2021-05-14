@@ -118,12 +118,6 @@ public class Api {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/trigger/update")
-    public ResponseEntity<?> triggerCowinUpdates() {
-        Executors.newSingleThreadExecutor().submit(() -> this.vaccineAvailability.refreshVaccineAvailabilityFromCowin(userRequestManager.fetchAllUserRequests()));
-        return ResponseEntity.ok().build();
-    }
-
     @PostMapping("/trigger/updateViaKafka")
     public ResponseEntity<?> triggerCowinUpdatesViaKafka() {
         Executors.newSingleThreadExecutor().submit(this.vaccineAvailability::refreshVaccineAvailabilityFromCowinViaKafka);
