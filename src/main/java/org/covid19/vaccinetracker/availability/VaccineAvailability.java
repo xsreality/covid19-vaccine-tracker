@@ -50,10 +50,39 @@ public class VaccineAvailability {
     @Scheduled(cron = "0 0/5 6-23 * * *", zone = "IST")
     public void refreshVaccineAvailabilityFromCowinAndTriggerNotifications() {
         Executors.newSingleThreadExecutor().submit(() -> {
-            this.refreshVaccineAvailabilityFromCowin(userRequestManager.fetchAllUserRequests());
+//            this.refreshVaccineAvailabilityFromCowin(userRequestManager.fetchAllUserRequests());
+            this.refreshVaccineAvailabilityFromCowinViaKafka();
             this.vaccineCentersNotification.checkUpdatesAndSendNotifications();
             this.pincodeReconciliation.reconcilePincodesFromCowin(userRequestManager.fetchAllUserRequests());
         });
+    }
+
+    public void refreshVaccineAvailabilityFromCowinViaKafka() {
+        log.info("Refreshing Vaccine Availability from Cowin API");
+        availabilityStats.reset();
+        availabilityStats.noteStartTime();
+
+        this.userRequestManager.fetchAllUserDistricts()
+                .parallelStream()
+                .peek(district -> availabilityStats.incrementProcessedDistricts())
+                .map(district -> cowinApiClient.fetchSessionsByDistrict(district.getId()))
+                .peek(vaccineCenters -> {
+                    availabilityStats.incrementTotalApiCalls();
+                    if (isNull(vaccineCenters)) {
+                        availabilityStats.incrementFailedApiCalls();
+                    }
+                    introduceDelay();
+                })
+                .filter(vaccineCentersProcessor::areVaccineCentersAvailable)
+                .filter(vaccineCentersProcessor::areVaccineCentersAvailableFor18plus)
+                .forEach(vaccinePersistence::persistVaccineCenters);
+
+        availabilityStats.noteEndTime();
+        final String message = String.format("[AVAILABILITY] Districts: %d, Total API calls: %d, Failed API calls: %d, Time taken: %s",
+                availabilityStats.processedDistricts(), availabilityStats.totalApiCalls(),
+                availabilityStats.failedApiCalls(), availabilityStats.timeTaken());
+        log.info(message);
+        botService.notifyOwner(message);
     }
 
     public void refreshVaccineAvailabilityFromCowin(List<UserRequest> userRequests) {
