@@ -6,6 +6,7 @@ cowin:
 
 topic:
   user.requests: "user-requests"
+  user.districts: "user-districts"
   vaccine.centers: "vaccine-centers"
 
 telegram:

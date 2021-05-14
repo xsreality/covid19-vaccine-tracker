@@ -6,6 +6,7 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.covid19.vaccinetracker.model.UserRequest;
 import org.covid19.vaccinetracker.persistence.kafka.KafkaStateStores;
+import org.covid19.vaccinetracker.persistence.mariadb.entity.District;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -13,7 +14,9 @@ import org.springframework.kafka.support.ProducerListener;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +33,16 @@ public class UserRequestManager {
     public UserRequestManager(KafkaTemplate<String, UserRequest> kafkaTemplate, KafkaStateStores kafkaStateStores) {
         this.kafkaTemplate = kafkaTemplate;
         this.kafkaStateStores = kafkaStateStores;
+    }
+
+    public Set<District> fetchAllUserDistricts() {
+        final Set<District> userDistricts = new HashSet<>();
+        final KeyValueIterator<String, District> districts = this.kafkaStateStores.userDistricts();
+        while (districts.hasNext()) {
+            final KeyValue<String, District> request = districts.next();
+            userDistricts.add(request.value);
+        }
+        return userDistricts;
     }
 
     public List<UserRequest> fetchAllUserRequests() {

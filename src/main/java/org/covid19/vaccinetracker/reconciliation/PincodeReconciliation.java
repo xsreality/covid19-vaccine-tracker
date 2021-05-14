@@ -37,7 +37,7 @@ public class PincodeReconciliation {
         this.botService = botService;
     }
 
-    @Scheduled(cron = "0 5/10 6-23 * * *", zone = "IST")
+//    @Scheduled(cron = "0 5/10 6-23 * * *", zone = "IST")
     public void pincodesReconciliationJob() {
         this.reconcilePincodesFromCowin(userRequestManager.fetchAllUserRequests());
     }
@@ -86,10 +86,10 @@ public class PincodeReconciliation {
             });
         });
         reconciliationStats.noteEndTime();
-        log.info("Pincode reconciliation = Unknown: {}, Failed: {}, Missing district: {}, Successful: {}, Time taken: {}",
+        log.info("[PINCODE RECONCILIATION] Unknown: {}, Failed: {}, Missing district: {}, Successful: {}, Time taken: {}",
                 reconciliationStats.unknownPincodes(), reconciliationStats.failedReconciliations(),
                 reconciliationStats.failedWithUnknownDistrict(), reconciliationStats.successfulReconciliations(), reconciliationStats.timeTaken());
-        botService.notifyOwner(String.format("Pincode reconciliation = Unknown: %d, Failed: %d, Missing district: %d, Successful: %d, Time taken: %s",
+        botService.notifyOwner(String.format("[PINCODE RECONCILIATION] Unknown: %d, Failed: %d, Missing district: %d, Successful: %d, Time taken: %s",
                 reconciliationStats.unknownPincodes(), reconciliationStats.failedReconciliations(),
                 reconciliationStats.failedWithUnknownDistrict(), reconciliationStats.successfulReconciliations(), reconciliationStats.timeTaken()));
     }

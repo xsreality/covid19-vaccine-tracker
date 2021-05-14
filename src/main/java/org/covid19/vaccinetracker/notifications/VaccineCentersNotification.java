@@ -89,9 +89,9 @@ public class VaccineCentersNotification {
             });
         });
         notificationStats.noteEndTime();
-        log.info("User requests: {}, Processed pincodes: {}, Notifications sent: {}, Time taken: {}",
+        log.info("[NOTIFICATION] Users: {}, Pincodes: {}, Notifications sent: {}, Time taken: {}",
                 notificationStats.userRequests(), notificationStats.processedPincodes(), notificationStats.notificationsSent(), notificationStats.timeTaken());
-        botService.notifyOwner(String.format("User requests: %d, Processed pincodes: %d, Notifications sent: %d, Time taken: %s",
+        botService.notifyOwner(String.format("[NOTIFICATION] Users: %d, Pincodes: %d, Notifications sent: %d, Time taken: %s",
                 notificationStats.userRequests(), notificationStats.processedPincodes(), notificationStats.notificationsSent(), notificationStats.timeTaken()));
         cache.clear(); // clear cache
     }

@@ -8,6 +8,7 @@ import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.notifications.DistrictNotifications;
 import org.covid19.vaccinetracker.notifications.VaccineCentersNotification;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
+import org.covid19.vaccinetracker.persistence.mariadb.entity.District;
 import org.covid19.vaccinetracker.reconciliation.PincodeReconciliation;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.covid19.vaccinetracker.utils.Utils;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executors;
 
 @RestController
@@ -57,6 +59,11 @@ public class Api {
     @GetMapping("/fetch/user_request")
     public ResponseEntity<List<UserRequest>> fetchUserRequests() {
         return ResponseEntity.ok(userRequestManager.fetchAllUserRequests());
+    }
+
+    @GetMapping("/fetch/user_districts")
+    public ResponseEntity<Set<District>> fetchUserDistricts() {
+        return ResponseEntity.ok(userRequestManager.fetchAllUserDistricts());
     }
 
     @GetMapping("/fetch/missingPincodes")
