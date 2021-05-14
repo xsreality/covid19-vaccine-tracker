@@ -5,13 +5,17 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.covid19.vaccinetracker.model.UserRequest;
+import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.persistence.kafka.KafkaStateStores;
 import org.covid19.vaccinetracker.persistence.kafka.KafkaStreamsConfig;
+import org.covid19.vaccinetracker.persistence.mariadb.entity.District;
+import org.covid19.vaccinetracker.persistence.mariadb.entity.State;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
@@ -19,16 +23,17 @@ import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.annotation.DirtiesContext;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static java.util.Objects.isNull;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 import static org.springframework.kafka.test.hamcrest.KafkaMatchers.hasValue;
 
 @SpringBootTest(classes = {
@@ -40,12 +45,16 @@ import static org.springframework.kafka.test.hamcrest.KafkaMatchers.hasValue;
 })
 @EmbeddedKafka(
         partitions = 1,
-        topics = {"${topic.user.requests}"},
+        topics = {"${topic.user.requests}", "${topic.user.districts}"},
         brokerProperties = {"listeners=PLAINTEXT://localhost:9092", "port=9092"})
 @DirtiesContext
 public class UserRequestManagerIT {
     @Value("${topic.user.requests}")
     private String userRequestsTopic;
+
+    @SuppressWarnings("unused")
+    @MockBean
+    private VaccinePersistence vaccinePersistence;
 
     @Autowired
     private UserRequestManager userRequestManager;
@@ -94,13 +103,20 @@ public class UserRequestManagerIT {
     @Test
     public void testFetchAllUserRequests() throws Exception {
         kafkaTemplate.send(userRequestsTopic, "456789", new UserRequest("456789", asList("360005", "110085"), null)).get();
-        final List<UserRequest> userRequests = userRequestManager.fetchAllUserRequests();
-        assertThat(userRequests.size(), is(greaterThanOrEqualTo(1)));
-        assertTrue(userRequests
+        await().atMost(1, SECONDS).until(() -> userRequestManager.fetchAllUserRequests().size() >= 1);
+        assertTrue(userRequestManager.fetchAllUserRequests()
                 .stream()
                 .anyMatch(userRequest -> "456789".equals(userRequest.getChatId())
                         && userRequest.getPincodes().containsAll(asList("360005", "110085"))
                         && isNull(userRequest.getLastNotifiedAt())));
+    }
+
+    @Test
+    public void testFetchAllUserDistricts() throws Exception {
+        District aDistrict = new District(1, "Shahdara", new State(1, "Delhi"));
+        when(vaccinePersistence.fetchDistrictsByPincode("110092")).thenReturn(singletonList(aDistrict));
+        kafkaTemplate.send(userRequestsTopic, "999888", new UserRequest("999888", asList("110092", "110093"), null)).get();
+        await().atMost(1, SECONDS).until(() -> userRequestManager.fetchAllUserDistricts().size() >= 1);
     }
 
     private <K, V> Consumer<K, V> buildConsumer(String groupId) {
