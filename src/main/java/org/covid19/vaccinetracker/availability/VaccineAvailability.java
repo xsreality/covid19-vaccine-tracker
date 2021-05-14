@@ -80,6 +80,7 @@ public class VaccineAvailability {
                     }
                     availabilityStats.incrementProcessedDistricts();
                     final VaccineCenters vaccineCenters = cowinApiClient.fetchSessionsByDistrict(district.getId());
+                    availabilityStats.incrementTotalApiCalls();
                     if (isNull(vaccineCenters) || vaccineCenters.centers.isEmpty()) {
                         if (isNull(vaccineCenters)) {
                             availabilityStats.incrementFailedApiCalls();
@@ -107,12 +108,12 @@ public class VaccineAvailability {
             });
         });
         availabilityStats.noteEndTime();
-        log.info("Refreshed pincodes: {}, Refreshed districts: {}, Failed API calls: {}, Unknown pincodes: {}, Time taken: {}",
+        log.info("[AVAILABILITY] Pincodes: {}, Districts: {}, Total API calls: {}, Failed API calls: {}, Unknown pincodes: {}, Time taken: {}",
                 availabilityStats.processedPincodes(), availabilityStats.processedDistricts(),
-                availabilityStats.failedApiCalls(), availabilityStats.unknownPincodes(), availabilityStats.timeTaken());
-        botService.notifyOwner(String.format("Refreshed pincodes: %d, Refreshed districts: %d, Failed API calls: %d, Unknown pincodes: %d, Time taken: %s",
+                availabilityStats.totalApiCalls(), availabilityStats.failedApiCalls(), availabilityStats.unknownPincodes(), availabilityStats.timeTaken());
+        botService.notifyOwner(String.format("[AVAILABILITY] Pincodes: %d, Districts: %d, Total API calls: %d, Failed API calls: %d, Unknown pincodes: %d, Time taken: %s",
                 availabilityStats.processedPincodes(), availabilityStats.processedDistricts(),
-                availabilityStats.failedApiCalls(), availabilityStats.unknownPincodes(), availabilityStats.timeTaken()));
+                availabilityStats.totalApiCalls(), availabilityStats.failedApiCalls(), availabilityStats.unknownPincodes(), availabilityStats.timeTaken()));
         // clear cache
         processedDistricts.clear();
         processedPincodes.clear();
@@ -162,7 +163,7 @@ public class VaccineAvailability {
 
     private void introduceDelay() {
         try {
-            Thread.sleep(100);
+            Thread.sleep(10);
         } catch (InterruptedException e) {
             // eat
         }

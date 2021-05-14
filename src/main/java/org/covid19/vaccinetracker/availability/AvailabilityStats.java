@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AvailabilityStats {
     private final AtomicInteger processedPincodes = new AtomicInteger(0);
     private final AtomicInteger processedDistricts = new AtomicInteger(0);
+    private final AtomicInteger totalApiCalls = new AtomicInteger(0);
     private final AtomicInteger failedApiCalls = new AtomicInteger(0);
     private final AtomicInteger unknownPincodes = new AtomicInteger(0);
     private Instant startTime;
@@ -21,6 +22,7 @@ public class AvailabilityStats {
     public void reset() {
         processedPincodes.set(0);
         processedDistricts.set(0);
+        totalApiCalls.set(0);
         failedApiCalls.set(0);
         unknownPincodes.set(0);
     }
@@ -35,6 +37,10 @@ public class AvailabilityStats {
 
     public void incrementFailedApiCalls() {
         failedApiCalls.incrementAndGet();
+    }
+
+    public void incrementTotalApiCalls() {
+        totalApiCalls.incrementAndGet();
     }
 
     public void incrementUnknownPincodes() {
@@ -59,6 +65,10 @@ public class AvailabilityStats {
 
     public int failedApiCalls() {
         return failedApiCalls.get();
+    }
+
+    public int totalApiCalls() {
+        return totalApiCalls.get();
     }
 
     public int unknownPincodes() {

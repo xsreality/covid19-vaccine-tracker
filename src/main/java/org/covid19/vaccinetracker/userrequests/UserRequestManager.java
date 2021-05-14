@@ -67,7 +67,7 @@ public class UserRequestManager {
         return new ProducerListener<>() {
             @Override
             public void onSuccess(ProducerRecord<String, UserRequest> producerRecord, RecordMetadata recordMetadata) {
-                log.info("Successfully updated user request for chatId {}, request {}", producerRecord.key(), producerRecord.value());
+                log.info("Successfully updated user request {}", producerRecord.value());
             }
 
             @Override
