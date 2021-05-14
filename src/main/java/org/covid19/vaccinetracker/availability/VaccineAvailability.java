@@ -8,6 +8,7 @@ import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.notifications.VaccineCentersNotification;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.District;
+import org.covid19.vaccinetracker.reconciliation.PincodeReconciliation;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -30,25 +31,28 @@ public class VaccineAvailability {
     private final UserRequestManager userRequestManager;
     private final AvailabilityStats availabilityStats;
     private final VaccineCentersNotification vaccineCentersNotification;
+    private final PincodeReconciliation pincodeReconciliation;
     private final BotService botService;
 
     public VaccineAvailability(CowinApiClient cowinApiClient, VaccinePersistence vaccinePersistence,
                                VaccineCentersProcessor vaccineCentersProcessor, UserRequestManager userRequestManager,
-                               AvailabilityStats availabilityStats, VaccineCentersNotification vaccineCentersNotification, BotService botService) {
+                               AvailabilityStats availabilityStats, VaccineCentersNotification vaccineCentersNotification, PincodeReconciliation pincodeReconciliation, BotService botService) {
         this.cowinApiClient = cowinApiClient;
         this.vaccinePersistence = vaccinePersistence;
         this.vaccineCentersProcessor = vaccineCentersProcessor;
         this.userRequestManager = userRequestManager;
         this.availabilityStats = availabilityStats;
         this.vaccineCentersNotification = vaccineCentersNotification;
+        this.pincodeReconciliation = pincodeReconciliation;
         this.botService = botService;
     }
 
-    @Scheduled(cron = "0 0/10 6-23 * * *", zone = "IST")
+    @Scheduled(cron = "0 0/5 6-23 * * *", zone = "IST")
     public void refreshVaccineAvailabilityFromCowinAndTriggerNotifications() {
         Executors.newSingleThreadExecutor().submit(() -> {
             this.refreshVaccineAvailabilityFromCowin(userRequestManager.fetchAllUserRequests());
             this.vaccineCentersNotification.checkUpdatesAndSendNotifications();
+            this.pincodeReconciliation.reconcilePincodesFromCowin(userRequestManager.fetchAllUserRequests());
         });
     }
 
