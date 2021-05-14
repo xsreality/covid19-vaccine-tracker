@@ -13,7 +13,7 @@ import static java.util.Objects.nonNull;
 @Component
 public class VaccineCentersProcessor {
     public boolean areVaccineCentersAvailable(VaccineCenters vaccineCenters) {
-        return nonNull(vaccineCenters.centers) && !vaccineCenters.centers.isEmpty();
+        return nonNull(vaccineCenters) && nonNull(vaccineCenters.centers) && !vaccineCenters.centers.isEmpty();
     }
 
     public boolean areVaccineCentersAvailableFor18plus(VaccineCenters vaccineCenters) {
