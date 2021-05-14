@@ -2,8 +2,6 @@ package org.covid19.vaccinetracker.availability;
 
 import org.covid19.vaccinetracker.bot.BotService;
 import org.covid19.vaccinetracker.cowin.CowinApiClient;
-import org.covid19.vaccinetracker.cowin.CowinException;
-import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.notifications.VaccineCentersNotification;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.reconciliation.PincodeReconciliation;
@@ -79,35 +77,6 @@ public class VaccineAvailability {
                 availabilityStats.failedApiCalls(), availabilityStats.timeTaken());
         log.info(message);
         botService.notifyOwner(message);
-    }
-
-    public void refreshVaccineAvailabilityFromCowinApi(int districtId) {
-        final VaccineCenters vaccineCenters = cowinApiClient.fetchSessionsByDistrict(districtId);
-        vaccinePersistence.persistVaccineCenters(vaccineCenters);
-    }
-
-    public void fetchVaccineAvailabilityFromCowinApi(String pincode) {
-        try {
-            log.info("Fetching vaccine availability for pin code {}", pincode);
-            final VaccineCenters vaccineCenters = cowinApiClient.fetchCentersByPincode(pincode);
-            if (!vaccineCentersProcessor.areVaccineCentersAvailable(vaccineCenters)) {
-                log.info("Found no centers for pin code {}", pincode);
-                return;
-            }
-            if (!vaccineCentersProcessor.areVaccineCentersAvailableFor18plus(vaccineCenters)) {
-                log.info("Vaccine centers not found for 18+ or no capacity for pin code {}", pincode);
-                return;
-            }
-            log.info("Persisting vaccine availability for pin code {}", pincode);
-            vaccinePersistence.persistVaccineCenters(pincode, vaccineCenters);
-        } catch (CowinException ce) {
-            log.error("Error fetching centers for pincode {}, got status code {}", pincode, ce.getStatusCode());
-        }
-    }
-
-    public VaccineCenters fetchVaccineAvailabilityFromPersistenceStore(String pincode) {
-        log.info("Fetching Vaccine availability from local store for pin code {}", pincode);
-        return vaccinePersistence.fetchVaccineCentersByPincode(pincode);
     }
 
     /**
