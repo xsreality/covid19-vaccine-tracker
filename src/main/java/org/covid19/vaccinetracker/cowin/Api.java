@@ -51,11 +51,6 @@ public class Api {
         return ResponseEntity.ok(cowinApiClient.fetchCentersByPincode(pincode));
     }
 
-    @GetMapping("/fetch/vaccine_centers_by_pincode")
-    public ResponseEntity<VaccineCenters> vaccineCentersFromStore(@RequestParam final String pincode) {
-        return ResponseEntity.ok(vaccineAvailability.fetchVaccineAvailabilityFromPersistenceStore(pincode));
-    }
-
     @GetMapping("/fetch/user_request")
     public ResponseEntity<List<UserRequest>> fetchUserRequests() {
         return ResponseEntity.ok(userRequestManager.fetchAllUserRequests());
@@ -69,12 +64,6 @@ public class Api {
     @GetMapping("/fetch/missingPincodes")
     public ResponseEntity<List<String>> fetchMissingPincodes() {
         return ResponseEntity.ok(vaccineAvailability.missingPincodes());
-    }
-
-    @GetMapping("/persist/cowin")
-    public ResponseEntity<?> tracker(@RequestParam final String pincode) {
-        vaccineAvailability.fetchVaccineAvailabilityFromCowinApi(pincode);
-        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/notify")
