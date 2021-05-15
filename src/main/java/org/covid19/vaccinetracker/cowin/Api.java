@@ -32,22 +32,26 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/covid19")
 public class Api {
     private final CowinApiClient cowinApiClient;
+    private final CowinApiOtpClient cowinApiOtpClient;
     private final VaccineAvailability vaccineAvailability;
     private final VaccineCentersNotification notifications;
     private final VaccinePersistence vaccinePersistence;
     private final UserRequestManager userRequestManager;
     private final PincodeReconciliation pincodeReconciliation;
     private final DistrictNotifications districtNotifications;
+    private final CowinApiAuth cowinApiAuth;
 
-    public Api(CowinApiClient cowinApiClient, VaccineAvailability vaccineAvailability, VaccineCentersNotification notifications,
-               VaccinePersistence vaccinePersistence, UserRequestManager userRequestManager, PincodeReconciliation pincodeReconciliation, DistrictNotifications districtNotifications) {
+    public Api(CowinApiClient cowinApiClient, CowinApiOtpClient cowinApiOtpClient, VaccineAvailability vaccineAvailability, VaccineCentersNotification notifications,
+               VaccinePersistence vaccinePersistence, UserRequestManager userRequestManager, PincodeReconciliation pincodeReconciliation, DistrictNotifications districtNotifications, CowinApiAuth cowinApiAuth) {
         this.cowinApiClient = cowinApiClient;
+        this.cowinApiOtpClient = cowinApiOtpClient;
         this.vaccineAvailability = vaccineAvailability;
         this.notifications = notifications;
         this.vaccinePersistence = vaccinePersistence;
         this.userRequestManager = userRequestManager;
         this.pincodeReconciliation = pincodeReconciliation;
         this.districtNotifications = districtNotifications;
+        this.cowinApiAuth = cowinApiAuth;
     }
 
     @GetMapping("/fetch/cowin")
@@ -124,18 +128,19 @@ public class Api {
     }
 
     @GetMapping("/webhook")
-    public ResponseEntity<?> webhook(@RequestBody String text) {
-        log.info("Received a call on webhook endpoint with text: {}", text);
+    public ResponseEntity<?> webhook(@RequestBody String callback) {
+        log.info("Received a call on webhook endpoint with text: {}", callback);
+        Executors.newSingleThreadExecutor().submit(() -> this.cowinApiAuth.handleOtpCallback(callback));
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/generateOtp")
     public ResponseEntity<?> generateOtp() {
-        return ResponseEntity.ok(this.cowinApiClient.generateOtp("9999999999"));
+        return ResponseEntity.ok(this.cowinApiOtpClient.generateOtp("9999999999"));
     }
 
     @GetMapping("/confirmOtp")
     public ResponseEntity<?> confirmOtp() {
-        return ResponseEntity.ok(this.cowinApiClient.confirmOtp("061a6491-6c03-42ba-b2a1-c8a5c3971ed4", "3f3e2b6b5162f527642eaa4b10fd6767cfebc40ea372e2162fcd7e4ae071bb8c"));
+        return ResponseEntity.ok(this.cowinApiOtpClient.confirmOtp("061a6491-6c03-42ba-b2a1-c8a5c3971ed4", "3f3e2b6b5162f527642eaa4b10fd6767cfebc40ea372e2162fcd7e4ae071bb8c"));
     }
 }
