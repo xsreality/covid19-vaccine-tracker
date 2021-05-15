@@ -4,6 +4,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.covid19.vaccinetracker.model.ConfirmOtpResponse;
 import org.covid19.vaccinetracker.model.GenerateOtpResponse;
+import org.covid19.vaccinetracker.utils.Utils;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -28,11 +30,12 @@ public class CowinApiAuth {
         this.cowinConfig = cowinConfig;
     }
 
+//    @Scheduled(cron = "0 48/15 5-23 * * *", zone = "IST")
     public void refreshCowinToken() {
         log.info("Refreshing Cowin Auth Token");
         if (this.awaitingOtp.get()) {
-            log.info("Still awaiting OTP. Resetting and canceling current run.");
-            this.awaitingOtp.set(false);
+            log.warn("Still awaiting OTP. Resetting and canceling current run.");
+            reset();
             return;
         }
         final GenerateOtpResponse generateOtpResponse = this.cowinApiOtpClient.generateOtp(cowinConfig.getAuthMobile());
@@ -59,12 +62,14 @@ public class CowinApiAuth {
             return;
         }
         this.bearerToken.set(confirmOtpResponse.getToken());
-        reset();
+        this.awaitingOtp.set(false);
+        this.transactionId.set("");
     }
 
     void reset() {
         this.awaitingOtp.set(false);
         this.transactionId.set("");
+        this.bearerToken.set("");
     }
 
     public String getBearerToken() {
@@ -77,6 +82,10 @@ public class CowinApiAuth {
 
     public boolean isAwaitingOtp() {
         return awaitingOtp.get();
+    }
+
+    public boolean isAvailable() {
+        return Utils.isValidJwtToken(this.bearerToken.get());
     }
 
     private String parseOtp(String message) {

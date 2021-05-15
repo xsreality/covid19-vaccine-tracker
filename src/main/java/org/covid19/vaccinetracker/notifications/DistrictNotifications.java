@@ -27,7 +27,7 @@ public class DistrictNotifications {
         this.cowinApiClient = cowinApiClient;
     }
 
-//    @Scheduled(cron = "0 4/5 6-23 * * *", zone = "IST")
+    @Scheduled(cron = "0 4/5 6-23 * * *", zone = "IST")
     public void sendDistrictNotifications() {
         final VaccineCenters vaccineCenters = cowinApiClient.fetchSessionsByDistrict(MUMBAI_DISTRICT_ID);
         final List<Center> eligibleCenters = vaccineCentersProcessor.eligibleVaccineCenters(vaccineCenters, false);

@@ -46,6 +46,8 @@ public class CowinApiAuthTest {
         String callback = "Your OTP to register/access CoWIN is 181895. It will be valid for 3 minutes. - CoWIN";
         cowinApiAuth.handleOtpCallback(callback);
         assertThat(cowinApiAuth.getBearerToken(), is(equalTo("xyz-token")));
+        // txnId should be reset, isAwaitingOtp should be false
+        assertThat(cowinApiAuth.getTransactionId(), is(emptyString()));
         assertFalse(cowinApiAuth.isAwaitingOtp());
     }
 
@@ -58,6 +60,7 @@ public class CowinApiAuthTest {
 
         String callback = "Your OTP to register/access CoWIN is 181895. It will be valid for 3 minutes. - CoWIN";
         cowinApiAuth.handleOtpCallback(callback);
+        assertThat(cowinApiAuth.getBearerToken(), is(emptyString()));
         assertFalse(cowinApiAuth.isAwaitingOtp());
     }
 
@@ -78,6 +81,7 @@ public class CowinApiAuthTest {
 
         // ...variables should be reset again
         assertThat(cowinApiAuth.getTransactionId(), is(emptyString()));
+        assertThat(cowinApiAuth.getBearerToken(), is(emptyString()));
         assertFalse(cowinApiAuth.isAwaitingOtp());
     }
 
@@ -96,6 +100,7 @@ public class CowinApiAuthTest {
 
         // ...variables should be reset again
         assertThat(cowinApiAuth.getTransactionId(), is(emptyString()));
+        assertThat(cowinApiAuth.getBearerToken(), is(emptyString()));
         assertFalse(cowinApiAuth.isAwaitingOtp());
     }
 

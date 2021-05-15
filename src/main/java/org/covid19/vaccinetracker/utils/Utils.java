@@ -1,11 +1,17 @@
 package org.covid19.vaccinetracker.utils;
 
+import com.nimbusds.jwt.JWT;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.JWTParser;
+
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.State;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 
+import java.text.ParseException;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -15,10 +21,13 @@ import java.util.Map;
 
 import javax.validation.constraints.NotNull;
 
+import lombok.extern.slf4j.Slf4j;
+
 import static java.util.Map.entry;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
+@Slf4j
 public class Utils {
     private static final String PINCODE_REGEX_PATTERN = "^[1-9][0-9]{5}$";
     private static final String INDIA_TIMEZONE = "Asia/Kolkata";
@@ -168,5 +177,20 @@ public class Utils {
         }
         String language = STATE_LANGUAGES.getOrDefault(state.getStateName(), "Hindi");
         return LOCALIZED_ACK_TEXT.get(language);
+    }
+
+    public static boolean isValidJwtToken(String token) {
+        if (isNull(token)) {
+            return false;
+        }
+        try {
+            final JWT jwt = JWTParser.parse(token);
+            final JWTClaimsSet jwtClaimsSet = jwt.getJWTClaimsSet();
+            return jwtClaimsSet.getIssueTime().toInstant().isBefore(Instant.now())
+                    && jwtClaimsSet.getExpirationTime().toInstant().isAfter(Instant.now());
+        } catch (ParseException e) {
+            log.debug("Error parsing JWT token: {}", e.getMessage());
+            return false;
+        }
     }
 }
