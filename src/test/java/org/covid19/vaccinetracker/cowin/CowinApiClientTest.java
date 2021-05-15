@@ -3,6 +3,8 @@ package org.covid19.vaccinetracker.cowin;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.covid19.vaccinetracker.model.Center;
+import org.covid19.vaccinetracker.model.ConfirmOtpResponse;
+import org.covid19.vaccinetracker.model.GenerateOtpResponse;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -15,10 +17,13 @@ import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.springframework.http.HttpHeaders.ACCEPT;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -75,5 +80,34 @@ public class CowinApiClientTest {
         final VaccineCenters actual = cowinApiClient.fetchSessionsByDistrict(315);
 
         assertThat(actual, is(equalTo(expected)));
+    }
+
+    @Test
+    public void testGenerateOtp() throws Exception {
+        GenerateOtpResponse expected = GenerateOtpResponse.builder().transactionId("6171c423-90db-4b16-a3b1-bbd85d3cde6a").build();
+        mockWebServer.enqueue(new MockResponse()
+                .setBody(objectMapper.writeValueAsString(expected))
+                .addHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE));
+        final GenerateOtpResponse actual = cowinApiClient.generateOtp("9999999999");
+        assertThat(actual, is(equalTo(expected)));
+        final RecordedRequest recordedRequest = mockWebServer.takeRequest(3, SECONDS);
+        assertThat(recordedRequest.getBody().readUtf8(), is(equalTo("{\"mobile\":\"9999999999\"}")));
+        assertThat(recordedRequest.getHeader(CONTENT_TYPE), is(equalTo(APPLICATION_JSON_VALUE)));
+        assertThat(recordedRequest.getHeader(ACCEPT), is(equalTo(APPLICATION_JSON_VALUE)));
+    }
+
+    @Test
+    public void testConfirmOtp() throws Exception {
+        ConfirmOtpResponse expected = ConfirmOtpResponse.builder().token("xxxxx").isNewAccount("N").build();
+        mockWebServer.enqueue(new MockResponse()
+                .setBody(objectMapper.writeValueAsString(expected))
+                .addHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE));
+        final ConfirmOtpResponse actual = cowinApiClient.confirmOtp(
+                "62b136fa-831d-4132-8457-b7bc10916d9d",
+                "deebfa8af67efe975b1859f418e90dcaad5875301fb6881fbea47b68f94432cd");
+        assertThat(actual, is(equalTo(expected)));
+        final RecordedRequest recordedRequest = mockWebServer.takeRequest(3, SECONDS);
+        assertThat(recordedRequest.getHeader(CONTENT_TYPE), is(equalTo(APPLICATION_JSON_VALUE)));
+        assertThat(recordedRequest.getHeader(ACCEPT), is(equalTo(APPLICATION_JSON_VALUE)));
     }
 }

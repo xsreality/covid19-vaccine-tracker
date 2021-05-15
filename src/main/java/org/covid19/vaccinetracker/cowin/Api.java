@@ -15,6 +15,7 @@ import org.covid19.vaccinetracker.utils.Utils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,6 +25,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @RestController
 @RequestMapping("/covid19")
 public class Api {
@@ -117,5 +121,21 @@ public class Api {
     public ResponseEntity<?> triggerPincodesReconciliation() {
         Executors.newSingleThreadExecutor().submit(() -> this.pincodeReconciliation.reconcilePincodesFromCowin(userRequestManager.fetchAllUserRequests()));
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/webhook")
+    public ResponseEntity<?> webhook(@RequestBody String text) {
+        log.info("Received a call on webhook endpoint with text: {}", text);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/generateOtp")
+    public ResponseEntity<?> generateOtp() {
+        return ResponseEntity.ok(this.cowinApiClient.generateOtp("9999999999"));
+    }
+
+    @GetMapping("/confirmOtp")
+    public ResponseEntity<?> confirmOtp() {
+        return ResponseEntity.ok(this.cowinApiClient.confirmOtp("061a6491-6c03-42ba-b2a1-c8a5c3971ed4", "3f3e2b6b5162f527642eaa4b10fd6767cfebc40ea372e2162fcd7e4ae071bb8c"));
     }
 }
