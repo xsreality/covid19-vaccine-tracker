@@ -72,8 +72,8 @@ public class VaccineAvailability {
                 .forEach(vaccinePersistence::persistVaccineCenters);
 
         availabilityStats.noteEndTime();
-        final String message = String.format("[AVAILABILITY] Districts: %d, Total API calls: %d, Failed API calls: %d, Time taken: %s",
-                availabilityStats.processedDistricts(), availabilityStats.totalApiCalls(),
+        final String message = String.format("[AVAILABILITY] Districts: %d, Total API calls: %d (protected=%s), Failed API calls: %d, Time taken: %s",
+                availabilityStats.processedDistricts(), availabilityStats.totalApiCalls(), cowinApiClient.isProtected(),
                 availabilityStats.failedApiCalls(), availabilityStats.timeTaken());
         log.info(message);
         botService.notifyOwner(message);
