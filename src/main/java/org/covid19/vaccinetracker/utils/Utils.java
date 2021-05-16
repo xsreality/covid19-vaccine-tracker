@@ -142,11 +142,11 @@ public class Utils {
                 .compareTo(Duration.ofHours(24)) >= 0;
     }
 
-    public static boolean pastHalfHour(String lastNotifiedAt) {
+    public static boolean past15mins(String lastNotifiedAt) {
         ZonedDateTime notifiedAt = dateFromString(lastNotifiedAt);
         ZonedDateTime currentTime = ZonedDateTime.now(ZoneId.of(INDIA_TIMEZONE));
         return Duration.between(notifiedAt, currentTime)
-                .compareTo(Duration.ofMinutes(30L)) >= 0;
+                .compareTo(Duration.ofMinutes(15L)) >= 0;
     }
 
     public static String buildNotificationMessage(List<Center> eligibleCenters) {
