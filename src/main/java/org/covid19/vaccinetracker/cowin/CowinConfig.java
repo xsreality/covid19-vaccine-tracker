@@ -10,4 +10,5 @@ import lombok.Data;
 @Data
 public class CowinConfig {
     private String apiUrl;
+    private String authMobile;
 }

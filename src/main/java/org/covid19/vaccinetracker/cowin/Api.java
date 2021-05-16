@@ -15,6 +15,7 @@ import org.covid19.vaccinetracker.utils.Utils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,6 +25,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @RestController
 @RequestMapping("/covid19")
 public class Api {
@@ -34,9 +38,10 @@ public class Api {
     private final UserRequestManager userRequestManager;
     private final PincodeReconciliation pincodeReconciliation;
     private final DistrictNotifications districtNotifications;
+    private final CowinApiAuth cowinApiAuth;
 
     public Api(CowinApiClient cowinApiClient, VaccineAvailability vaccineAvailability, VaccineCentersNotification notifications,
-               VaccinePersistence vaccinePersistence, UserRequestManager userRequestManager, PincodeReconciliation pincodeReconciliation, DistrictNotifications districtNotifications) {
+               VaccinePersistence vaccinePersistence, UserRequestManager userRequestManager, PincodeReconciliation pincodeReconciliation, DistrictNotifications districtNotifications, CowinApiAuth cowinApiAuth) {
         this.cowinApiClient = cowinApiClient;
         this.vaccineAvailability = vaccineAvailability;
         this.notifications = notifications;
@@ -44,6 +49,7 @@ public class Api {
         this.userRequestManager = userRequestManager;
         this.pincodeReconciliation = pincodeReconciliation;
         this.districtNotifications = districtNotifications;
+        this.cowinApiAuth = cowinApiAuth;
     }
 
     @GetMapping("/fetch/cowin")
@@ -116,6 +122,19 @@ public class Api {
     @PostMapping("/trigger/reconcile")
     public ResponseEntity<?> triggerPincodesReconciliation() {
         Executors.newSingleThreadExecutor().submit(() -> this.pincodeReconciliation.reconcilePincodesFromCowin(userRequestManager.fetchAllUserRequests()));
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/webhook")
+    public ResponseEntity<?> webhook(@RequestBody String callback) {
+        log.info("Received a call on webhook endpoint with text: {}", callback);
+        Executors.newSingleThreadExecutor().submit(() -> this.cowinApiAuth.handleOtpCallback(callback));
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/generateOtp")
+    public ResponseEntity<?> generateOtp() {
+        Executors.newSingleThreadExecutor().submit(this.cowinApiAuth::refreshCowinToken);
         return ResponseEntity.ok().build();
     }
 }

@@ -47,5 +47,18 @@ public class UtilsTest {
         centers.add(Center.builder().name("Premlok Park Disp- 2(18-44)").districtName("Pune").pincode(411033).sessions(sessions).build());
         assertEquals(expected, Utils.buildNotificationMessage(centers), "Notification text does not match");
     }
+
+    @Test
+    public void testIsValidJwtToken() {
+        String invalidToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX25hbWUiOiJlYWYxMDc3Ny00ZjIxLTQwNjYtYTQ2Yy0yNDhjOGJkNzNiNDEiLCJ1c2VyX2lkIjoiZWFmMTA3NzctNGYyMS00MDY2LWE0NmMtMjQ4YzhiZDczYjQxIiwidXNlcl90eXBlIjoiQkVORUZJQ0lBUlkiLCJtb2JpbGVfbnVtYmVyIjo5OTk5OTk5OTk5LCJiZW5lZmljaWFyeV9yZWZlcmVuY2VfaWQiOjc1MTIxOTk5ODE4MTUwLCJ1YSI6Imluc29tbmlhLzIwMjEuMy4wIiwiZGF0ZV9tb2RpZmllZCI6IjIwMjEtMDUtMTVUMTA6MTg6MzkuMjk5WiIsImlhdCI6MTYyMTA3MzkxOSwiZXhwIjoxNjIxMDc0ODE5fQ.YDQCfcSwtKAT5epVMOFt3jmQ1dc6jOZ-XbYISOmQLGw";
+        assertFalse(Utils.isValidJwtToken(invalidToken));
+
+        String validToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX25hbWUiOiJlYWYxMDc3Ny00ZjIxLTQwNjYtYTQ2Yy0yNDhjOGJkNzNiNDEiLCJ1c2VyX2lkIjoiZWFmMTA3NzctNGYyMS00MDY2LWE0NmMtMjQ4YzhiZDczYjQxIiwidXNlcl90eXBlIjoiQkVORUZJQ0lBUlkiLCJtb2JpbGVfbnVtYmVyIjo5OTk5OTk5OTk5LCJiZW5lZmljaWFyeV9yZWZlcmVuY2VfaWQiOjc1MTIxOTk5ODE4MTUwLCJ1YSI6Imluc29tbmlhLzIwMjEuMy4wIiwiZGF0ZV9tb2RpZmllZCI6IjIwMjEtMDUtMTZUMTA6MTg6MzkuMjk5WiIsImlhdCI6MTYyMTA3MzkxOSwiZXhwIjoyNjIxMTc0ODE5fQ.CDXX9uaPoz6dk19EvYwZC_UkJYRJA_z2FSVYSXzTPyc";
+        assertTrue(Utils.isValidJwtToken(validToken));
+
+        String emptyToken = "";
+        assertFalse(Utils.isValidJwtToken(emptyToken));
+        assertFalse(Utils.isValidJwtToken(null));
+    }
 }
 
