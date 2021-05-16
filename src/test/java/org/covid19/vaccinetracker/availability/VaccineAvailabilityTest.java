@@ -103,6 +103,8 @@ public class VaccineAvailabilityTest {
                                         .sessionId("abcd")
                                         .vaccine("COVISHIELD")
                                         .availableCapacity(5)
+                                        .availableCapacityDose1(5) // as most people are looking for 1st dose, this will be used for alerting
+                                        .availableCapacityDose2(0) // ignored for now
                                         .minAgeLimit(18)
                                         .date("15-05-2021")
                                         .build()))

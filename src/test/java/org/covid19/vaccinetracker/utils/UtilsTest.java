@@ -42,8 +42,8 @@ public class UtilsTest {
                 "For registration, please visit <a href=\"https://selfregistration.cowin.gov.in/\">CoWIN Website</a>\n";
         List<Center> centers = new ArrayList<>();
         List<Session> sessions = new ArrayList<>();
-        sessions.add(Session.builder().availableCapacity(3).minAgeLimit(18).date("04-05-2021").vaccine("COVISHIELD").build());
-        sessions.add(Session.builder().availableCapacity(12).minAgeLimit(18).date("05-05-2021").vaccine("COVAXIN").build());
+        sessions.add(Session.builder().availableCapacity(6).availableCapacityDose1(3).availableCapacityDose2(5).minAgeLimit(18).date("04-05-2021").vaccine("COVISHIELD").build());
+        sessions.add(Session.builder().availableCapacity(4).availableCapacityDose1(12).availableCapacityDose2(3).minAgeLimit(18).date("05-05-2021").vaccine("COVAXIN").build());
         centers.add(Center.builder().name("Premlok Park Disp- 2(18-44)").districtName("Pune").pincode(411033).sessions(sessions).build());
         assertEquals(expected, Utils.buildNotificationMessage(centers), "Notification text does not match");
     }
