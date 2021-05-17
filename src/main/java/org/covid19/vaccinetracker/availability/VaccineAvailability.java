@@ -47,7 +47,7 @@ public class VaccineAvailability {
         Executors.newSingleThreadExecutor().submit(() -> {
             this.refreshVaccineAvailabilityFromCowinViaKafka();
             this.vaccineCentersNotification.checkUpdatesAndSendNotifications();
-            this.pincodeReconciliation.reconcilePincodesFromCowin(userRequestManager.fetchAllUserRequests());
+//            this.pincodeReconciliation.reconcilePincodesFromCowin(userRequestManager.fetchAllUserRequests());
         });
     }
 

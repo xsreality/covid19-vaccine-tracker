@@ -53,11 +53,11 @@ public class VaccineCentersNotification {
         final List<UserRequest> userRequests = userRequestManager.fetchAllUserRequests();
         userRequests.forEach(userRequest -> {
             notificationStats.incrementUserRequests();
-            final String lastNotifiedAt = userRequest.getLastNotifiedAt();
-            if (userWasNotifiedRecently(lastNotifiedAt)) {
-                log.info("Skipping sending notification to {} as they were notified already on {}", userRequest.getChatId(), lastNotifiedAt);
-                return;
-            }
+//            final String lastNotifiedAt = userRequest.getLastNotifiedAt();
+//            if (userWasNotifiedRecently(lastNotifiedAt)) {
+//                log.info("Skipping sending notification to {} as they were notified already on {}", userRequest.getChatId(), lastNotifiedAt);
+//                return;
+//            }
             // process pin codes of each user
             userRequest.getPincodes().forEach(pincode -> {
                 VaccineCenters vaccineCenters;

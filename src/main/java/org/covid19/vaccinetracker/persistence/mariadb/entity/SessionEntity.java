@@ -31,6 +31,12 @@ public class SessionEntity {
     @Column(name = "available_capacity")
     private int availableCapacity;
 
+    @Column(name = "available_capacity_dose1")
+    private int availableCapacityDose1;
+
+    @Column(name = "available_capacity_dose2")
+    private int availableCapacityDose2;
+
     @Column(name = "min_age_limit")
     private int minAgeLimit;
 
