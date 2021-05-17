@@ -23,6 +23,8 @@ import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
 
+import static java.util.Objects.nonNull;
+
 @Slf4j
 @Component
 public class MariaDBVaccinePersistence implements VaccinePersistence {
@@ -54,6 +56,8 @@ public class MariaDBVaccinePersistence implements VaccinePersistence {
                     .vaccine(sessionEntity.getVaccine())
                     .date(sessionEntity.getDate())
                     .availableCapacity(sessionEntity.getAvailableCapacity())
+                    .availableCapacityDose1(sessionEntity.getAvailableCapacityDose1())
+                    .availableCapacityDose2(sessionEntity.getAvailableCapacityDose2())
                     .minAgeLimit(sessionEntity.getMinAgeLimit())
                     .build()));
             centers.add(Center.builder()
@@ -94,7 +98,9 @@ public class MariaDBVaccinePersistence implements VaccinePersistence {
                     .id(session.sessionId)
                     .date(session.date)
                     .vaccine(session.vaccine)
-                    .availableCapacity(session.availableCapacity)
+                    .availableCapacity(nonNull(session.availableCapacity) ? session.availableCapacity : 0)
+                    .availableCapacityDose1(nonNull(session.availableCapacityDose1) ? session.availableCapacityDose1 : 0)
+                    .availableCapacityDose2(nonNull(session.availableCapacityDose2) ? session.availableCapacityDose2 : 0)
                     .minAgeLimit(session.minAgeLimit)
                     .processedAt(LocalDateTime.now())
                     .build()));
@@ -111,7 +117,9 @@ public class MariaDBVaccinePersistence implements VaccinePersistence {
                     .id(session.sessionId)
                     .date(session.date)
                     .vaccine(session.vaccine)
-                    .availableCapacity(session.availableCapacity)
+                    .availableCapacity(nonNull(session.availableCapacity) ? session.availableCapacity : 0)
+                    .availableCapacityDose1(nonNull(session.availableCapacityDose1) ? session.availableCapacityDose1 : 0)
+                    .availableCapacityDose2(nonNull(session.availableCapacityDose2) ? session.availableCapacityDose2 : 0)
                     .minAgeLimit(session.minAgeLimit)
                     .processedAt(processedAt)
                     .build()));

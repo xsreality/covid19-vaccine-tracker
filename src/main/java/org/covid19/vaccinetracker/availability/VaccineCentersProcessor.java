@@ -25,7 +25,8 @@ public class VaccineCentersProcessor {
     }
 
     public boolean hasCapacity(Session session) {
-        return session.availableCapacity > 0;
+        return (session.availableCapacityDose1 > 0)
+                && (session.availableCapacity == (session.availableCapacityDose1 + session.availableCapacityDose2));
     }
 
     public boolean ageLimitExactly18(Session session) {

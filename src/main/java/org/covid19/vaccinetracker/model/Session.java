@@ -23,6 +23,10 @@ public class Session {
     public String date;
     @JsonProperty("available_capacity")
     public Integer availableCapacity;
+    @JsonProperty("available_capacity_dose1")
+    public Integer availableCapacityDose1;
+    @JsonProperty("available_capacity_dose2")
+    public Integer availableCapacityDose2;
     @JsonProperty("min_age_limit")
     public Integer minAgeLimit;
     @JsonProperty("vaccine")
