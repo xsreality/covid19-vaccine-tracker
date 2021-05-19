@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
@@ -18,6 +19,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @Data
 @Entity
+@EntityListeners(EntityListeners.class)
 @Table(name = "sessions")
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
