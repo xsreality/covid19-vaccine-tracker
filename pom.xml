@@ -12,7 +12,7 @@
 
     <groupId>com.abhinav.covid19</groupId>
     <artifactId>covid19-vaccine-tracker</artifactId>
-    <version>0.1.18-SNAPSHOT</version>
+    <version>0.1.19-SNAPSHOT</version>
     <name>covid19-vaccine-tracker</name>
     <description>Demo project for Spring Boot</description>
     <properties>
@@ -90,6 +90,11 @@
         <dependency>
             <groupId>org.awaitility</groupId>
             <artifactId>awaitility</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

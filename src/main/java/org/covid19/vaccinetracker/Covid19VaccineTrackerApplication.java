@@ -20,49 +20,12 @@ import java.io.File;
 @SpringBootApplication
 public class Covid19VaccineTrackerApplication implements CommandLineRunner {
 
-    @Value("${telegram.db.path}")
-    private String telegramDbPath;
-
-    @Value("${telegram.bot.username}")
-    private String telegramBotUsername;
-
-    @Value("${telegram.bot.token}")
-    private String telegramBotToken;
-
-    @Value("${telegram.creator.id}")
-    private String telegramCreatorId;
-
-    @Value("${telegram.chat.id}")
-    private String telegramChatId;
-
-    @Value("${telegram.enabled}")
-    private boolean telegramEnabled;
-
     public static void main(String[] args) {
         SpringApplication.run(Covid19VaccineTrackerApplication.class, args);
     }
 
     @Override
     public void run(String... args) {
-        if (telegramEnabled) {
-            try {
-                TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-                botsApi.registerBot(telegramBot());
-            } catch (TelegramApiException e) {
-                throw new IllegalStateException("Unable to register Telegram bot", e);
-            }
-        }
     }
 
-    @Bean
-    public TelegramBot telegramBot() {
-        DB db = DBMaker
-                .fileDB(new File(telegramDbPath))
-                .fileMmapEnableIfSupported()
-                .closeOnJvmShutdown()
-                .transactionEnable()
-                .make();
-
-        return new TelegramBot(telegramBotToken, telegramBotUsername, new MapDBContext(db), telegramCreatorId, telegramChatId);
-    }
 }

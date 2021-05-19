@@ -1,0 +1,15 @@
+telegram:
+  enabled: false
+  bot.username: covid19_vaccine_tracker_bot
+  db.path: "/tmp/telegram.db"
+  creator.id: "12345"
+  chat.id: "12345"
+
+spring:
+  flyway:
+    enabled: false
+  datasource:
+    platform: h2
+  jpa:
+    hibernate:
+      ddl-auto: create-drop

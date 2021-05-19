@@ -25,7 +25,7 @@ public class VaccineCentersProcessor {
     }
 
     public boolean hasCapacity(Session session) {
-        return (session.availableCapacityDose1 > 0)
+        return (session.availableCapacityDose1 > 1)
                 && (session.availableCapacity == (session.availableCapacityDose1 + session.availableCapacityDose2));
     }
 

@@ -14,11 +14,13 @@ import org.telegram.abilitybots.api.bot.AbilityBot;
 import org.telegram.abilitybots.api.db.DBContext;
 import org.telegram.abilitybots.api.objects.Ability;
 import org.telegram.abilitybots.api.objects.MessageContext;
+import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
 import java.util.List;
 import java.util.Optional;
@@ -36,6 +38,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
     private static Long CHAT_ID;
     private static Long CHANNEL_ID;
     private TelegramConfig telegramConfig;
+    private TelegramBot telegramBot;
     private BotBackend botBackend;
     private KafkaTemplate<String, UserRequest> userRequestKafkaTemplate;
     private StateRepository stateRepository;
@@ -152,6 +155,15 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
     public void setApplicationContext(@NotNull ApplicationContext applicationContext) throws BeansException {
         this.botBackend = (BotBackend) applicationContext.getBean("botBackend");
         this.stateRepository = (StateRepository) applicationContext.getBean("stateRepository");
+        this.telegramBot = (TelegramBot) applicationContext.getBean("telegramBot");
         this.telegramConfig = (TelegramConfig) applicationContext.getBean("telegramConfig");
+        if (telegramConfig.isEnabled()) {
+            try {
+                TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
+                botsApi.registerBot(this.telegramBot);
+            } catch (TelegramApiException e) {
+                throw new IllegalStateException("Unable to register Telegram bot", e);
+            }
+        }
     }
 }
