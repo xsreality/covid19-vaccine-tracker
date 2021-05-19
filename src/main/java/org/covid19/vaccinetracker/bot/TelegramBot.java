@@ -13,6 +13,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.telegram.abilitybots.api.bot.AbilityBot;
 import org.telegram.abilitybots.api.db.DBContext;
 import org.telegram.abilitybots.api.objects.Ability;
+import org.telegram.abilitybots.api.objects.MessageContext;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -24,6 +25,7 @@ import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 
+import static java.util.Objects.nonNull;
 import static org.telegram.abilitybots.api.objects.Flag.MESSAGE;
 import static org.telegram.abilitybots.api.objects.Locality.ALL;
 import static org.telegram.abilitybots.api.objects.Privacy.PUBLIC;
@@ -105,12 +107,16 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                                 localizedAckMessage, ctx.chatId());
 
                         // send an update to Bot channel
-                        String channelMsg = String.format("User %s (%s, %s) set notification preference for pin code(s) %s",
-                                Utils.translateName(ctx.update().getMessage().getChat()), chatId, ctx.user().getUserName(), pincodes);
+                        String channelMsg = String.format("%s (%s, %s) set notification preference for pin code(s) %s",
+                                Utils.translateName(ctx.update().getMessage().getChat()), chatId, getUserName(ctx), pincodes);
                         silent.send(channelMsg, CHANNEL_ID);
                     }
                 })
                 .build();
+    }
+
+    private String getUserName(MessageContext ctx) {
+        return nonNull(ctx.user().getUserName()) ? ctx.user().getUserName() : "";
     }
 
     private String getChatId(Update update) {

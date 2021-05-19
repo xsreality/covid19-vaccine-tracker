@@ -16,4 +16,6 @@ public interface CenterRepository extends CrudRepository<CenterEntity, Long> {
             "WHERE c.pincode = :pincode " +
             "AND s.processedAt IS NULL")
     List<CenterEntity> findCenterEntityByPincodeAndSessionsProcessedAtIsNull(String pincode);
+
+    void deleteBySessionsDate(String date);
 }

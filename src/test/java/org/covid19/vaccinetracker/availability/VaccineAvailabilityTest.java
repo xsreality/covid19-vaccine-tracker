@@ -11,7 +11,6 @@ import org.covid19.vaccinetracker.persistence.mariadb.entity.District;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.State;
 import org.covid19.vaccinetracker.reconciliation.PincodeReconciliation;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
-import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -59,7 +58,7 @@ public class VaccineAvailabilityTest {
         AvailabilityStats availabilityStats = new AvailabilityStats();
         VaccineAvailability vaccineAvailability = new VaccineAvailability(cowinApiClient, vaccinePersistence,
                 new VaccineCentersProcessor(), userRequestManager, availabilityStats,
-                notification, pincodeReconciliation, botService);
+                notification, botService);
         vaccineAvailability.refreshVaccineAvailabilityFromCowinViaKafka();
 
         verify(vaccinePersistence, times(1)).persistVaccineCenters(vaccineCenters);
@@ -78,7 +77,7 @@ public class VaccineAvailabilityTest {
         AvailabilityStats availabilityStats = new AvailabilityStats();
         VaccineAvailability vaccineAvailability = new VaccineAvailability(cowinApiClient, vaccinePersistence,
                 new VaccineCentersProcessor(), userRequestManager, availabilityStats,
-                notification, pincodeReconciliation, botService);
+                notification, botService);
         vaccineAvailability.refreshVaccineAvailabilityFromCowinViaKafka();
 
         verify(vaccinePersistence, times(0)).persistVaccineCenters(any());
