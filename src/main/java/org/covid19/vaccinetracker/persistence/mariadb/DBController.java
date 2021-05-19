@@ -1,6 +1,5 @@
 package org.covid19.vaccinetracker.persistence.mariadb;
 
-import org.covid19.vaccinetracker.availability.VaccineAvailability;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.State;
 import org.covid19.vaccinetracker.persistence.mariadb.repository.CenterRepository;
 import org.covid19.vaccinetracker.persistence.mariadb.repository.DistrictRepository;
@@ -18,14 +17,12 @@ public class DBController {
     private final StateRepository stateRepository;
     private final DistrictRepository districtRepository;
     private final PincodeRepository pincodeRepository;
-    private final VaccineAvailability vaccineAvailability;
     private final CenterRepository centerRepository;
 
-    public DBController(StateRepository stateRepository, DistrictRepository districtRepository, PincodeRepository pincodeRepository, VaccineAvailability vaccineAvailability, CenterRepository centerRepository) {
+    public DBController(StateRepository stateRepository, DistrictRepository districtRepository, PincodeRepository pincodeRepository, CenterRepository centerRepository) {
         this.stateRepository = stateRepository;
         this.districtRepository = districtRepository;
         this.pincodeRepository = pincodeRepository;
-        this.vaccineAvailability = vaccineAvailability;
         this.centerRepository = centerRepository;
     }
 

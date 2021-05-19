@@ -31,4 +31,6 @@ public interface VaccinePersistence {
     List<VaccineCenters> fetchAllVaccineCenters();
 
     void markProcessed(VaccineCenters vaccineCenters);
+
+    void cleanupOldCenters(String date);
 }

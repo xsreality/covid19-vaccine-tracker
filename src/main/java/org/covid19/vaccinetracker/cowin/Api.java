@@ -13,6 +13,7 @@ import org.covid19.vaccinetracker.reconciliation.PincodeReconciliation;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -110,6 +111,12 @@ public class Api {
         VaccineCenters vaccineCenters = new VaccineCenters();
         vaccineCenters.setCenters(Collections.singletonList(center));
         this.vaccinePersistence.persistVaccineCenters(pincode, vaccineCenters);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/delete/vaccine_centers")
+    public ResponseEntity<?> cleanupVaccineCentersByDate(@RequestParam String date) {
+        this.vaccinePersistence.cleanupOldCenters(date);
         return ResponseEntity.ok().build();
     }
 

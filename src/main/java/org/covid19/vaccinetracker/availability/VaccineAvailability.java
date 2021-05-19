@@ -4,8 +4,8 @@ import org.covid19.vaccinetracker.bot.BotService;
 import org.covid19.vaccinetracker.cowin.CowinApiClient;
 import org.covid19.vaccinetracker.notifications.VaccineCentersNotification;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
-import org.covid19.vaccinetracker.reconciliation.PincodeReconciliation;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
+import org.covid19.vaccinetracker.utils.Utils;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -26,19 +26,17 @@ public class VaccineAvailability {
     private final UserRequestManager userRequestManager;
     private final AvailabilityStats availabilityStats;
     private final VaccineCentersNotification vaccineCentersNotification;
-    private final PincodeReconciliation pincodeReconciliation;
     private final BotService botService;
 
     public VaccineAvailability(CowinApiClient cowinApiClient, VaccinePersistence vaccinePersistence,
                                VaccineCentersProcessor vaccineCentersProcessor, UserRequestManager userRequestManager,
-                               AvailabilityStats availabilityStats, VaccineCentersNotification vaccineCentersNotification, PincodeReconciliation pincodeReconciliation, BotService botService) {
+                               AvailabilityStats availabilityStats, VaccineCentersNotification vaccineCentersNotification, BotService botService) {
         this.cowinApiClient = cowinApiClient;
         this.vaccinePersistence = vaccinePersistence;
         this.vaccineCentersProcessor = vaccineCentersProcessor;
         this.userRequestManager = userRequestManager;
         this.availabilityStats = availabilityStats;
         this.vaccineCentersNotification = vaccineCentersNotification;
-        this.pincodeReconciliation = pincodeReconciliation;
         this.botService = botService;
     }
 
@@ -47,7 +45,6 @@ public class VaccineAvailability {
         Executors.newSingleThreadExecutor().submit(() -> {
             this.refreshVaccineAvailabilityFromCowinViaKafka();
             this.vaccineCentersNotification.checkUpdatesAndSendNotifications();
-//            this.pincodeReconciliation.reconcilePincodesFromCowin(userRequestManager.fetchAllUserRequests());
         });
     }
 
@@ -90,6 +87,13 @@ public class VaccineAvailability {
                 .flatMap(userRequest -> userRequest.getPincodes().stream())
                 .filter(pincode -> !vaccinePersistence.pincodeExists(pincode))
                 .collect(Collectors.toList());
+    }
+
+    @Scheduled(cron = "0 55 23 * * *", zone = "IST")
+    public void cleanupOldVaccineCenters() {
+        String yesterday = Utils.yesterdayIST();
+        log.info("Deleting Vaccine centers for {}", yesterday);
+        this.vaccinePersistence.cleanupOldCenters(yesterday);
     }
 
     private void introduceDelay() {

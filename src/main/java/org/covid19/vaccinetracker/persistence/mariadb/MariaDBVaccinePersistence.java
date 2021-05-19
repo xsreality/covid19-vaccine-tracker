@@ -14,6 +14,7 @@ import org.covid19.vaccinetracker.persistence.mariadb.repository.PincodeReposito
 import org.covid19.vaccinetracker.persistence.mariadb.repository.SessionRepository;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -150,5 +151,11 @@ public class MariaDBVaccinePersistence implements VaccinePersistence {
     @Override
     public void persistPincode(Pincode pincode) {
         this.pincodeRepository.save(pincode);
+    }
+
+    @Transactional
+    @Override
+    public void cleanupOldCenters(String date) {
+        this.centerRepository.deleteBySessionsDate(date);
     }
 }
