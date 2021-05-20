@@ -75,6 +75,21 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                 }).build();
     }
 
+    public Ability subscriptions() {
+        return Ability.builder().name("subscriptions").info("Show my subscriptions")
+                .locality(ALL).privacy(PUBLIC).input(0).action(ctx -> {
+                    String chatId = getChatId(ctx.update());
+                    final List<String> pincodes = this.botBackend.fetchUserSubscriptions(chatId);
+                    String message;
+                    if (pincodes.isEmpty()) {
+                        message = "You have no pincodes subscribed. Just send pincodes separated by comma (,) to subscribe.";
+                    } else {
+                        message = String.format("You are currently subscribed to pincodes: %s", Utils.joinPincodes(pincodes));
+                    }
+                    silent.send(message, ctx.chatId());
+                }).build();
+    }
+
     public Ability catchAll() {
         return Ability
                 .builder()

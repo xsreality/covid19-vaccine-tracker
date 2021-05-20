@@ -25,4 +25,8 @@ public class BotBackend {
     public void cancelUserRequest(String userId) {
         userRequestManager.acceptUserRequest(userId, emptyList());
     }
+
+    public List<String> fetchUserSubscriptions(String userId) {
+        return userRequestManager.fetchUserPincodes(userId);
+    }
 }

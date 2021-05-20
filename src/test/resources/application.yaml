@@ -5,6 +5,11 @@ telegram:
   creator.id: "12345"
   chat.id: "12345"
 
+topic:
+  user.requests: "user-requests"
+  user.districts: "user-districts"
+  vaccine.centers: "vaccine-centers"
+
 spring:
   flyway:
     enabled: false
