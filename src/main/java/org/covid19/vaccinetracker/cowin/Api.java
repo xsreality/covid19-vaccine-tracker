@@ -28,6 +28,8 @@ import java.util.concurrent.Executors;
 
 import lombok.extern.slf4j.Slf4j;
 
+import static java.util.Collections.emptyList;
+
 @Slf4j
 @RestController
 @RequestMapping("/covid19")
@@ -100,6 +102,12 @@ public class Api {
     @GetMapping("/add/user_request")
     public ResponseEntity<?> addUserRequest(@RequestParam final String chatId, @RequestParam final String pincodes) {
         this.userRequestManager.acceptUserRequest(chatId, Utils.splitPincodes(pincodes));
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/delete/user_request")
+    public ResponseEntity<?> removeUserRequest(@RequestParam final String chatId) {
+        this.userRequestManager.acceptUserRequest(chatId, emptyList());
         return ResponseEntity.ok().build();
     }
 

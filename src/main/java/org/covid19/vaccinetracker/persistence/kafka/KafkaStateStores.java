@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.StreamsBuilderFactoryBean;
 
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -50,6 +51,10 @@ public class KafkaStateStores {
 
     public KeyValueIterator<String, UserRequest> userRequests() {
         return userRequestsStore.all();
+    }
+
+    public List<String> pincodesForUser(String userId) {
+        return userRequestsStore.get(userId).getPincodes();
     }
 
     public KeyValueIterator<String, District> userDistricts() {
