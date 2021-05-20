@@ -7,6 +7,8 @@ import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
 
+import static java.util.Collections.emptyList;
+
 @Slf4j
 @Service
 public class BotBackend {
@@ -18,5 +20,9 @@ public class BotBackend {
 
     public void acceptUserRequest(String userId, List<String> pincodes) {
         userRequestManager.acceptUserRequest(userId, pincodes);
+    }
+
+    public void cancelUserRequest(String userId) {
+        userRequestManager.acceptUserRequest(userId, emptyList());
     }
 }

@@ -38,7 +38,6 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
     private static Long CHAT_ID;
     private static Long CHANNEL_ID;
     private TelegramConfig telegramConfig;
-    private TelegramBot telegramBot;
     private BotBackend botBackend;
     private KafkaTemplate<String, UserRequest> userRequestKafkaTemplate;
     private StateRepository stateRepository;
@@ -55,22 +54,25 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
     }
 
     public Ability start() {
-        return Ability
-                .builder()
-                .name("start")
-                .info("Subscribe to Covid19 Vaccine Tracker")
-                .locality(ALL)
-                .privacy(PUBLIC)
-                .input(0)
-                .action(ctx -> {
+        return Ability.builder().name("start").info("Subscribe to Covid19 Vaccine Tracker")
+                .locality(ALL).privacy(PUBLIC).input(0).action(ctx -> {
                     String message = "Welcome to COVID19 Vaccine Tracker! कोविड-19 वैक्सीन ट्रैकर में आपका स्वागत है!\n\n" +
                             "To automatically receive notification when Vaccine becomes available near you, send your pin code.\n" +
                             "जब आपके पास वैक्सीन उपलब्ध हो जाता है तो अपने आप ही सूचना प्राप्त करने के लिए अपना पिन कोड भेजें।\n\n" +
                             "Stay safe, wear masks and keep social distancing!\n" +
                             "सुरक्षित रहें, मास्क पहनें और सामाजिक दूरी बनाए रखें!";
                     silent.send(message, ctx.chatId());
-                })
-                .build();
+                }).build();
+    }
+
+    public Ability stop() {
+        return Ability.builder().name("stop").info("Stop getting alerts")
+                .locality(ALL).privacy(PUBLIC).input(0).action(ctx -> {
+                    String chatId = getChatId(ctx.update());
+                    this.botBackend.cancelUserRequest(chatId);
+                    String message = "Okay, I will no longer send you any alerts. ठीक है, मैं अब आपको कोई अलर्ट नहीं भेजूंगी।";
+                    silent.send(message, ctx.chatId());
+                }).build();
     }
 
     public Ability catchAll() {
@@ -155,12 +157,12 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
     public void setApplicationContext(@NotNull ApplicationContext applicationContext) throws BeansException {
         this.botBackend = (BotBackend) applicationContext.getBean("botBackend");
         this.stateRepository = (StateRepository) applicationContext.getBean("stateRepository");
-        this.telegramBot = (TelegramBot) applicationContext.getBean("telegramBot");
+//        TelegramBot telegramBot = (TelegramBot) applicationContext.getBean("telegramBot");
         this.telegramConfig = (TelegramConfig) applicationContext.getBean("telegramConfig");
         if (telegramConfig.isEnabled()) {
             try {
                 TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-                botsApi.registerBot(this.telegramBot);
+                botsApi.registerBot(this);
             } catch (TelegramApiException e) {
                 throw new IllegalStateException("Unable to register Telegram bot", e);
             }

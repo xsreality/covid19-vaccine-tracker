@@ -33,6 +33,7 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 
 import static java.time.Duration.ofDays;
+import static java.util.Objects.nonNull;
 import static org.apache.kafka.streams.StreamsConfig.APPLICATION_ID_CONFIG;
 
 @Configuration
@@ -92,6 +93,7 @@ public class KafkaStreamsConfig {
         streamsBuilder.addStateStore(dedupStoreBuilder);
 
         userRequestsTable(streamsBuilder).toStream()
+                .filter((userId, userRequest) -> nonNull(userRequest.getPincodes()) && !userRequest.getPincodes().isEmpty())
                 .flatMapValues((userId, userRequest) -> userRequest.getPincodes())
                 .flatMapValues((userId, pincode) -> vaccinePersistence.fetchDistrictsByPincode(pincode))
                 .transform(() -> new DeduplicationTransformer<>(windowSize.toMillis(), (key, value) -> value, UNIQUE_DISTRICTS_STORE), UNIQUE_DISTRICTS_STORE)
