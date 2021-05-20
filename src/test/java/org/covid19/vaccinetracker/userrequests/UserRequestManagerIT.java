@@ -32,6 +32,7 @@ import static java.util.Objects.isNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.springframework.kafka.test.hamcrest.KafkaMatchers.hasValue;
@@ -80,6 +81,13 @@ public class UserRequestManagerIT {
             }
         });
         assertTrue(recordFound.get());
+    }
+
+    @Test
+    public void testFetchUserPincodes() throws Exception {
+        kafkaTemplate.send(userRequestsTopic, "931543", new UserRequest("931543", asList("110045", "110081"), null)).get();
+        await().atMost(1, SECONDS).until(() -> userRequestManager.fetchAllUserRequests().size() >= 1);
+        assertEquals(asList("110045", "110081"), userRequestManager.fetchUserPincodes("931543"));
     }
 
     @Test

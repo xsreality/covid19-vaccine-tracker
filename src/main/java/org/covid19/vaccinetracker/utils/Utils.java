@@ -4,6 +4,7 @@ import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.JWTParser;
 
+import org.apache.commons.lang3.StringUtils;
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.State;
@@ -106,6 +107,10 @@ public class Utils {
 
     public static List<String> splitPincodes(@NotNull String pincodes) {
         return Arrays.asList(pincodes.trim().split("\\s*,\\s*"));
+    }
+
+    public static String joinPincodes(List<String> pincodes) {
+        return StringUtils.join(pincodes, ',');
     }
 
     public static String translateName(Chat chat) {

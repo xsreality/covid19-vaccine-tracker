@@ -55,6 +55,10 @@ public class UserRequestManager {
         return userRequests;
     }
 
+    public List<String> fetchUserPincodes(String userId) {
+        return kafkaStateStores.pincodesForUser(userId);
+    }
+
     public void acceptUserRequest(String userId, List<String> pincodes) {
         UserRequest request = new UserRequest(userId, pincodes, null);
         kafkaTemplate.setProducerListener(producerListener());
