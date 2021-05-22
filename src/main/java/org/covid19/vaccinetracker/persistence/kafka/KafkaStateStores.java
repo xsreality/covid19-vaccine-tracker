@@ -7,6 +7,7 @@ import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.covid19.vaccinetracker.model.UserRequest;
+import org.covid19.vaccinetracker.model.UsersByPincode;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.District;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
@@ -24,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 public class KafkaStateStores {
     private ReadOnlyKeyValueStore<String, UserRequest> userRequestsStore;
     private ReadOnlyKeyValueStore<String, District> userDistrictsStore;
+    private ReadOnlyKeyValueStore<String, UsersByPincode> usersByPincodeStore;
 
     @Bean
     public CountDownLatch latch(StreamsBuilderFactoryBean fb) {
@@ -39,13 +41,16 @@ public class KafkaStateStores {
     @Bean
     public ApplicationRunner runner(StreamsBuilderFactoryBean fb,
                                     KTable<String, UserRequest> userRequestsTable,
-                                    KTable<String, District> userDistrictsTable) {
+                                    KTable<String, District> userDistrictsTable,
+                                    KTable<String, UsersByPincode> usersByPincodeTable) {
         return args -> {
             latch(fb).await(100, TimeUnit.SECONDS);
             userRequestsStore = fb.getKafkaStreams().store(
                     StoreQueryParameters.fromNameAndType(userRequestsTable.queryableStoreName(), QueryableStoreTypes.keyValueStore()));
             userDistrictsStore = fb.getKafkaStreams().store(
                     StoreQueryParameters.fromNameAndType(userDistrictsTable.queryableStoreName(), QueryableStoreTypes.keyValueStore()));
+            usersByPincodeStore = fb.getKafkaStreams().store(
+                    StoreQueryParameters.fromNameAndType(usersByPincodeTable.queryableStoreName(), QueryableStoreTypes.keyValueStore()));
         };
     }
 
@@ -59,5 +64,13 @@ public class KafkaStateStores {
 
     public KeyValueIterator<String, District> userDistricts() {
         return userDistrictsStore.all();
+    }
+
+    public KeyValueIterator<String, UsersByPincode> usersByPincode() {
+        return usersByPincodeStore.all();
+    }
+
+    public UsersByPincode usersByPincode(String pincode) {
+        return usersByPincodeStore.get(pincode);
     }
 }

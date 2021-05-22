@@ -5,6 +5,7 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.covid19.vaccinetracker.model.UserRequest;
+import org.covid19.vaccinetracker.model.UsersByPincode;
 import org.covid19.vaccinetracker.persistence.kafka.KafkaStateStores;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.District;
 import org.jetbrains.annotations.NotNull;
@@ -77,6 +78,10 @@ public class UserRequestManager {
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException("Error producing user request to Kafka", e);
         }
+    }
+
+    public UsersByPincode fetchUsersByPincode(String pincode) {
+        return this.kafkaStateStores.usersByPincode(pincode);
     }
 
     @NotNull

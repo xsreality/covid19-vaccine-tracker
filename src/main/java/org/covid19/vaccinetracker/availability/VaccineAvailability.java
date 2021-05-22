@@ -85,6 +85,7 @@ public class VaccineAvailability {
         return userRequestManager.fetchAllUserRequests()
                 .stream()
                 .flatMap(userRequest -> userRequest.getPincodes().stream())
+                .distinct()
                 .filter(pincode -> !vaccinePersistence.pincodeExists(pincode))
                 .collect(Collectors.toList());
     }
