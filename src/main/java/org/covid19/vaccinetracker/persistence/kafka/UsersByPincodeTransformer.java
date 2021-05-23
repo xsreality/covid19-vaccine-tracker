@@ -33,9 +33,9 @@ public class UsersByPincodeTransformer implements Transformer<String, UserReques
 
     @Override
     public KeyValue<String, UsersByPincode> transform(String userId, UserRequest userRequest) {
+        log.debug("Entering transform for {}", userRequest);
         KeyValue<String, UsersByPincode> toForward = null;
 
-        // TODO: handle empty pincode (/stop), should cleanup old requests of this user
         if (userRequest.getPincodes().isEmpty()) {
             log.debug("Removing all references to {} in state store", userId);
             cleanupUserInStateStore(userId, Set.of());
@@ -43,7 +43,6 @@ public class UsersByPincodeTransformer implements Transformer<String, UserReques
         }
 
         /*
-         * TODO: handle cleanup of old requests when new one arrives for same user
          * e.g. given 2 events
          * user A -> 177001
          * user A -> 177401

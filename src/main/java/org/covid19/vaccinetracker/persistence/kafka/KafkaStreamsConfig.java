@@ -98,7 +98,9 @@ public class KafkaStreamsConfig {
 
         streamsBuilder.addStateStore(dedupStoreBuilder);
 
-        userRequestsTable(streamsBuilder).toStream()
+        userRequestsTable(streamsBuilder)
+                .toStream()
+                .peek((key, value) -> log.debug("districts streaming record {}", value))
                 .filter((userId, userRequest) -> nonNull(userRequest.getPincodes()) && !userRequest.getPincodes().isEmpty())
                 .flatMapValues((userId, userRequest) -> userRequest.getPincodes())
                 .flatMapValues((userId, pincode) -> vaccinePersistence.fetchDistrictsByPincode(pincode))
@@ -120,12 +122,13 @@ public class KafkaStreamsConfig {
         final StoreBuilder<KeyValueStore<String, UsersByPincode>> aggregateStoreBuilder = Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore(USERS_BY_PINCODE_AGGREGATE_STORE),
                 Serdes.String(), new UsersByPincodeSerde()
-        ).withCachingEnabled().withLoggingDisabled();
+        ).withCachingDisabled().withLoggingDisabled();
 
         streamsBuilder.addStateStore(aggregateStoreBuilder);
 
         userRequestsTable(streamsBuilder)
                 .toStream()
+                .peek((key, value) -> log.debug("streaming record {}", value))
                 .filter((userId, userRequest) -> nonNull(userRequest.getPincodes()))
                 .transform(() -> new UsersByPincodeTransformer(USERS_BY_PINCODE_AGGREGATE_STORE),
                         USERS_BY_PINCODE_AGGREGATE_STORE)
@@ -134,6 +137,6 @@ public class KafkaStreamsConfig {
         return streamsBuilder.table(usersByPincodeTopic,
                 Materialized.<String, UsersByPincode, KeyValueStore<Bytes, byte[]>>as(
                         Stores.inMemoryKeyValueStore("user-by-pincodes-inmemory").name()
-                ).withKeySerde(Serdes.String()).withValueSerde(new UsersByPincodeSerde()));
+                ).withKeySerde(Serdes.String()).withValueSerde(new UsersByPincodeSerde()).withCachingDisabled());
     }
 }
