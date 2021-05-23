@@ -127,7 +127,7 @@ public class KafkaStreamsConfig {
         userRequestsTable(streamsBuilder)
                 .toStream()
                 .filter((userId, userRequest) -> nonNull(userRequest.getPincodes()) && !userRequest.getPincodes().isEmpty())
-                .transform(() -> new UsersByPincodeProcessor(USERS_BY_PINCODE_AGGREGATE_STORE),
+                .transform(() -> new UsersByPincodeTransformer(USERS_BY_PINCODE_AGGREGATE_STORE),
                         USERS_BY_PINCODE_AGGREGATE_STORE)
                 .to(usersByPincodeTopic, Produced.with(Serdes.String(), new UsersByPincodeSerde()));
 

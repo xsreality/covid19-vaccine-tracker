@@ -12,12 +12,12 @@ import java.util.HashSet;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class UsersByPincodeProcessor implements Transformer<String, UserRequest, KeyValue<String, UsersByPincode>> {
+public class UsersByPincodeTransformer implements Transformer<String, UserRequest, KeyValue<String, UsersByPincode>> {
     private ProcessorContext ctx;
     private KeyValueStore<String, UsersByPincode> aggregateStore;
     private final String AGGREGATE_STORE_NAME;
 
-    public UsersByPincodeProcessor(String aggregateStoreName) {
+    public UsersByPincodeTransformer(String aggregateStoreName) {
         this.AGGREGATE_STORE_NAME = aggregateStoreName;
     }
 
