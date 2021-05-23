@@ -56,6 +56,16 @@ public class UserRequestManager {
         return userRequests;
     }
 
+    public List<UsersByPincode> fetchAllUsersByPincode() {
+        final List<UsersByPincode> usersByPincodes = new ArrayList<>();
+        final KeyValueIterator<String, UsersByPincode> iterator = this.kafkaStateStores.usersByPincode();
+        while (iterator.hasNext()) {
+            final KeyValue<String, UsersByPincode> request = iterator.next();
+            usersByPincodes.add(request.value);
+        }
+        return usersByPincodes;
+    }
+
     public List<String> fetchUserPincodes(String userId) {
         return kafkaStateStores.pincodesForUser(userId);
     }

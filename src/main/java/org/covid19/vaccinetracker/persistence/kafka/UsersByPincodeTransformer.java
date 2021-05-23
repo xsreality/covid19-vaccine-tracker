@@ -9,6 +9,7 @@ import org.covid19.vaccinetracker.model.UserRequest;
 import org.covid19.vaccinetracker.model.UsersByPincode;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +39,7 @@ public class UsersByPincodeTransformer implements Transformer<String, UserReques
 
         if (userRequest.getPincodes().isEmpty()) {
             log.debug("Removing all references to {} in state store", userId);
-            cleanupUserInStateStore(userId, Set.of());
+            cleanupUserInStateStore(userId, List.of());
             return null; // nothing else to forward
         }
 
@@ -59,8 +60,9 @@ public class UsersByPincodeTransformer implements Transformer<String, UserReques
             log.debug("aggregate: {}", aggregatedUsersByPincode);
             ctx.forward(pincode, aggregatedUsersByPincode);
 
-            cleanupUserInStateStore(userId, Set.of(pincode));
         });
+
+        cleanupUserInStateStore(userId, userRequest.getPincodes());
 
         return toForward;
     }
@@ -70,19 +72,23 @@ public class UsersByPincodeTransformer implements Transformer<String, UserReques
      * removes any references of given user. exceptionPincodes
      * are not modified.
      */
-    private void cleanupUserInStateStore(String userId, Set<String> exceptionPincodes) {
+    private void cleanupUserInStateStore(String userId, List<String> exceptionPincodes) {
         final KeyValueIterator<String, UsersByPincode> it = aggregateStore.all();
+        log.debug("Starting cleanup");
         while (it.hasNext()) {
             final KeyValue<String, UsersByPincode> entry = it.next();
             String pincode = entry.key;
+            log.debug("pincode: {}", pincode);
 
             if (exceptionPincodes.contains(pincode)) { // skip excepted pincodes
+                log.debug("pincode in exception list: {}", pincode);
                 continue;
             }
 
             final Set<String> users = entry.value.getUsers();
 
             if (users.remove(userId)) {
+                log.debug("Removing subscribed user {} for pincode {}", userId, pincode);
                 final UsersByPincode updated = new UsersByPincode(pincode, users);
                 aggregateStore.put(pincode, updated);
                 ctx.forward(pincode, updated);

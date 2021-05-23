@@ -115,4 +115,14 @@ public class UsersByPincodeTransformerTest {
         assertThat(store.get("411038"), is(equalTo(new UsersByPincode("411038", Set.of()))));
         assertThat(outputTopic.readKeyValue(), is(equalTo(new KeyValue<>("411038", new UsersByPincode("411038", Set.of())))));
     }
+
+    @Test
+    public void shouldUpdateStoreWhenUserSendsMultiplePincodes() {
+        // User 4932 sets 2 pincodes 682026, 682027
+        inputTopic.pipeInput("4932", new UserRequest("4932", List.of("682026", "682027"), null));
+
+        // store should have user 4932 for both pincodes 682026, 682027
+        assertThat(store.get("682027"), is(equalTo(new UsersByPincode("682027", Set.of("4932")))));
+        assertThat(store.get("682026"), is(equalTo(new UsersByPincode("682026", Set.of("4932")))));
+    }
 }

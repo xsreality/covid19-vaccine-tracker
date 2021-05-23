@@ -67,8 +67,8 @@ public class Api {
     }
 
     @GetMapping("/fetch/users_by_pincodes")
-    public ResponseEntity<UsersByPincode> fetchUsersByPincode(@RequestParam final String pincode) {
-        return ResponseEntity.ok(userRequestManager.fetchUsersByPincode(pincode));
+    public ResponseEntity<List<UsersByPincode>> fetchUsersByPincode() {
+        return ResponseEntity.ok(userRequestManager.fetchAllUsersByPincode());
     }
 
     @GetMapping("/fetch/user_districts")

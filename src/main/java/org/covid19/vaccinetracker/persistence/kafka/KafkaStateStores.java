@@ -20,6 +20,8 @@ import java.util.concurrent.TimeUnit;
 
 import lombok.extern.slf4j.Slf4j;
 
+import static java.util.Optional.ofNullable;
+
 @Slf4j
 @Configuration
 public class KafkaStateStores {
@@ -59,7 +61,9 @@ public class KafkaStateStores {
     }
 
     public List<String> pincodesForUser(String userId) {
-        return userRequestsStore.get(userId).getPincodes();
+        return ofNullable(userRequestsStore.get(userId))
+                .orElseGet(() -> new UserRequest(userId, List.of(), null))
+                .getPincodes();
     }
 
     public KeyValueIterator<String, District> userDistricts() {
