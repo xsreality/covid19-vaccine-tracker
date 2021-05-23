@@ -4,6 +4,7 @@ import org.covid19.vaccinetracker.availability.VaccineAvailability;
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.model.UserRequest;
+import org.covid19.vaccinetracker.model.UsersByPincode;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.notifications.DistrictNotifications;
 import org.covid19.vaccinetracker.notifications.VaccineCentersNotification;
@@ -63,6 +64,11 @@ public class Api {
     @GetMapping("/fetch/user_request")
     public ResponseEntity<List<UserRequest>> fetchUserRequests() {
         return ResponseEntity.ok(userRequestManager.fetchAllUserRequests());
+    }
+
+    @GetMapping("/fetch/users_by_pincodes")
+    public ResponseEntity<UsersByPincode> fetchUsersByPincode(@RequestParam final String pincode) {
+        return ResponseEntity.ok(userRequestManager.fetchUsersByPincode(pincode));
     }
 
     @GetMapping("/fetch/user_districts")
