@@ -3,11 +3,13 @@ package org.covid19.vaccinetracker.persistence.kafka;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
+import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.covid19.vaccinetracker.model.UserRequest;
 import org.covid19.vaccinetracker.model.UsersByPincode;
 
 import java.util.HashSet;
+import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -23,7 +25,7 @@ public class UsersByPincodeTransformer implements Transformer<String, UserReques
 
     @Override
     public void init(ProcessorContext context) {
-        log.info("inside init() method)");
+        log.debug("UsersByPincodeTransformer init() called)");
         this.ctx = context;
         //noinspection unchecked
         this.aggregateStore = (KeyValueStore<String, UsersByPincode>) context.getStateStore(this.AGGREGATE_STORE_NAME);
@@ -34,6 +36,11 @@ public class UsersByPincodeTransformer implements Transformer<String, UserReques
         KeyValue<String, UsersByPincode> toForward = null;
 
         // TODO: handle empty pincode (/stop), should cleanup old requests of this user
+        if (userRequest.getPincodes().isEmpty()) {
+            log.debug("Removing all references to {} in state store", userId);
+            cleanupUserInStateStore(userId, Set.of());
+            return null; // nothing else to forward
+        }
 
         /*
          * TODO: handle cleanup of old requests when new one arrives for same user
@@ -52,10 +59,36 @@ public class UsersByPincodeTransformer implements Transformer<String, UserReques
 
             log.debug("aggregate: {}", aggregatedUsersByPincode);
             ctx.forward(pincode, aggregatedUsersByPincode);
+
+            cleanupUserInStateStore(userId, Set.of(pincode));
         });
 
-
         return toForward;
+    }
+
+    /*
+     * Iterates through all pincodes in state store and
+     * removes any references of given user. exceptionPincodes
+     * are not modified.
+     */
+    private void cleanupUserInStateStore(String userId, Set<String> exceptionPincodes) {
+        final KeyValueIterator<String, UsersByPincode> it = aggregateStore.all();
+        while (it.hasNext()) {
+            final KeyValue<String, UsersByPincode> entry = it.next();
+            String pincode = entry.key;
+
+            if (exceptionPincodes.contains(pincode)) { // skip excepted pincodes
+                continue;
+            }
+
+            final Set<String> users = entry.value.getUsers();
+
+            if (users.remove(userId)) {
+                final UsersByPincode updated = new UsersByPincode(pincode, users);
+                aggregateStore.put(pincode, updated);
+                ctx.forward(pincode, updated);
+            }
+        }
     }
 
     private void maybeInitializeNewEventInStateStore(final String eventId) {

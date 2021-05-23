@@ -137,9 +137,22 @@ public class UserRequestManagerIT {
         await().atMost(5, SECONDS).until(() -> nonNull(userRequestManager.fetchUsersByPincode("751010")));
         await().atMost(5, SECONDS).until(() -> userRequestManager.fetchUsersByPincode("751010").getUsers().contains("112233"));
 
-        // Add another user request for same pincode and and verify topology updated for usersByPincode
+        // Add another user request for same pincode and and verify store updated for usersByPincode
         kafkaTemplate.send(userRequestsTopic, "112234", new UserRequest("112234", List.of("751010"), null)).get();
         await().atMost(5, SECONDS).until(() -> userRequestManager.fetchUsersByPincode("751010").getUsers().containsAll(Set.of("112233", "112234")));
+
+        // Update user request of 112233 from pincode 751010 to 847226
+        kafkaTemplate.send(userRequestsTopic, "112233", new UserRequest("112233", List.of("847226"), null)).get();
+        // verify store updated for pincode 847226
+        await().atMost(5, SECONDS).until(() -> nonNull(userRequestManager.fetchUsersByPincode("847226")));
+        await().atMost(5, SECONDS).until(() -> userRequestManager.fetchUsersByPincode("847226").getUsers().contains("112233"));
+        // verify store updated for pincode 751010
+        await().atMost(5, SECONDS).until(() -> !userRequestManager.fetchUsersByPincode("751010").getUsers().contains("112233"));
+
+        // Terminate subscription of user 112233
+        kafkaTemplate.send(userRequestsTopic, "112233", new UserRequest("112233", List.of(), null)).get();
+        // verify store contains no references to user 112233
+        await().atMost(5, SECONDS).until(() -> !userRequestManager.fetchUsersByPincode("847226").getUsers().contains("112233"));
     }
 
     private <K, V> Consumer<K, V> buildConsumer(String groupId) {

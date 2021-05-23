@@ -120,13 +120,13 @@ public class KafkaStreamsConfig {
         final StoreBuilder<KeyValueStore<String, UsersByPincode>> aggregateStoreBuilder = Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore(USERS_BY_PINCODE_AGGREGATE_STORE),
                 Serdes.String(), new UsersByPincodeSerde()
-        ).withCachingEnabled();
+        ).withCachingEnabled().withLoggingDisabled();
 
         streamsBuilder.addStateStore(aggregateStoreBuilder);
 
         userRequestsTable(streamsBuilder)
                 .toStream()
-                .filter((userId, userRequest) -> nonNull(userRequest.getPincodes()) && !userRequest.getPincodes().isEmpty())
+                .filter((userId, userRequest) -> nonNull(userRequest.getPincodes()))
                 .transform(() -> new UsersByPincodeTransformer(USERS_BY_PINCODE_AGGREGATE_STORE),
                         USERS_BY_PINCODE_AGGREGATE_STORE)
                 .to(usersByPincodeTopic, Produced.with(Serdes.String(), new UsersByPincodeSerde()));

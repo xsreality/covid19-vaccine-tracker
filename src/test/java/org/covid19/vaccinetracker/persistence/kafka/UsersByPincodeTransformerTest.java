@@ -75,10 +75,10 @@ public class UsersByPincodeTransformerTest {
 
     @Test
     public void shouldFlushStoreForFirstInput() {
-        inputTopic.pipeInput("1234", new UserRequest("1234", List.of("110092"), null));
+        inputTopic.pipeInput("9999", new UserRequest("9999", List.of("110092"), null));
         final TestRecord<String, UsersByPincode> record = outputTopic.readRecord();
         assertThat(record.key(), is(equalTo("110092")));
-        assertThat(record.value(), is(equalTo(new UsersByPincode("110092", Set.of("1234")))));
+        assertThat(record.value(), is(equalTo(new UsersByPincode("110092", Set.of("9999")))));
         assertThat(outputTopic.isEmpty(), is(true));
     }
 
@@ -113,5 +113,6 @@ public class UsersByPincodeTransformerTest {
 
         // store should have no users for pincode 411038
         assertThat(store.get("411038"), is(equalTo(new UsersByPincode("411038", Set.of()))));
+        assertThat(outputTopic.readKeyValue(), is(equalTo(new KeyValue<>("411038", new UsersByPincode("411038", Set.of())))));
     }
 }
