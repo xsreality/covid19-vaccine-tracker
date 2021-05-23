@@ -15,6 +15,14 @@ telegram:
   bot.username: covid19_vaccine_tracker_bot
   db.path: "/tmp/telegram.db"
 
+jobs:
+  cron:
+    vaccine.availability: "0 0/5 6-23 * * *"
+    district.notifications: "0 4/5 6-23 * * *"
+    pincode.reconciliation: "0 0 6-23 * * *"
+    cowin.api.auth: "0 3/15 6-23 * * *"
+    db.cleanup: "0 55 23 * * *"
+
 logging:
   level:
     org.apache.kafka.streams: INFO

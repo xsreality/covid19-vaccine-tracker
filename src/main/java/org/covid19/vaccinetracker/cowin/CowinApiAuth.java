@@ -30,7 +30,7 @@ public class CowinApiAuth {
         this.cowinConfig = cowinConfig;
     }
 
-    @Scheduled(cron = "0 3/15 6-23 * * *", zone = "IST")
+    @Scheduled(cron = "${jobs.cron.cowin.api.auth:-}", zone = "IST")
     public void refreshCowinToken() {
         log.info("Refreshing Cowin Auth Token");
         if (this.awaitingOtp.get()) {

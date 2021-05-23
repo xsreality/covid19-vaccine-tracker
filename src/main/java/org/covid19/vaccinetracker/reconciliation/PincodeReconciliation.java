@@ -37,7 +37,7 @@ public class PincodeReconciliation {
         this.botService = botService;
     }
 
-    @Scheduled(cron = "0 0 6-23 * * *", zone = "IST")
+    @Scheduled(cron = "${jobs.cron.pincode.reconciliation:-}", zone = "IST")
     public void pincodesReconciliationJob() {
         this.reconcilePincodesFromCowin(userRequestManager.fetchAllUserRequests());
     }
