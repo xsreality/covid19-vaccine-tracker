@@ -2,10 +2,13 @@ package org.covid19.vaccinetracker.availability;
 
 import org.covid19.vaccinetracker.bot.BotService;
 import org.covid19.vaccinetracker.cowin.CowinApiClient;
+import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.notifications.VaccineCentersNotification;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.covid19.vaccinetracker.utils.Utils;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +23,9 @@ import static java.util.Objects.isNull;
 @Slf4j
 @Service
 public class VaccineAvailability {
+    @Value("${topic.updated.pincodes}")
+    private String updatedPincodesTopic;
+
     private final CowinApiClient cowinApiClient;
     private final VaccinePersistence vaccinePersistence;
     private final VaccineCentersProcessor vaccineCentersProcessor;
@@ -27,10 +33,11 @@ public class VaccineAvailability {
     private final AvailabilityStats availabilityStats;
     private final VaccineCentersNotification vaccineCentersNotification;
     private final BotService botService;
+    private final KafkaTemplate<String, String> updatedPincodesKafkaTemplate;
 
     public VaccineAvailability(CowinApiClient cowinApiClient, VaccinePersistence vaccinePersistence,
                                VaccineCentersProcessor vaccineCentersProcessor, UserRequestManager userRequestManager,
-                               AvailabilityStats availabilityStats, VaccineCentersNotification vaccineCentersNotification, BotService botService) {
+                               AvailabilityStats availabilityStats, VaccineCentersNotification vaccineCentersNotification, BotService botService, KafkaTemplate<String, String> updatedPincodesKafkaTemplate) {
         this.cowinApiClient = cowinApiClient;
         this.vaccinePersistence = vaccinePersistence;
         this.vaccineCentersProcessor = vaccineCentersProcessor;
@@ -38,6 +45,7 @@ public class VaccineAvailability {
         this.availabilityStats = availabilityStats;
         this.vaccineCentersNotification = vaccineCentersNotification;
         this.botService = botService;
+        this.updatedPincodesKafkaTemplate = updatedPincodesKafkaTemplate;
     }
 
     @Scheduled(cron = "${jobs.cron.vaccine.availability:-}", zone = "IST")
@@ -66,7 +74,16 @@ public class VaccineAvailability {
                 })
                 .filter(vaccineCentersProcessor::areVaccineCentersAvailable)
                 .filter(vaccineCentersProcessor::areVaccineCentersAvailableFor18plus)
-                .forEach(vaccinePersistence::persistVaccineCenters);
+                .forEach(vaccineCenters -> {
+                    vaccinePersistence.persistVaccineCenters(vaccineCenters);
+                    vaccineCenters.getCenters()
+                            .stream()
+                            .filter(Center::areVaccineCentersAvailableFor18plus)
+                            .map(Center::getPincode)
+                            .map(String::valueOf)
+                            .distinct()
+                            .forEach(pincode -> updatedPincodesKafkaTemplate.send(updatedPincodesTopic, pincode, pincode));
+                });
 
         availabilityStats.noteEndTime();
         final String message = String.format("[AVAILABILITY] Districts: %d, Total API calls: %d (protected=%s), Failed API calls: %d, Time taken: %s",

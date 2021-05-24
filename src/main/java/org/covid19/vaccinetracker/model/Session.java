@@ -34,4 +34,16 @@ public class Session {
     @JsonProperty("slots")
     public List<String> slots = null;
 
+    public boolean ageLimit18AndAbove() {
+        return minAgeLimit >= 18;
+    }
+
+    public boolean ageLimitExactly18() {
+        return minAgeLimit == 18;
+    }
+
+    public boolean hasCapacity() {
+        return (availableCapacityDose1 > 1)
+                && (availableCapacity == (availableCapacityDose1 + availableCapacityDose2));
+    }
 }

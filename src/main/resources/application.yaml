@@ -8,7 +8,7 @@ topic:
   user.requests: "user-requests"
   user.districts: "user-districts"
   user.bypincode: "users-by-pincode"
-  vaccine.centers: "vaccine-centers"
+  updated.pincodes: "updated-pincodes"
 
 telegram:
   enabled: true

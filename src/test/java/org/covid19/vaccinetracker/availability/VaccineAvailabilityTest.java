@@ -9,19 +9,18 @@ import org.covid19.vaccinetracker.notifications.VaccineCentersNotification;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.District;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.State;
-import org.covid19.vaccinetracker.reconciliation.PincodeReconciliation;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.kafka.core.KafkaTemplate;
 
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
@@ -43,10 +42,10 @@ public class VaccineAvailabilityTest {
     private VaccineCentersNotification notification;
 
     @Mock
-    private PincodeReconciliation pincodeReconciliation;
+    private BotService botService;
 
     @Mock
-    private BotService botService;
+    private KafkaTemplate<String, String> updatedPincodesKafkaTemplate;
 
     @Test
     public void testRefreshVaccineAvailabilityFromCowinViaKafka_happyScenario() {
@@ -58,7 +57,7 @@ public class VaccineAvailabilityTest {
         AvailabilityStats availabilityStats = new AvailabilityStats();
         VaccineAvailability vaccineAvailability = new VaccineAvailability(cowinApiClient, vaccinePersistence,
                 new VaccineCentersProcessor(), userRequestManager, availabilityStats,
-                notification, botService);
+                notification, botService, updatedPincodesKafkaTemplate);
         vaccineAvailability.refreshVaccineAvailabilityFromCowinViaKafka();
 
         verify(vaccinePersistence, times(1)).persistVaccineCenters(vaccineCenters);
@@ -77,7 +76,7 @@ public class VaccineAvailabilityTest {
         AvailabilityStats availabilityStats = new AvailabilityStats();
         VaccineAvailability vaccineAvailability = new VaccineAvailability(cowinApiClient, vaccinePersistence,
                 new VaccineCentersProcessor(), userRequestManager, availabilityStats,
-                notification, botService);
+                notification, botService, updatedPincodesKafkaTemplate);
         vaccineAvailability.refreshVaccineAvailabilityFromCowinViaKafka();
 
         verify(vaccinePersistence, times(0)).persistVaccineCenters(any());
