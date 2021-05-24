@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -92,6 +93,31 @@ public class UserRequestManager {
 
     public UsersByPincode fetchUsersByPincode(String pincode) {
         return this.kafkaStateStores.usersByPincode(pincode);
+    }
+
+    /**
+     * Reads the user requests state store and
+     * produces each request again to the user-requests topic
+     * Useful when adding new topology that needs to be populated
+     */
+    public void regenerateUserRequests() {
+        final KeyValueIterator<String, UserRequest> requests = kafkaStateStores.userRequests();
+        AtomicInteger count = new AtomicInteger();
+        requests.forEachRemaining(entry -> {
+            List<String> updatedPincodes = entry.value.getPincodes();
+            updatedPincodes.add("999999");
+
+            kafkaTemplate.send(userRequestsTopic, entry.key, new UserRequest(entry.value.getChatId(), updatedPincodes, entry.value.getLastNotifiedAt()));
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            updatedPincodes.removeAll(List.of("999999"));
+            kafkaTemplate.send(userRequestsTopic, entry.key, entry.value);
+            count.getAndIncrement();
+        });
+        log.info("Reloaded {} user requests", count);
     }
 
     @NotNull

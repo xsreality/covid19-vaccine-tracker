@@ -105,6 +105,12 @@ public class Api {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/reload/user_request")
+    public ResponseEntity<?> reloadUserRequests() {
+        this.userRequestManager.regenerateUserRequests();
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/add/user_request")
     public ResponseEntity<?> addUserRequest(@RequestParam final String chatId, @RequestParam final String pincodes) {
         if (pincodes.trim().isEmpty()) {

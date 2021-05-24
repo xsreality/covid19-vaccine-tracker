@@ -35,7 +35,6 @@ public class UsersByPincodeTransformer implements Transformer<String, UserReques
     @Override
     public KeyValue<String, UsersByPincode> transform(String userId, UserRequest userRequest) {
         log.debug("Entering transform for {}", userRequest);
-        KeyValue<String, UsersByPincode> toForward = null;
 
         if (userRequest.getPincodes().isEmpty()) {
             log.debug("Removing all references to {} in state store", userId);
@@ -43,23 +42,14 @@ public class UsersByPincodeTransformer implements Transformer<String, UserReques
             return null; // nothing else to forward
         }
 
-        /*
+        /* Must handle below scenario
          * e.g. given 2 events
          * user A -> 177001
          * user A -> 177401
          * state store should update value of key 177001 and remove user A
-         * maybe use UserRequest as input for this transformer?
          */
-
         userRequest.getPincodes().forEach(pincode -> {
-            final KeyValueIterator<String, UsersByPincode> all = aggregateStore.all();
-            int count = 0;
-            while (all.hasNext()) {
-                count++;
-                all.next();
-            }
-            log.info("Number of records in aggregate store: {}", count);
-            log.info("current data in state store: {}", aggregateStore.get(pincode));
+            log.debug("current data in state store: {}", aggregateStore.get(pincode));
 
             if (pincode.isBlank()) {
                 return; // very unlikely to happen but ¯\_(ツ)_/¯
@@ -72,12 +62,11 @@ public class UsersByPincodeTransformer implements Transformer<String, UserReques
 
             log.debug("aggregate: {}", aggregatedUsersByPincode);
             ctx.forward(pincode, aggregatedUsersByPincode);
-
         });
 
         cleanupUserInStateStore(userId, userRequest.getPincodes());
 
-        return toForward;
+        return null;
     }
 
     /*
