@@ -52,6 +52,19 @@ public class UsersByPincodeTransformer implements Transformer<String, UserReques
          */
 
         userRequest.getPincodes().forEach(pincode -> {
+            final KeyValueIterator<String, UsersByPincode> all = aggregateStore.all();
+            int count = 0;
+            while (all.hasNext()) {
+                count++;
+                all.next();
+            }
+            log.info("Number of records in aggregate store: {}", count);
+            log.info("current data in state store: {}", aggregateStore.get(pincode));
+
+            if (pincode.isBlank()) {
+                return; // very unlikely to happen but ¯\_(ツ)_/¯
+            }
+
             maybeInitializeNewEventInStateStore(pincode);
 
             UsersByPincode aggregatedUsersByPincode = aggregateStore.get(pincode).merge(userId);

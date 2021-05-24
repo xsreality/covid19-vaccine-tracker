@@ -107,7 +107,11 @@ public class Api {
 
     @GetMapping("/add/user_request")
     public ResponseEntity<?> addUserRequest(@RequestParam final String chatId, @RequestParam final String pincodes) {
-        this.userRequestManager.acceptUserRequest(chatId, Utils.splitPincodes(pincodes));
+        if (pincodes.trim().isEmpty()) {
+            this.userRequestManager.acceptUserRequest(chatId, List.of());
+        } else {
+            this.userRequestManager.acceptUserRequest(chatId, Utils.splitPincodes(pincodes));
+        }
         return ResponseEntity.ok().build();
     }
 

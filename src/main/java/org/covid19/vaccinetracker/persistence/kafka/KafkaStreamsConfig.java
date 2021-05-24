@@ -121,8 +121,7 @@ public class KafkaStreamsConfig {
     public KTable<String, UsersByPincode> usersByPincodeTable(StreamsBuilder streamsBuilder) {
         final StoreBuilder<KeyValueStore<String, UsersByPincode>> aggregateStoreBuilder = Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore(USERS_BY_PINCODE_AGGREGATE_STORE),
-                Serdes.String(), new UsersByPincodeSerde()
-        ).withCachingDisabled().withLoggingDisabled();
+                Serdes.String(), new UsersByPincodeSerde());
 
         streamsBuilder.addStateStore(aggregateStoreBuilder);
 
