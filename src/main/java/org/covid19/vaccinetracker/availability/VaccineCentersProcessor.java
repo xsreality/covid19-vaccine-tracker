@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 @Component
@@ -39,6 +40,11 @@ public class VaccineCentersProcessor {
 
     public List<Center> eligibleVaccineCenters(VaccineCenters vaccineCenters, boolean shouldAlertAbove45) {
         List<Center> eligibleCenters = new ArrayList<>();
+
+        if (isNull(vaccineCenters.centers)) {
+            return eligibleCenters;
+        }
+
         vaccineCenters.centers.forEach(center -> {
             List<Session> eligibleSessions = new ArrayList<>();
             center.sessions.forEach(session -> {

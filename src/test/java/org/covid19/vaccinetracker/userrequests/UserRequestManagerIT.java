@@ -23,12 +23,15 @@ import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.annotation.DirtiesContext;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -46,7 +49,7 @@ import static org.springframework.kafka.test.hamcrest.KafkaMatchers.hasValue;
 })
 @EmbeddedKafka(
         partitions = 1,
-        topics = {"${topic.user.requests}", "${topic.user.districts}"},
+        topics = {"${topic.user.requests}", "${topic.user.districts}", "${topic.user.bypincode}"},
         brokerProperties = {"listeners=PLAINTEXT://localhost:9092", "port=9092"})
 @DirtiesContext
 public class UserRequestManagerIT {
@@ -125,6 +128,35 @@ public class UserRequestManagerIT {
         when(vaccinePersistence.fetchDistrictsByPincode("110092")).thenReturn(singletonList(aDistrict));
         kafkaTemplate.send(userRequestsTopic, "999888", new UserRequest("999888", asList("110092", "110093"), null)).get();
         await().atMost(1, SECONDS).until(() -> userRequestManager.fetchAllUserDistricts().size() >= 1);
+    }
+
+    @Test
+    public void testfetchAllUsersByPincode() throws Exception {
+        // create user request and verify topology completed for usersByPincode
+        kafkaTemplate.send(userRequestsTopic, "112233", new UserRequest("112233", List.of("751010"), null)).get();
+        await().atMost(5, SECONDS).until(() -> nonNull(userRequestManager.fetchUsersByPincode("751010")));
+        await().atMost(5, SECONDS).until(() -> extractUsers("751010").contains("112233"));
+
+        // Add another user request for same pincode and and verify store updated for usersByPincode
+        kafkaTemplate.send(userRequestsTopic, "112234", new UserRequest("112234", List.of("751010"), null)).get();
+        await().atMost(5, SECONDS).until(() -> extractUsers("751010").containsAll(Set.of("112233", "112234")));
+
+        // Update user request of 112233 from pincode 751010 to 847226
+        kafkaTemplate.send(userRequestsTopic, "112233", new UserRequest("112233", List.of("847226"), null)).get();
+        // verify store updated for pincode 847226
+        await().atMost(5, SECONDS).until(() -> nonNull(userRequestManager.fetchUsersByPincode("847226")));
+        await().atMost(5, SECONDS).until(() -> extractUsers("847226").contains("112233"));
+        // verify store updated for pincode 751010
+        await().atMost(5, SECONDS).until(() -> !extractUsers("751010").contains("112233"));
+
+        // Terminate subscription of user 112233
+        kafkaTemplate.send(userRequestsTopic, "112233", new UserRequest("112233", List.of(), null)).get();
+        // verify store contains no references to user 112233
+        await().atMost(5, SECONDS).until(() -> !extractUsers("847226").contains("112233"));
+    }
+
+    private Set<String> extractUsers(String pincode) {
+        return userRequestManager.fetchUsersByPincode(pincode).getUsers();
     }
 
     private <K, V> Consumer<K, V> buildConsumer(String groupId) {

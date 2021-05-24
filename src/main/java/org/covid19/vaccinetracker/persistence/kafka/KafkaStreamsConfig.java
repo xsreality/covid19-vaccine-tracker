@@ -16,6 +16,8 @@ import org.apache.kafka.streams.state.WindowStore;
 import org.covid19.vaccinetracker.model.DistrictSerde;
 import org.covid19.vaccinetracker.model.UserRequest;
 import org.covid19.vaccinetracker.model.UserRequestSerde;
+import org.covid19.vaccinetracker.model.UsersByPincode;
+import org.covid19.vaccinetracker.model.UsersByPincodeSerde;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.District;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,10 +48,14 @@ public class KafkaStreamsConfig {
     @Value("${topic.user.districts}")
     private String userDistrictsTopic;
 
+    @Value("${topic.user.bypincode}")
+    private String usersByPincodeTopic;
+
     private final KafkaProperties kafkaProperties;
     private final VaccinePersistence vaccinePersistence;
 
     private static final String UNIQUE_DISTRICTS_STORE = "unique-districts-store";
+    private static final String USERS_BY_PINCODE_AGGREGATE_STORE = "users-by-pincode-aggregate-store";
 
     public KafkaStreamsConfig(KafkaProperties kafkaProperties, VaccinePersistence vaccinePersistence) {
         this.kafkaProperties = kafkaProperties;
@@ -61,7 +67,7 @@ public class KafkaStreamsConfig {
         Map<String, Object> kafkaStreamsProps = new HashMap<>(kafkaProperties.buildStreamsProperties());
         kafkaStreamsProps.put(APPLICATION_ID_CONFIG, "org.covid19.vaccine-tracker");
         kafkaStreamsProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        kafkaStreamsProps.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, 2);
+        kafkaStreamsProps.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, 3);
         kafkaStreamsProps.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 10 * 1000);
         kafkaStreamsProps.put(StreamsConfig.TOPOLOGY_OPTIMIZATION, StreamsConfig.OPTIMIZE);
         return new KafkaStreamsConfiguration(kafkaStreamsProps);
@@ -92,7 +98,9 @@ public class KafkaStreamsConfig {
 
         streamsBuilder.addStateStore(dedupStoreBuilder);
 
-        userRequestsTable(streamsBuilder).toStream()
+        userRequestsTable(streamsBuilder)
+                .toStream()
+                .peek((key, value) -> log.debug("districts streaming record {}", value))
                 .filter((userId, userRequest) -> nonNull(userRequest.getPincodes()) && !userRequest.getPincodes().isEmpty())
                 .flatMapValues((userId, userRequest) -> userRequest.getPincodes())
                 .flatMapValues((userId, pincode) -> vaccinePersistence.fetchDistrictsByPincode(pincode))
@@ -104,5 +112,30 @@ public class KafkaStreamsConfig {
                 Materialized.<String, District, KeyValueStore<Bytes, byte[]>>as(
                         Stores.inMemoryKeyValueStore("user-districts-inmemory-store").name()
                 ).withKeySerde(Serdes.String()).withValueSerde(new DistrictSerde()).withCachingDisabled());
+    }
+
+    /*
+     * Topology to convert user->[pincodes] topic to pincode->[users] topic.
+     */
+    @Bean
+    public KTable<String, UsersByPincode> usersByPincodeTable(StreamsBuilder streamsBuilder) {
+        final StoreBuilder<KeyValueStore<String, UsersByPincode>> aggregateStoreBuilder = Stores.keyValueStoreBuilder(
+                Stores.persistentKeyValueStore(USERS_BY_PINCODE_AGGREGATE_STORE),
+                Serdes.String(), new UsersByPincodeSerde());
+
+        streamsBuilder.addStateStore(aggregateStoreBuilder);
+
+        userRequestsTable(streamsBuilder)
+                .toStream()
+                .peek((key, value) -> log.debug("streaming record {}", value))
+                .filter((userId, userRequest) -> nonNull(userRequest.getPincodes()))
+                .transform(() -> new UsersByPincodeTransformer(USERS_BY_PINCODE_AGGREGATE_STORE),
+                        USERS_BY_PINCODE_AGGREGATE_STORE)
+                .to(usersByPincodeTopic, Produced.with(Serdes.String(), new UsersByPincodeSerde()));
+
+        return streamsBuilder.table(usersByPincodeTopic,
+                Materialized.<String, UsersByPincode, KeyValueStore<Bytes, byte[]>>as(
+                        Stores.inMemoryKeyValueStore("user-by-pincodes-inmemory").name()
+                ).withKeySerde(Serdes.String()).withValueSerde(new UsersByPincodeSerde()).withCachingDisabled());
     }
 }

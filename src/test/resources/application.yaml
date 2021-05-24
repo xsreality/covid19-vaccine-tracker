@@ -8,6 +8,7 @@ telegram:
 topic:
   user.requests: "user-requests"
   user.districts: "user-districts"
+  user.bypincode: "users-by-pincode"
   vaccine.centers: "vaccine-centers"
 
 spring:

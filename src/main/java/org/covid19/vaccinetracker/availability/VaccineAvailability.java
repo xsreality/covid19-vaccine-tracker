@@ -40,7 +40,7 @@ public class VaccineAvailability {
         this.botService = botService;
     }
 
-    @Scheduled(cron = "0 0/5 6-23 * * *", zone = "IST")
+    @Scheduled(cron = "${jobs.cron.vaccine.availability:-}", zone = "IST")
     public void refreshVaccineAvailabilityFromCowinAndTriggerNotifications() {
         Executors.newSingleThreadExecutor().submit(() -> {
             this.refreshVaccineAvailabilityFromCowinViaKafka();
@@ -85,11 +85,12 @@ public class VaccineAvailability {
         return userRequestManager.fetchAllUserRequests()
                 .stream()
                 .flatMap(userRequest -> userRequest.getPincodes().stream())
+                .distinct()
                 .filter(pincode -> !vaccinePersistence.pincodeExists(pincode))
                 .collect(Collectors.toList());
     }
 
-    @Scheduled(cron = "0 55 23 * * *", zone = "IST")
+    @Scheduled(cron = "${jobs.cron.db.cleanup:-}", zone = "IST")
     public void cleanupOldVaccineCenters() {
         String yesterday = Utils.yesterdayIST();
         log.info("Deleting Vaccine centers for {}", yesterday);

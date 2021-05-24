@@ -4,6 +4,7 @@ import org.covid19.vaccinetracker.availability.VaccineAvailability;
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.model.UserRequest;
+import org.covid19.vaccinetracker.model.UsersByPincode;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.notifications.DistrictNotifications;
 import org.covid19.vaccinetracker.notifications.VaccineCentersNotification;
@@ -65,6 +66,11 @@ public class Api {
         return ResponseEntity.ok(userRequestManager.fetchAllUserRequests());
     }
 
+    @GetMapping("/fetch/users_by_pincodes")
+    public ResponseEntity<List<UsersByPincode>> fetchUsersByPincode() {
+        return ResponseEntity.ok(userRequestManager.fetchAllUsersByPincode());
+    }
+
     @GetMapping("/fetch/user_districts")
     public ResponseEntity<Set<District>> fetchUserDistricts() {
         return ResponseEntity.ok(userRequestManager.fetchAllUserDistricts());
@@ -99,9 +105,19 @@ public class Api {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/reload/user_request")
+    public ResponseEntity<?> reloadUserRequests() {
+        this.userRequestManager.regenerateUserRequests();
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/add/user_request")
     public ResponseEntity<?> addUserRequest(@RequestParam final String chatId, @RequestParam final String pincodes) {
-        this.userRequestManager.acceptUserRequest(chatId, Utils.splitPincodes(pincodes));
+        if (pincodes.trim().isEmpty()) {
+            this.userRequestManager.acceptUserRequest(chatId, List.of());
+        } else {
+            this.userRequestManager.acceptUserRequest(chatId, Utils.splitPincodes(pincodes));
+        }
         return ResponseEntity.ok().build();
     }
 
