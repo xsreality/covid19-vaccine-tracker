@@ -150,6 +150,12 @@ public class Api {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/trigger/updateViaLambda")
+    public ResponseEntity<?> triggerCowinUpdatesViaLambda() {
+        Executors.newSingleThreadExecutor().submit(this.vaccineAvailability::refreshVaccineAvailabilityFromCowinViaLambda);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/trigger/reconcile")
     public ResponseEntity<?> triggerPincodesReconciliation() {
         Executors.newSingleThreadExecutor().submit(() -> this.pincodeReconciliation.reconcilePincodesFromCowin(userRequestManager.fetchAllUserRequests()));
