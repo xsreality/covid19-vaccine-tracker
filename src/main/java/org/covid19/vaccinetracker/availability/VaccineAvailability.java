@@ -116,7 +116,7 @@ public class VaccineAvailability {
 
     private void introduceDelay() {
         try {
-            Thread.sleep(10);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
             // eat
         }
