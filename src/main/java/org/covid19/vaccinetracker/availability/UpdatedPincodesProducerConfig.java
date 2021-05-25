@@ -1,8 +1,7 @@
-package org.covid19.vaccinetracker.userrequests;
+package org.covid19.vaccinetracker.availability;
 
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.Serdes;
-import org.covid19.vaccinetracker.model.UserRequest;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,21 +12,20 @@ import org.springframework.kafka.core.ProducerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.apache.kafka.clients.producer.ProducerConfig.CLIENT_ID_CONFIG;
-
 @Configuration
-public class UserRequestProducerConfig {
+public class UpdatedPincodesProducerConfig {
     private final KafkaProperties kafkaProperties;
 
-    public UserRequestProducerConfig(KafkaProperties kafkaProperties) {
+    public UpdatedPincodesProducerConfig(KafkaProperties kafkaProperties) {
         this.kafkaProperties = kafkaProperties;
     }
 
     @Bean
-    public Map<String, Object> userRequestProducerConfigs() {
+    public Map<String, Object> updatedPincodesProducerConfigs() {
         Map<String, Object> props = new HashMap<>(kafkaProperties.buildProducerProperties());
 
-        props.put(CLIENT_ID_CONFIG, "org.covid19.user-request-producer");
+        props.put(ProducerConfig.CLIENT_ID_CONFIG, "org.covid19.updated-pincodes-producer");
+        props.put(ProducerConfig.LINGER_MS_CONFIG, "5");
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, Serdes.String().serializer().getClass().getName());
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "io.confluent.kafka.serializers.KafkaJsonSerializer");
 
@@ -35,12 +33,12 @@ public class UserRequestProducerConfig {
     }
 
     @Bean
-    public ProducerFactory<String, UserRequest> userRequestProducerFactory() {
-        return new DefaultKafkaProducerFactory<>(userRequestProducerConfigs());
+    public ProducerFactory<String, String> updatedPincodesProducerFactory() {
+        return new DefaultKafkaProducerFactory<>(updatedPincodesProducerConfigs());
     }
 
     @Bean
-    public KafkaTemplate<String, UserRequest> userRequestKafkaTemplate() {
-        return new KafkaTemplate<>(userRequestProducerFactory());
+    public KafkaTemplate<String, String> updatedPincodesKafkaTemplate() {
+        return new KafkaTemplate<>(updatedPincodesProducerFactory());
     }
 }

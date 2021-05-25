@@ -42,4 +42,9 @@ public class Center {
     @JsonProperty("sessions")
     public List<Session> sessions = null;
 
+    public boolean areVaccineCentersAvailableFor18plus() {
+        return this.getSessions()
+                .stream()
+                .anyMatch(session -> session.ageLimit18AndAbove() && session.hasCapacity());
+    }
 }
