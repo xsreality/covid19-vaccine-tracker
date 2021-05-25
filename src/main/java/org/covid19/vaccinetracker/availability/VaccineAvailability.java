@@ -54,7 +54,7 @@ public class VaccineAvailability {
     @Scheduled(cron = "${jobs.cron.vaccine.availability:-}", zone = "IST")
     public void refreshVaccineAvailabilityFromCowinAndTriggerNotifications() {
         Executors.newSingleThreadExecutor().submit(() -> {
-            this.refreshVaccineAvailabilityFromCowinViaKafka();
+            this.refreshVaccineAvailabilityFromCowinViaLambda();
             this.vaccineCentersNotification.checkUpdatesAndSendNotifications();
         });
     }

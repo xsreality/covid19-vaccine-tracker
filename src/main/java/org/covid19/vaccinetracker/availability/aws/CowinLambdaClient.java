@@ -5,7 +5,6 @@ import com.amazonaws.services.lambda.model.InvokeRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.covid19.vaccinetracker.cowin.CowinApiAuth;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.springframework.stereotype.Component;
@@ -26,13 +25,11 @@ import static java.util.Objects.nonNull;
 public class CowinLambdaClient {
     private final AWSConfig awsConfig;
     private final AWSLambda awsLambda;
-    private final CowinApiAuth cowinApiAuth;
     private final ObjectMapper objectMapper;
 
-    public CowinLambdaClient(AWSConfig awsConfig, AWSLambda awsLambda, CowinApiAuth cowinApiAuth, ObjectMapper objectMapper) {
+    public CowinLambdaClient(AWSConfig awsConfig, AWSLambda awsLambda, ObjectMapper objectMapper) {
         this.awsConfig = awsConfig;
         this.awsLambda = awsLambda;
-        this.cowinApiAuth = cowinApiAuth;
         this.objectMapper = objectMapper;
     }
 
@@ -40,9 +37,7 @@ public class CowinLambdaClient {
         String lambdaEvent = String.format("{\n" +
                 " \"district_id\": \"%d\",\n" +
                 " \"date\": \"%s\"\n" +
-                " \"bearer_token\": \"%s\"\n" +
-                "}", districtId, Utils.todayIST(), cowinApiAuth.getBearerToken());
-
+                "}", districtId, Utils.todayIST());
 
 
         return Stream.of(lambdaEvent)
