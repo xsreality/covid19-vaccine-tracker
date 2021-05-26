@@ -4,6 +4,7 @@ import org.covid19.vaccinetracker.availability.aws.CowinLambdaClient;
 import org.covid19.vaccinetracker.bot.BotService;
 import org.covid19.vaccinetracker.cowin.CowinApiClient;
 import org.covid19.vaccinetracker.model.Center;
+import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.notifications.VaccineCentersNotification;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
@@ -71,24 +72,12 @@ public class VaccineAvailability {
                 .peek(district -> availabilityStats.incrementProcessedDistricts())
                 .peek(district -> log.debug("processing district id {}", district.getId()))
                 .map(district -> cowinLambdaClient.fetchSessionsByDistrict(district.getId()))
-                .peek(vaccineCenters -> {
-                    log.debug("Lambda call completed");
-                    availabilityStats.incrementTotalApiCalls();
-                    if (isNull(vaccineCenters)) {
-                        availabilityStats.incrementFailedApiCalls();
-                    }
-                })
+                .peek(this::measureApiCalls)
                 .filter(vaccineCentersProcessor::areVaccineCentersAvailable)
                 .filter(vaccineCentersProcessor::areVaccineCentersAvailableFor18plus)
                 .forEach(vaccineCenters -> {
                     vaccinePersistence.persistVaccineCenters(vaccineCenters);
-                    vaccineCenters.getCenters()
-                            .stream()
-                            .filter(Center::areVaccineCentersAvailableFor18plus)
-                            .map(Center::getPincode)
-                            .map(String::valueOf)
-                            .distinct()
-                            .forEach(pincode -> updatedPincodesKafkaTemplate.send(updatedPincodesTopic, pincode, pincode));
+                    sendUpdatedPincodesToKafka(vaccineCenters);
                 });
 
         availabilityStats.noteEndTime();
@@ -97,6 +86,24 @@ public class VaccineAvailability {
                 availabilityStats.failedApiCalls(), availabilityStats.timeTaken());
         log.info(message);
         botService.notifyOwner(message);
+    }
+
+    private void sendUpdatedPincodesToKafka(VaccineCenters vaccineCenters) {
+        vaccineCenters.getCenters()
+                .stream()
+                .filter(Center::areVaccineCentersAvailableFor18plus)
+                .map(Center::getPincode)
+                .map(String::valueOf)
+                .distinct()
+                .forEach(pincode -> updatedPincodesKafkaTemplate.send(updatedPincodesTopic, pincode, pincode));
+    }
+
+    private void measureApiCalls(VaccineCenters vaccineCenters) {
+        log.debug("Lambda call completed");
+        availabilityStats.incrementTotalApiCalls();
+        if (isNull(vaccineCenters)) {
+            availabilityStats.incrementFailedApiCalls();
+        }
     }
 
     /**
