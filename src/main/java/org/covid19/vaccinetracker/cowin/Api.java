@@ -144,9 +144,9 @@ public class Api {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/trigger/updateViaKafka")
-    public ResponseEntity<?> triggerCowinUpdatesViaKafka() {
-        Executors.newSingleThreadExecutor().submit(this.vaccineAvailability::refreshVaccineAvailabilityFromCowinViaKafka);
+    @PostMapping("/trigger/updateViaLambda")
+    public ResponseEntity<?> triggerCowinUpdatesViaLambda() {
+        Executors.newSingleThreadExecutor().submit(this.vaccineAvailability::refreshVaccineAvailabilityFromCowinViaLambda);
         return ResponseEntity.ok().build();
     }
 

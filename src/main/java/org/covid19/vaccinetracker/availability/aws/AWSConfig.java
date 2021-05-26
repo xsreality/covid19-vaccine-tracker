@@ -1,0 +1,26 @@
+package org.covid19.vaccinetracker.availability.aws;
+
+import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.lambda.AWSLambda;
+import com.amazonaws.services.lambda.AWSLambdaClientBuilder;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import lombok.Data;
+
+@Configuration
+@ConfigurationProperties(prefix = "aws")
+@Data
+public class AWSConfig {
+    private String lambdaFunctionArn;
+
+    @Bean
+    public AWSLambda awsLambda() {
+        return AWSLambdaClientBuilder.standard()
+                .withCredentials(new EnvironmentVariableCredentialsProvider())
+                .withRegion(Regions.AP_SOUTH_1).build();
+    }
+}

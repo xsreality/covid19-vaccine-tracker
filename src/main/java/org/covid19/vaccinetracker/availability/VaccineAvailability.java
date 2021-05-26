@@ -1,8 +1,10 @@
 package org.covid19.vaccinetracker.availability;
 
+import org.covid19.vaccinetracker.availability.aws.CowinLambdaClient;
 import org.covid19.vaccinetracker.bot.BotService;
 import org.covid19.vaccinetracker.cowin.CowinApiClient;
 import org.covid19.vaccinetracker.model.Center;
+import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.notifications.VaccineCentersNotification;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
@@ -13,6 +15,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
@@ -34,10 +37,11 @@ public class VaccineAvailability {
     private final VaccineCentersNotification vaccineCentersNotification;
     private final BotService botService;
     private final KafkaTemplate<String, String> updatedPincodesKafkaTemplate;
+    private final CowinLambdaClient cowinLambdaClient;
 
     public VaccineAvailability(CowinApiClient cowinApiClient, VaccinePersistence vaccinePersistence,
                                VaccineCentersProcessor vaccineCentersProcessor, UserRequestManager userRequestManager,
-                               AvailabilityStats availabilityStats, VaccineCentersNotification vaccineCentersNotification, BotService botService, KafkaTemplate<String, String> updatedPincodesKafkaTemplate) {
+                               AvailabilityStats availabilityStats, VaccineCentersNotification vaccineCentersNotification, BotService botService, KafkaTemplate<String, String> updatedPincodesKafkaTemplate, CowinLambdaClient cowinLambdaClient) {
         this.cowinApiClient = cowinApiClient;
         this.vaccinePersistence = vaccinePersistence;
         this.vaccineCentersProcessor = vaccineCentersProcessor;
@@ -46,43 +50,34 @@ public class VaccineAvailability {
         this.vaccineCentersNotification = vaccineCentersNotification;
         this.botService = botService;
         this.updatedPincodesKafkaTemplate = updatedPincodesKafkaTemplate;
+        this.cowinLambdaClient = cowinLambdaClient;
     }
 
     @Scheduled(cron = "${jobs.cron.vaccine.availability:-}", zone = "IST")
     public void refreshVaccineAvailabilityFromCowinAndTriggerNotifications() {
         Executors.newSingleThreadExecutor().submit(() -> {
-            this.refreshVaccineAvailabilityFromCowinViaKafka();
+            this.refreshVaccineAvailabilityFromCowinViaLambda();
             this.vaccineCentersNotification.checkUpdatesAndSendNotifications();
         });
     }
 
-    public void refreshVaccineAvailabilityFromCowinViaKafka() {
-        log.info("Refreshing Vaccine Availability from Cowin API");
+    public void refreshVaccineAvailabilityFromCowinViaLambda() {
+        log.info("Refreshing Vaccine Availability from Cowin API via AWS Lambda");
         availabilityStats.reset();
         availabilityStats.noteStartTime();
 
         this.userRequestManager.fetchAllUserDistricts()
                 .parallelStream()
+                .filter(Objects::nonNull)
                 .peek(district -> availabilityStats.incrementProcessedDistricts())
-                .map(district -> cowinApiClient.fetchSessionsByDistrict(district.getId()))
-                .peek(vaccineCenters -> {
-                    availabilityStats.incrementTotalApiCalls();
-                    if (isNull(vaccineCenters)) {
-                        availabilityStats.incrementFailedApiCalls();
-                    }
-                    introduceDelay();
-                })
+                .peek(district -> log.debug("processing district id {}", district.getId()))
+                .map(district -> cowinLambdaClient.fetchSessionsByDistrict(district.getId()))
+                .peek(this::measureApiCalls)
                 .filter(vaccineCentersProcessor::areVaccineCentersAvailable)
                 .filter(vaccineCentersProcessor::areVaccineCentersAvailableFor18plus)
                 .forEach(vaccineCenters -> {
                     vaccinePersistence.persistVaccineCenters(vaccineCenters);
-                    vaccineCenters.getCenters()
-                            .stream()
-                            .filter(Center::areVaccineCentersAvailableFor18plus)
-                            .map(Center::getPincode)
-                            .map(String::valueOf)
-                            .distinct()
-                            .forEach(pincode -> updatedPincodesKafkaTemplate.send(updatedPincodesTopic, pincode, pincode));
+                    sendUpdatedPincodesToKafka(vaccineCenters);
                 });
 
         availabilityStats.noteEndTime();
@@ -91,6 +86,24 @@ public class VaccineAvailability {
                 availabilityStats.failedApiCalls(), availabilityStats.timeTaken());
         log.info(message);
         botService.notifyOwner(message);
+    }
+
+    private void sendUpdatedPincodesToKafka(VaccineCenters vaccineCenters) {
+        vaccineCenters.getCenters()
+                .stream()
+                .filter(Center::areVaccineCentersAvailableFor18plus)
+                .map(Center::getPincode)
+                .map(String::valueOf)
+                .distinct()
+                .forEach(pincode -> updatedPincodesKafkaTemplate.send(updatedPincodesTopic, pincode, pincode));
+    }
+
+    private void measureApiCalls(VaccineCenters vaccineCenters) {
+        log.debug("Lambda call completed");
+        availabilityStats.incrementTotalApiCalls();
+        if (isNull(vaccineCenters)) {
+            availabilityStats.incrementFailedApiCalls();
+        }
     }
 
     /**
@@ -112,13 +125,5 @@ public class VaccineAvailability {
         String yesterday = Utils.yesterdayIST();
         log.info("Deleting Vaccine centers for {}", yesterday);
         this.vaccinePersistence.cleanupOldCenters(yesterday);
-    }
-
-    private void introduceDelay() {
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            // eat
-        }
     }
 }

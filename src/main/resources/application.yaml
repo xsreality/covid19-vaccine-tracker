@@ -17,10 +17,10 @@ telegram:
 
 jobs:
   cron:
-    vaccine.availability: "0 0/30 6-23 * * *"
+    vaccine.availability: "0 0/5 6-23 * * *"
     district.notifications: "-"
     pincode.reconciliation: "-"
-    cowin.api.auth: "0 3/15 6-23 * * *"
+    cowin.api.auth: "-"
     db.cleanup: "0 55 23 * * *"
 
 logging:

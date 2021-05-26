@@ -22,20 +22,12 @@ public class VaccineCentersProcessor {
                 .stream()
                 .anyMatch(center -> center.sessions
                         .stream()
-                        .anyMatch(session -> ageLimit18AndAbove(session) && hasCapacity(session)));
+                        .anyMatch(session -> session.ageLimit18AndAbove() && session.hasCapacity()));
     }
 
     public boolean hasCapacity(Session session) {
         return (session.availableCapacityDose1 > 1)
                 && (session.availableCapacity == (session.availableCapacityDose1 + session.availableCapacityDose2));
-    }
-
-    public boolean ageLimitExactly18(Session session) {
-        return session.getMinAgeLimit() == 18;
-    }
-
-    public boolean ageLimit18AndAbove(Session session) {
-        return session.getMinAgeLimit() >= 18;
     }
 
     public List<Center> eligibleVaccineCenters(VaccineCenters vaccineCenters, boolean shouldAlertAbove45) {
@@ -49,11 +41,11 @@ public class VaccineCentersProcessor {
             List<Session> eligibleSessions = new ArrayList<>();
             center.sessions.forEach(session -> {
                 if (shouldAlertAbove45) { // some users should be alerted for 45 too
-                    if (this.ageLimit18AndAbove(session) && this.hasCapacity(session)) {
+                    if (session.ageLimit18AndAbove() && session.hasCapacity()) {
                         eligibleSessions.add(session);
                     }
                 } else {
-                    if (this.ageLimitExactly18(session) && this.hasCapacity(session)) {
+                    if (session.ageLimitExactly18() && session.hasCapacity()) {
                         eligibleSessions.add(session);
                     }
                 }
