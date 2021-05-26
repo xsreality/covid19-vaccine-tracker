@@ -52,26 +52,6 @@ public class VaccineAvailabilityTest {
     private CowinLambdaClient cowinLambdaClient;
 
     @Test
-    public void testRefreshVaccineAvailabilityFromCowinViaKafka_happyScenario() {
-        District aDistrict = new District(1, "Shahdara", new State(1, "Delhi"));
-        VaccineCenters vaccineCenters = createVaccineCenters();
-        when(userRequestManager.fetchAllUserDistricts()).thenReturn(singleton(aDistrict));
-        when(cowinApiClient.fetchSessionsByDistrict(1)).thenReturn(vaccineCenters);
-
-        AvailabilityStats availabilityStats = new AvailabilityStats();
-        VaccineAvailability vaccineAvailability = new VaccineAvailability(cowinApiClient, vaccinePersistence,
-                new VaccineCentersProcessor(), userRequestManager, availabilityStats,
-                notification, botService, updatedPincodesKafkaTemplate, cowinLambdaClient);
-        vaccineAvailability.refreshVaccineAvailabilityFromCowinViaKafka();
-
-        verify(vaccinePersistence, times(1)).persistVaccineCenters(vaccineCenters);
-        verify(botService, times(1)).notifyOwner(anyString());
-
-        assertThat(availabilityStats.processedDistricts(), is(1));
-        assertThat(availabilityStats.totalApiCalls(), is(1));
-    }
-
-    @Test
     public void testRefreshVaccineAvailabilityFromCowinViaLambda_happyScenario() {
         District aDistrict = new District(1, "Shahdara", new State(1, "Delhi"));
         VaccineCenters vaccineCenters = createVaccineCenters();
@@ -92,16 +72,16 @@ public class VaccineAvailabilityTest {
     }
 
     @Test
-    public void testRefreshVaccineAvailabilityFromCowinViaKafka_nullCenters() {
+    public void testRefreshVaccineAvailabilityFromCowinViaLambda_nullCenters() {
         District aDistrict = new District(1, "Shahdara", new State(1, "Delhi"));
         when(userRequestManager.fetchAllUserDistricts()).thenReturn(singleton(aDistrict));
-        when(cowinApiClient.fetchSessionsByDistrict(1)).thenReturn(null);
+        when(cowinLambdaClient.fetchSessionsByDistrict(1)).thenReturn(null);
 
         AvailabilityStats availabilityStats = new AvailabilityStats();
         VaccineAvailability vaccineAvailability = new VaccineAvailability(cowinApiClient, vaccinePersistence,
                 new VaccineCentersProcessor(), userRequestManager, availabilityStats,
                 notification, botService, updatedPincodesKafkaTemplate, cowinLambdaClient);
-        vaccineAvailability.refreshVaccineAvailabilityFromCowinViaKafka();
+        vaccineAvailability.refreshVaccineAvailabilityFromCowinViaLambda();
 
         verify(vaccinePersistence, times(0)).persistVaccineCenters(any());
         verify(botService, times(1)).notifyOwner(anyString());

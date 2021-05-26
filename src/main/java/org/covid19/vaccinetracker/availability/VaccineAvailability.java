@@ -60,43 +60,6 @@ public class VaccineAvailability {
         });
     }
 
-    public void refreshVaccineAvailabilityFromCowinViaKafka() {
-        log.info("Refreshing Vaccine Availability from Cowin API");
-        availabilityStats.reset();
-        availabilityStats.noteStartTime();
-
-        this.userRequestManager.fetchAllUserDistricts()
-                .parallelStream()
-                .peek(district -> availabilityStats.incrementProcessedDistricts())
-                .map(district -> cowinApiClient.fetchSessionsByDistrict(district.getId()))
-                .peek(vaccineCenters -> {
-                    availabilityStats.incrementTotalApiCalls();
-                    if (isNull(vaccineCenters)) {
-                        availabilityStats.incrementFailedApiCalls();
-                    }
-                    introduceDelay();
-                })
-                .filter(vaccineCentersProcessor::areVaccineCentersAvailable)
-                .filter(vaccineCentersProcessor::areVaccineCentersAvailableFor18plus)
-                .forEach(vaccineCenters -> {
-                    vaccinePersistence.persistVaccineCenters(vaccineCenters);
-                    vaccineCenters.getCenters()
-                            .stream()
-                            .filter(Center::areVaccineCentersAvailableFor18plus)
-                            .map(Center::getPincode)
-                            .map(String::valueOf)
-                            .distinct()
-                            .forEach(pincode -> updatedPincodesKafkaTemplate.send(updatedPincodesTopic, pincode, pincode));
-                });
-
-        availabilityStats.noteEndTime();
-        final String message = String.format("[AVAILABILITY] Districts: %d, Total API calls: %d (protected=%s), Failed API calls: %d, Time taken: %s",
-                availabilityStats.processedDistricts(), availabilityStats.totalApiCalls(), cowinApiClient.isProtected(),
-                availabilityStats.failedApiCalls(), availabilityStats.timeTaken());
-        log.info(message);
-        botService.notifyOwner(message);
-    }
-
     public void refreshVaccineAvailabilityFromCowinViaLambda() {
         log.info("Refreshing Vaccine Availability from Cowin API via AWS Lambda");
         availabilityStats.reset();
@@ -155,13 +118,5 @@ public class VaccineAvailability {
         String yesterday = Utils.yesterdayIST();
         log.info("Deleting Vaccine centers for {}", yesterday);
         this.vaccinePersistence.cleanupOldCenters(yesterday);
-    }
-
-    private void introduceDelay() {
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            // eat
-        }
     }
 }
