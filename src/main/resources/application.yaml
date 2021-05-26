@@ -20,7 +20,7 @@ jobs:
     vaccine.availability: "0 0/5 6-23 * * *"
     district.notifications: "-"
     pincode.reconciliation: "-"
-    cowin.api.auth: "0 3/15 6-23 * * *"
+    cowin.api.auth: "-"
     db.cleanup: "0 55 23 * * *"
 
 logging:

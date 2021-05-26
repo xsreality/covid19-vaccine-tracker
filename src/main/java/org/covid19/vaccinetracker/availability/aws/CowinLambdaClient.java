@@ -7,7 +7,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.covid19.vaccinetracker.cowin.CowinApiAuth;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.jetbrains.annotations.Nullable;
@@ -28,13 +27,11 @@ import lombok.extern.slf4j.Slf4j;
 public class CowinLambdaClient {
     private final AWSConfig awsConfig;
     private final AWSLambda awsLambda;
-    private final CowinApiAuth cowinApiAuth;
     private final ObjectMapper objectMapper;
 
-    public CowinLambdaClient(AWSConfig awsConfig, AWSLambda awsLambda, CowinApiAuth cowinApiAuth, ObjectMapper objectMapper) {
+    public CowinLambdaClient(AWSConfig awsConfig, AWSLambda awsLambda, ObjectMapper objectMapper) {
         this.awsConfig = awsConfig;
         this.awsLambda = awsLambda;
-        this.cowinApiAuth = cowinApiAuth;
         this.objectMapper = objectMapper;
     }
 
@@ -62,7 +59,7 @@ public class CowinLambdaClient {
 
     private void logInvalidStatusCode(LambdaResponse lambdaResponse) {
         if (!"200".equals(lambdaResponse.getStatusCode())) {
-            log.info("Got invalid status code: {}", lambdaResponse.getStatusCode());
+            log.info("Got invalid status code {} for district {}", lambdaResponse.getStatusCode(), lambdaResponse.getDistrictId());
         }
     }
 
@@ -82,7 +79,7 @@ public class CowinLambdaClient {
                     LambdaEvent.builder()
                             .districtId(String.valueOf(districtId))
                             .date(Utils.todayIST())
-                            .bearerToken(cowinApiAuth.getBearerToken())
+                            .bearerToken("")
                             .build()
             );
         } catch (JsonProcessingException e) {
@@ -108,6 +105,9 @@ class LambdaEvent {
 @AllArgsConstructor
 @NoArgsConstructor
 class LambdaResponse {
+    @JsonProperty("status_code")
     private String statusCode;
     private VaccineCenters payload;
+    @JsonProperty("district_id")
+    private String districtId;
 }

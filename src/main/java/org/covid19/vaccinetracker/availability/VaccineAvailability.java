@@ -14,6 +14,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
@@ -103,6 +104,7 @@ public class VaccineAvailability {
 
         this.userRequestManager.fetchAllUserDistricts()
                 .parallelStream()
+                .filter(Objects::nonNull)
                 .peek(district -> availabilityStats.incrementProcessedDistricts())
                 .peek(district -> log.debug("processing district id {}", district.getId()))
                 .map(district -> cowinLambdaClient.fetchSessionsByDistrict(district.getId()))
