@@ -127,7 +127,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                                 localizedAckMessage, ctx.chatId());
 
                         // send an update to Bot channel
-                        String channelMsg = String.format("%s (%s, %s) set notification preference for pin code(s) %s",
+                        String channelMsg = String.format("%s (%s, %s) set notification preference for pincode(s) %s",
                                 Utils.translateName(ctx.update().getMessage().getChat()), chatId, getUserName(ctx), pincodes);
                         silent.send(channelMsg, CHANNEL_ID);
                     }
