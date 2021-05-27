@@ -8,7 +8,6 @@ import org.covid19.vaccinetracker.notifications.VaccineCentersNotification;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.covid19.vaccinetracker.utils.Utils;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -30,12 +29,12 @@ public class VaccineAvailability {
     private final AvailabilityStats availabilityStats;
     private final VaccineCentersNotification vaccineCentersNotification;
     private final BotService botService;
-    private final KafkaTemplate<String, String> updatedPincodesKafkaTemplate;
     private final CowinLambdaWrapper cowinLambdaWrapper;
 
     public VaccineAvailability(CowinApiClient cowinApiClient, VaccinePersistence vaccinePersistence,
                                VaccineCentersProcessor vaccineCentersProcessor, UserRequestManager userRequestManager,
-                               AvailabilityStats availabilityStats, VaccineCentersNotification vaccineCentersNotification, BotService botService, KafkaTemplate<String, String> updatedPincodesKafkaTemplate, CowinLambdaWrapper cowinLambdaWrapper) {
+                               AvailabilityStats availabilityStats, VaccineCentersNotification vaccineCentersNotification,
+                               BotService botService, CowinLambdaWrapper cowinLambdaWrapper) {
         this.cowinApiClient = cowinApiClient;
         this.vaccinePersistence = vaccinePersistence;
         this.vaccineCentersProcessor = vaccineCentersProcessor;
@@ -43,15 +42,14 @@ public class VaccineAvailability {
         this.availabilityStats = availabilityStats;
         this.vaccineCentersNotification = vaccineCentersNotification;
         this.botService = botService;
-        this.updatedPincodesKafkaTemplate = updatedPincodesKafkaTemplate;
         this.cowinLambdaWrapper = cowinLambdaWrapper;
     }
 
     @Scheduled(cron = "${jobs.cron.vaccine.availability:-}", zone = "IST")
     public void refreshVaccineAvailabilityFromCowinAndTriggerNotifications() {
         Executors.newSingleThreadExecutor().submit(() -> {
-            this.refreshVaccineAvailabilityFromCowinViaLambda();
-            this.vaccineCentersNotification.checkUpdatesAndSendNotifications();
+            this.refreshVaccineAvailabilityFromCowinViaLambdaAsync();
+//            this.vaccineCentersNotification.checkUpdatesAndSendNotifications();
         });
     }
 
