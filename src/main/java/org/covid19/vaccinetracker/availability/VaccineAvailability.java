@@ -1,6 +1,6 @@
 package org.covid19.vaccinetracker.availability;
 
-import org.covid19.vaccinetracker.availability.aws.CowinLambdaClient;
+import org.covid19.vaccinetracker.availability.aws.CowinLambdaWrapper;
 import org.covid19.vaccinetracker.bot.BotService;
 import org.covid19.vaccinetracker.cowin.CowinApiClient;
 import org.covid19.vaccinetracker.model.VaccineCenters;
@@ -32,11 +32,11 @@ public class VaccineAvailability {
     private final VaccineCentersNotification vaccineCentersNotification;
     private final BotService botService;
     private final KafkaTemplate<String, String> updatedPincodesKafkaTemplate;
-    private final CowinLambdaClient cowinLambdaClient;
+    private final CowinLambdaWrapper cowinLambdaWrapper;
 
     public VaccineAvailability(CowinApiClient cowinApiClient, VaccinePersistence vaccinePersistence,
                                VaccineCentersProcessor vaccineCentersProcessor, UserRequestManager userRequestManager,
-                               AvailabilityStats availabilityStats, VaccineCentersNotification vaccineCentersNotification, BotService botService, KafkaTemplate<String, String> updatedPincodesKafkaTemplate, CowinLambdaClient cowinLambdaClient) {
+                               AvailabilityStats availabilityStats, VaccineCentersNotification vaccineCentersNotification, BotService botService, KafkaTemplate<String, String> updatedPincodesKafkaTemplate, CowinLambdaWrapper cowinLambdaWrapper) {
         this.cowinApiClient = cowinApiClient;
         this.vaccinePersistence = vaccinePersistence;
         this.vaccineCentersProcessor = vaccineCentersProcessor;
@@ -45,7 +45,7 @@ public class VaccineAvailability {
         this.vaccineCentersNotification = vaccineCentersNotification;
         this.botService = botService;
         this.updatedPincodesKafkaTemplate = updatedPincodesKafkaTemplate;
-        this.cowinLambdaClient = cowinLambdaClient;
+        this.cowinLambdaWrapper = cowinLambdaWrapper;
     }
 
     @Scheduled(cron = "${jobs.cron.vaccine.availability:-}", zone = "IST")
@@ -66,7 +66,7 @@ public class VaccineAvailability {
                 .filter(Objects::nonNull)
                 .peek(district -> availabilityStats.incrementProcessedDistricts())
                 .peek(district -> log.debug("processing district id {}", district.getId()))
-                .forEach(district -> cowinLambdaClient.processDistrict(district.getId()));
+                .forEach(district -> cowinLambdaWrapper.processDistrict(district.getId()));
 
         availabilityStats.noteEndTime();
         final String message = String.format("[AVAILABILITY] Districts: %d, Time taken: %s", availabilityStats.processedDistricts(), availabilityStats.timeTaken());
@@ -84,7 +84,7 @@ public class VaccineAvailability {
                 .filter(Objects::nonNull)
                 .peek(district -> availabilityStats.incrementProcessedDistricts())
                 .peek(district -> log.debug("processing district id {}", district.getId()))
-                .map(district -> cowinLambdaClient.fetchSessionsByDistrict(district.getId()))
+                .map(district -> cowinLambdaWrapper.fetchSessionsByDistrict(district.getId()))
                 .peek(this::measureApiCalls)
                 .filter(vaccineCentersProcessor::areVaccineCentersAvailable)
                 .filter(vaccineCentersProcessor::areVaccineCentersAvailableFor18plus)

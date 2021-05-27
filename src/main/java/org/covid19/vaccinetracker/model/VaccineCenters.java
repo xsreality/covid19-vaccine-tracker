@@ -18,4 +18,7 @@ public class VaccineCenters {
     @JsonProperty("centers")
     public List<Center> centers = null;
 
+    public static VaccineCenters createEmpty() {
+        return new VaccineCenters(List.of());
+    }
 }

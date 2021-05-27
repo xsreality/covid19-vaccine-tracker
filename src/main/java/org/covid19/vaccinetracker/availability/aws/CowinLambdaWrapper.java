@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -34,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
-public class CowinLambdaClient implements DisposableBean {
+public class CowinLambdaWrapper implements DisposableBean {
     private final AWSConfig awsConfig;
     private final AWSLambda awsLambda;
     private final AWSLambdaAsync awsLambdaAsync;
@@ -42,8 +43,8 @@ public class CowinLambdaClient implements DisposableBean {
     private final VaccineCentersProcessor vaccineCentersProcessor;
     private final ExecutorService districtsProcessorExecutor;
 
-    public CowinLambdaClient(AWSConfig awsConfig, AWSLambda awsLambda, AWSLambdaAsync awsLambdaAsync,
-                             ObjectMapper objectMapper, VaccineCentersProcessor vaccineCentersProcessor) {
+    public CowinLambdaWrapper(AWSConfig awsConfig, AWSLambda awsLambda, AWSLambdaAsync awsLambdaAsync,
+                              ObjectMapper objectMapper, VaccineCentersProcessor vaccineCentersProcessor) {
         this.awsConfig = awsConfig;
         this.awsLambda = awsLambda;
         this.awsLambdaAsync = awsLambdaAsync;
@@ -55,27 +56,20 @@ public class CowinLambdaClient implements DisposableBean {
     public void processDistrict(int districtId) {
         Stream.ofNullable(createLambdaEvent(districtId))
                 .map(this::createInvokeRequest)
-                .forEach(invokeRequest -> awsLambdaAsync.invokeAsync(invokeRequest, createAsyncHandler()));
+                .forEach(invokeRequest -> awsLambdaAsync.invokeAsync(invokeRequest, asyncHandler()));
     }
 
     public VaccineCenters fetchSessionsByDistrict(int districtId) {
         return Stream.ofNullable(createLambdaEvent(districtId))
                 .map(this::createInvokeRequest)
                 .map(awsLambda::invoke)
-                .map(InvokeResult::getPayload)
-                .filter(Objects::nonNull)
-                .map(payload -> StandardCharsets.UTF_8.decode(payload).toString())
-                .map(this::parseLambdaResponseJson)
-                .filter(Objects::nonNull)
-                .peek(this::logInvalidStatusCode)
-                .filter(lambdaResponse -> "200".equals(lambdaResponse.getStatusCode()))
-                .map(LambdaResponse::getPayload)
+                .map(invokeResult -> toVaccineCenters(invokeResult).orElse(VaccineCenters.createEmpty()))
                 .findFirst()
                 .orElse(null);
     }
 
     @NotNull
-    private AsyncHandler<InvokeRequest, InvokeResult> createAsyncHandler() {
+    private AsyncHandler<InvokeRequest, InvokeResult> asyncHandler() {
         return new AsyncHandler<>() {
             @Override
             public void onError(Exception e) {
@@ -85,13 +79,9 @@ public class CowinLambdaClient implements DisposableBean {
             @Override
             public void onSuccess(InvokeRequest request, InvokeResult invokeResult) {
                 districtsProcessorExecutor.submit(() ->
-                        Stream.ofNullable(invokeResult.getPayload())
-                                .map(payload -> StandardCharsets.UTF_8.decode(payload).toString())
-                                .map(lambdaJson -> parseLambdaResponseJson(lambdaJson))
+                        toVaccineCenters(invokeResult)
+                                .stream()
                                 .filter(Objects::nonNull)
-                                .peek(lambdaResponse -> logInvalidStatusCode(lambdaResponse))
-                                .filter(lambdaResponse -> "200".equals(lambdaResponse.getStatusCode()))
-                                .map(LambdaResponse::getPayload)
                                 .forEach(vaccineCenters -> {
                                     vaccineCentersProcessor.persistVaccineCenters(vaccineCenters);
                                     vaccineCentersProcessor.sendUpdatedPincodesToKafka(vaccineCenters);
@@ -101,13 +91,29 @@ public class CowinLambdaClient implements DisposableBean {
         };
     }
 
+    @NotNull
+    private Optional<VaccineCenters> toVaccineCenters(InvokeResult invokeResult) {
+        return Stream.ofNullable(invokeResult.getPayload())
+                .map(payload -> StandardCharsets.UTF_8.decode(payload).toString())
+                .map(this::parseLambdaResponseJson)
+                .filter(Objects::nonNull)
+                .peek(this::logIfInvalidStatusCode)
+                .filter(this::statusCode200)
+                .map(LambdaResponse::getPayload)
+                .findFirst();
+    }
+
+    private boolean statusCode200(LambdaResponse lambdaResponse) {
+        return "200".equals(lambdaResponse.getStatusCode());
+    }
+
     private InvokeRequest createInvokeRequest(String event) {
         return new InvokeRequest()
                 .withFunctionName(awsConfig.getLambdaFunctionArn())
                 .withPayload(event);
     }
 
-    private void logInvalidStatusCode(LambdaResponse lambdaResponse) {
+    private void logIfInvalidStatusCode(LambdaResponse lambdaResponse) {
         if (!"200".equals(lambdaResponse.getStatusCode())) {
             log.info("Got invalid status code {} for district {}", lambdaResponse.getStatusCode(), lambdaResponse.getDistrictId());
         }
