@@ -12,9 +12,9 @@
 
     <groupId>com.abhinav.covid19</groupId>
     <artifactId>covid19-vaccine-tracker</artifactId>
-    <version>0.2.3-SNAPSHOT</version>
+    <version>0.2.4-SNAPSHOT</version>
     <name>covid19-vaccine-tracker</name>
-    <description>Demo project for Spring Boot</description>
+    <description>CoWIN Vaccine Alerts</description>
     <properties>
         <java.version>11</java.version>
     </properties>

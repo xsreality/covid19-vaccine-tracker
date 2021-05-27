@@ -1,34 +1,28 @@
 package org.covid19.vaccinetracker.availability;
 
-import org.covid19.vaccinetracker.availability.aws.CowinLambdaClient;
+import org.covid19.vaccinetracker.availability.aws.CowinLambdaWrapper;
 import org.covid19.vaccinetracker.bot.BotService;
 import org.covid19.vaccinetracker.cowin.CowinApiClient;
-import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.notifications.VaccineCentersNotification;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.covid19.vaccinetracker.utils.Utils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
-import static java.util.Objects.isNull;
-
 @Slf4j
 @Service
 public class VaccineAvailability {
-    @Value("${topic.updated.pincodes}")
-    private String updatedPincodesTopic;
-
     private final CowinApiClient cowinApiClient;
     private final VaccinePersistence vaccinePersistence;
     private final VaccineCentersProcessor vaccineCentersProcessor;
@@ -37,11 +31,11 @@ public class VaccineAvailability {
     private final VaccineCentersNotification vaccineCentersNotification;
     private final BotService botService;
     private final KafkaTemplate<String, String> updatedPincodesKafkaTemplate;
-    private final CowinLambdaClient cowinLambdaClient;
+    private final CowinLambdaWrapper cowinLambdaWrapper;
 
     public VaccineAvailability(CowinApiClient cowinApiClient, VaccinePersistence vaccinePersistence,
                                VaccineCentersProcessor vaccineCentersProcessor, UserRequestManager userRequestManager,
-                               AvailabilityStats availabilityStats, VaccineCentersNotification vaccineCentersNotification, BotService botService, KafkaTemplate<String, String> updatedPincodesKafkaTemplate, CowinLambdaClient cowinLambdaClient) {
+                               AvailabilityStats availabilityStats, VaccineCentersNotification vaccineCentersNotification, BotService botService, KafkaTemplate<String, String> updatedPincodesKafkaTemplate, CowinLambdaWrapper cowinLambdaWrapper) {
         this.cowinApiClient = cowinApiClient;
         this.vaccinePersistence = vaccinePersistence;
         this.vaccineCentersProcessor = vaccineCentersProcessor;
@@ -50,7 +44,7 @@ public class VaccineAvailability {
         this.vaccineCentersNotification = vaccineCentersNotification;
         this.botService = botService;
         this.updatedPincodesKafkaTemplate = updatedPincodesKafkaTemplate;
-        this.cowinLambdaClient = cowinLambdaClient;
+        this.cowinLambdaWrapper = cowinLambdaWrapper;
     }
 
     @Scheduled(cron = "${jobs.cron.vaccine.availability:-}", zone = "IST")
@@ -59,6 +53,24 @@ public class VaccineAvailability {
             this.refreshVaccineAvailabilityFromCowinViaLambda();
             this.vaccineCentersNotification.checkUpdatesAndSendNotifications();
         });
+    }
+
+    public void refreshVaccineAvailabilityFromCowinViaLambdaAsync() {
+        log.info("Refreshing Vaccine Availability from Cowin API via AWS Lambda asynchronously");
+        availabilityStats.reset();
+        availabilityStats.noteStartTime();
+
+        this.userRequestManager.fetchAllUserDistricts()
+                .parallelStream()
+                .filter(Objects::nonNull)
+                .peek(district -> availabilityStats.incrementProcessedDistricts())
+                .peek(district -> log.debug("processing district id {}", district.getId()))
+                .forEach(district -> cowinLambdaWrapper.processDistrict(district.getId()));
+
+        availabilityStats.noteEndTime();
+        final String message = String.format("[AVAILABILITY] Districts: %d, Time taken: %s", availabilityStats.processedDistricts(), availabilityStats.timeTaken());
+        log.info(message);
+        botService.notifyOwner(message);
     }
 
     public void refreshVaccineAvailabilityFromCowinViaLambda() {
@@ -71,13 +83,14 @@ public class VaccineAvailability {
                 .filter(Objects::nonNull)
                 .peek(district -> availabilityStats.incrementProcessedDistricts())
                 .peek(district -> log.debug("processing district id {}", district.getId()))
-                .map(district -> cowinLambdaClient.fetchSessionsByDistrict(district.getId()))
+                .flatMap(district -> cowinLambdaWrapper.fetchSessionsByDistrict(district.getId()))
                 .peek(this::measureApiCalls)
+                .flatMap(Optional::stream)
                 .filter(vaccineCentersProcessor::areVaccineCentersAvailable)
                 .filter(vaccineCentersProcessor::areVaccineCentersAvailableFor18plus)
                 .forEach(vaccineCenters -> {
-                    vaccinePersistence.persistVaccineCenters(vaccineCenters);
-                    sendUpdatedPincodesToKafka(vaccineCenters);
+                    vaccineCentersProcessor.persistVaccineCenters(vaccineCenters);
+                    vaccineCentersProcessor.sendUpdatedPincodesToKafka(vaccineCenters);
                 });
 
         availabilityStats.noteEndTime();
@@ -88,20 +101,10 @@ public class VaccineAvailability {
         botService.notifyOwner(message);
     }
 
-    private void sendUpdatedPincodesToKafka(VaccineCenters vaccineCenters) {
-        vaccineCenters.getCenters()
-                .stream()
-                .filter(Center::areVaccineCentersAvailableFor18plus)
-                .map(Center::getPincode)
-                .map(String::valueOf)
-                .distinct()
-                .forEach(pincode -> updatedPincodesKafkaTemplate.send(updatedPincodesTopic, pincode, pincode));
-    }
-
-    private void measureApiCalls(VaccineCenters vaccineCenters) {
+    private void measureApiCalls(Optional<VaccineCenters> vaccineCenters) {
         log.debug("Lambda call completed");
         availabilityStats.incrementTotalApiCalls();
-        if (isNull(vaccineCenters)) {
+        if (vaccineCenters.isEmpty()) {
             availabilityStats.incrementFailedApiCalls();
         }
     }

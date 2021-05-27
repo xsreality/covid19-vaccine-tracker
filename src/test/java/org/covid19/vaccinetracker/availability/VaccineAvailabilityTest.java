@@ -1,6 +1,6 @@
 package org.covid19.vaccinetracker.availability;
 
-import org.covid19.vaccinetracker.availability.aws.CowinLambdaClient;
+import org.covid19.vaccinetracker.availability.aws.CowinLambdaWrapper;
 import org.covid19.vaccinetracker.bot.BotService;
 import org.covid19.vaccinetracker.cowin.CowinApiClient;
 import org.covid19.vaccinetracker.model.Center;
@@ -17,6 +17,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
+
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
@@ -49,19 +52,19 @@ public class VaccineAvailabilityTest {
     private KafkaTemplate<String, String> updatedPincodesKafkaTemplate;
 
     @Mock
-    private CowinLambdaClient cowinLambdaClient;
+    private CowinLambdaWrapper cowinLambdaWrapper;
 
     @Test
     public void testRefreshVaccineAvailabilityFromCowinViaLambda_happyScenario() {
         District aDistrict = new District(1, "Shahdara", new State(1, "Delhi"));
         VaccineCenters vaccineCenters = createVaccineCenters();
         when(userRequestManager.fetchAllUserDistricts()).thenReturn(singleton(aDistrict));
-        when(cowinLambdaClient.fetchSessionsByDistrict(1)).thenReturn(vaccineCenters);
+        when(cowinLambdaWrapper.fetchSessionsByDistrict(1)).thenReturn(Stream.of(Optional.of(vaccineCenters)));
 
         AvailabilityStats availabilityStats = new AvailabilityStats();
         VaccineAvailability vaccineAvailability = new VaccineAvailability(cowinApiClient, vaccinePersistence,
-                new VaccineCentersProcessor(), userRequestManager, availabilityStats,
-                notification, botService, updatedPincodesKafkaTemplate, cowinLambdaClient);
+                new VaccineCentersProcessor(vaccinePersistence, updatedPincodesKafkaTemplate), userRequestManager, availabilityStats,
+                notification, botService, updatedPincodesKafkaTemplate, cowinLambdaWrapper);
         vaccineAvailability.refreshVaccineAvailabilityFromCowinViaLambda();
 
         verify(vaccinePersistence, times(1)).persistVaccineCenters(vaccineCenters);
@@ -75,12 +78,12 @@ public class VaccineAvailabilityTest {
     public void testRefreshVaccineAvailabilityFromCowinViaLambda_nullCenters() {
         District aDistrict = new District(1, "Shahdara", new State(1, "Delhi"));
         when(userRequestManager.fetchAllUserDistricts()).thenReturn(singleton(aDistrict));
-        when(cowinLambdaClient.fetchSessionsByDistrict(1)).thenReturn(null);
+        when(cowinLambdaWrapper.fetchSessionsByDistrict(1)).thenReturn(null);
 
         AvailabilityStats availabilityStats = new AvailabilityStats();
         VaccineAvailability vaccineAvailability = new VaccineAvailability(cowinApiClient, vaccinePersistence,
-                new VaccineCentersProcessor(), userRequestManager, availabilityStats,
-                notification, botService, updatedPincodesKafkaTemplate, cowinLambdaClient);
+                new VaccineCentersProcessor(vaccinePersistence, updatedPincodesKafkaTemplate), userRequestManager, availabilityStats,
+                notification, botService, updatedPincodesKafkaTemplate, cowinLambdaWrapper);
         vaccineAvailability.refreshVaccineAvailabilityFromCowinViaLambda();
 
         verify(vaccinePersistence, times(0)).persistVaccineCenters(any());

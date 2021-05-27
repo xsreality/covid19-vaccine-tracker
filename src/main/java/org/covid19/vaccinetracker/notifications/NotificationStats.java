@@ -12,6 +12,7 @@ public class NotificationStats {
     private final AtomicInteger processedPincodes = new AtomicInteger(0);
     private final AtomicInteger failedApiCalls = new AtomicInteger(0);
     private final AtomicInteger notificationsSent = new AtomicInteger(0);
+    private final AtomicInteger notificationsErrors = new AtomicInteger(0);
     private Instant startTime;
     private Instant endTime;
 
@@ -20,6 +21,7 @@ public class NotificationStats {
         processedPincodes.set(0);
         failedApiCalls.set(0);
         notificationsSent.set(0);
+        notificationsErrors.set(0);
     }
 
     public void incrementUserRequests() {
@@ -36,6 +38,10 @@ public class NotificationStats {
 
     public void incrementNotificationsSent() {
         notificationsSent.incrementAndGet();
+    }
+
+    public void incrementNotificationsErrors() {
+        notificationsErrors.incrementAndGet();
     }
 
     public void noteStartTime() {
@@ -60,6 +66,10 @@ public class NotificationStats {
 
     public int notificationsSent() {
         return notificationsSent.get();
+    }
+
+    public int notificationsErrors() {
+        return notificationsErrors.get();
     }
 
     public String timeTaken() {
