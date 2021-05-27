@@ -50,22 +50,13 @@ public class CowinLambdaWrapper implements DisposableBean {
         this.awsLambdaAsync = awsLambdaAsync;
         this.objectMapper = objectMapper;
         this.vaccineCentersProcessor = vaccineCentersProcessor;
-        this.districtsProcessorExecutor = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("vaccine-centers-processor-%d").build());
+        this.districtsProcessorExecutor = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("vaccinelambda-%d").build());
     }
 
     public void processDistrict(int districtId) {
         Stream.ofNullable(createLambdaEvent(districtId))
                 .map(this::createInvokeRequest)
                 .forEach(invokeRequest -> awsLambdaAsync.invokeAsync(invokeRequest, asyncHandler()));
-    }
-
-    public VaccineCenters fetchSessionsByDistrict(int districtId) {
-        return Stream.ofNullable(createLambdaEvent(districtId))
-                .map(this::createInvokeRequest)
-                .map(awsLambda::invoke)
-                .map(invokeResult -> toVaccineCenters(invokeResult).orElse(VaccineCenters.createEmpty()))
-                .findFirst()
-                .orElse(null);
     }
 
     @NotNull
@@ -77,19 +68,27 @@ public class CowinLambdaWrapper implements DisposableBean {
             }
 
             @Override
-            public void onSuccess(InvokeRequest request, InvokeResult invokeResult) {
+            public void onSuccess(InvokeRequest request, InvokeResult result) {
                 // run in separate thread to not delay Lambda callback thread
                 districtsProcessorExecutor.submit(() ->
-                        toVaccineCenters(invokeResult)
+                        toVaccineCenters(result)
                                 .stream()
                                 .filter(Objects::nonNull)
                                 .forEach(vaccineCenters -> {
                                     vaccineCentersProcessor.persistVaccineCenters(vaccineCenters); // DB
                                     vaccineCentersProcessor.sendUpdatedPincodesToKafka(vaccineCenters); // Kafka
+                                    log.debug("Processing completed.");
                                 })
                 );
             }
         };
+    }
+
+    public Stream<Optional<VaccineCenters>> fetchSessionsByDistrict(int districtId) {
+        return Stream.ofNullable(createLambdaEvent(districtId))
+                .map(this::createInvokeRequest)
+                .map(awsLambda::invoke)
+                .map(this::toVaccineCenters);
     }
 
     @NotNull

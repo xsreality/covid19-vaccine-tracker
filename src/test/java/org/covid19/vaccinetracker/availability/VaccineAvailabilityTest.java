@@ -18,6 +18,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
 
+import java.util.Optional;
+import java.util.stream.Stream;
+
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -56,7 +59,7 @@ public class VaccineAvailabilityTest {
         District aDistrict = new District(1, "Shahdara", new State(1, "Delhi"));
         VaccineCenters vaccineCenters = createVaccineCenters();
         when(userRequestManager.fetchAllUserDistricts()).thenReturn(singleton(aDistrict));
-        when(cowinLambdaWrapper.fetchSessionsByDistrict(1)).thenReturn(vaccineCenters);
+        when(cowinLambdaWrapper.fetchSessionsByDistrict(1)).thenReturn(Stream.of(Optional.of(vaccineCenters)));
 
         AvailabilityStats availabilityStats = new AvailabilityStats();
         VaccineAvailability vaccineAvailability = new VaccineAvailability(cowinApiClient, vaccinePersistence,

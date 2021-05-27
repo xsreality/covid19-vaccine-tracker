@@ -14,12 +14,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
-
-import static java.util.Objects.isNull;
 
 @Slf4j
 @Service
@@ -84,8 +83,9 @@ public class VaccineAvailability {
                 .filter(Objects::nonNull)
                 .peek(district -> availabilityStats.incrementProcessedDistricts())
                 .peek(district -> log.debug("processing district id {}", district.getId()))
-                .map(district -> cowinLambdaWrapper.fetchSessionsByDistrict(district.getId()))
+                .flatMap(district -> cowinLambdaWrapper.fetchSessionsByDistrict(district.getId()))
                 .peek(this::measureApiCalls)
+                .flatMap(Optional::stream)
                 .filter(vaccineCentersProcessor::areVaccineCentersAvailable)
                 .filter(vaccineCentersProcessor::areVaccineCentersAvailableFor18plus)
                 .forEach(vaccineCenters -> {
@@ -101,10 +101,10 @@ public class VaccineAvailability {
         botService.notifyOwner(message);
     }
 
-    private void measureApiCalls(VaccineCenters vaccineCenters) {
+    private void measureApiCalls(Optional<VaccineCenters> vaccineCenters) {
         log.debug("Lambda call completed");
         availabilityStats.incrementTotalApiCalls();
-        if (isNull(vaccineCenters)) {
+        if (vaccineCenters.isEmpty()) {
             availabilityStats.incrementFailedApiCalls();
         }
     }

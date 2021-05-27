@@ -146,7 +146,7 @@ public class Api {
 
     @PostMapping("/trigger/updateViaLambda")
     public ResponseEntity<?> triggerCowinUpdatesViaLambda() {
-        Executors.newSingleThreadExecutor().submit(this.vaccineAvailability::refreshVaccineAvailabilityFromCowinViaLambda);
+        Executors.newSingleThreadExecutor().submit(this.vaccineAvailability::refreshVaccineAvailabilityFromCowinViaLambdaAsync);
         return ResponseEntity.ok().build();
     }
 
