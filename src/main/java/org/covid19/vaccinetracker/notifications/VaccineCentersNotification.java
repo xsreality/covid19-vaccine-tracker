@@ -83,16 +83,20 @@ public class VaccineCentersNotification {
                 if (botService.notify(userRequest.getChatId(), eligibleCenters)) {
                     introduceDelay(10);
                     notificationStats.incrementNotificationsSent();
-                    userRequestManager.updateUserRequestLastNotifiedAt(userRequest, Utils.currentTime());
+//                    userRequestManager.updateUserRequestLastNotifiedAt(userRequest, Utils.currentTime());
+                } else {
+                    notificationStats.incrementNotificationsErrors();
                 }
                 vaccinePersistence.markProcessed(vaccineCenters); // mark processed
             });
         });
         notificationStats.noteEndTime();
-        log.info("[NOTIFICATION] Users: {}, Pincodes: {}, Notifications sent: {}, Time taken: {}",
-                notificationStats.userRequests(), notificationStats.processedPincodes(), notificationStats.notificationsSent(), notificationStats.timeTaken());
-        botService.notifyOwner(String.format("[NOTIFICATION] Users: %d, Pincodes: %d, Notifications sent: %d, Time taken: %s",
-                notificationStats.userRequests(), notificationStats.processedPincodes(), notificationStats.notificationsSent(), notificationStats.timeTaken()));
+        log.info("[NOTIFICATION] Users: {}, Pincodes: {}, Sent: {}, Errors: {}, Time taken: {}",
+                notificationStats.userRequests(), notificationStats.processedPincodes(),
+                notificationStats.notificationsSent(), notificationStats.notificationsErrors(), notificationStats.timeTaken());
+        botService.notifyOwner(String.format("[NOTIFICATION] Users: %d, Pincodes: %d, Sent: %d, Errors: %d, Time taken: %s",
+                notificationStats.userRequests(), notificationStats.processedPincodes(),
+                notificationStats.notificationsSent(), notificationStats.notificationsErrors(), notificationStats.timeTaken()));
         cache.clear(); // clear cache
     }
 

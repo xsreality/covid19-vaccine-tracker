@@ -78,13 +78,14 @@ public class CowinLambdaWrapper implements DisposableBean {
 
             @Override
             public void onSuccess(InvokeRequest request, InvokeResult invokeResult) {
+                // run in separate thread to not delay Lambda callback thread
                 districtsProcessorExecutor.submit(() ->
                         toVaccineCenters(invokeResult)
                                 .stream()
                                 .filter(Objects::nonNull)
                                 .forEach(vaccineCenters -> {
-                                    vaccineCentersProcessor.persistVaccineCenters(vaccineCenters);
-                                    vaccineCentersProcessor.sendUpdatedPincodesToKafka(vaccineCenters);
+                                    vaccineCentersProcessor.persistVaccineCenters(vaccineCenters); // DB
+                                    vaccineCentersProcessor.sendUpdatedPincodesToKafka(vaccineCenters); // Kafka
                                 })
                 );
             }
