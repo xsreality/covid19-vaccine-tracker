@@ -60,7 +60,7 @@ public class VaccineAvailabilityTest {
 
         AvailabilityStats availabilityStats = new AvailabilityStats();
         VaccineAvailability vaccineAvailability = new VaccineAvailability(cowinApiClient, vaccinePersistence,
-                new VaccineCentersProcessor(), userRequestManager, availabilityStats,
+                new VaccineCentersProcessor(vaccinePersistence, updatedPincodesKafkaTemplate), userRequestManager, availabilityStats,
                 notification, botService, updatedPincodesKafkaTemplate, cowinLambdaClient);
         vaccineAvailability.refreshVaccineAvailabilityFromCowinViaLambda();
 
@@ -79,7 +79,7 @@ public class VaccineAvailabilityTest {
 
         AvailabilityStats availabilityStats = new AvailabilityStats();
         VaccineAvailability vaccineAvailability = new VaccineAvailability(cowinApiClient, vaccinePersistence,
-                new VaccineCentersProcessor(), userRequestManager, availabilityStats,
+                new VaccineCentersProcessor(vaccinePersistence, updatedPincodesKafkaTemplate), userRequestManager, availabilityStats,
                 notification, botService, updatedPincodesKafkaTemplate, cowinLambdaClient);
         vaccineAvailability.refreshVaccineAvailabilityFromCowinViaLambda();
 

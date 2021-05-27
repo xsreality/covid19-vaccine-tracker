@@ -3,13 +3,11 @@ package org.covid19.vaccinetracker.availability;
 import org.covid19.vaccinetracker.availability.aws.CowinLambdaClient;
 import org.covid19.vaccinetracker.bot.BotService;
 import org.covid19.vaccinetracker.cowin.CowinApiClient;
-import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.notifications.VaccineCentersNotification;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.covid19.vaccinetracker.utils.Utils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -26,9 +24,6 @@ import static java.util.Objects.isNull;
 @Slf4j
 @Service
 public class VaccineAvailability {
-    @Value("${topic.updated.pincodes}")
-    private String updatedPincodesTopic;
-
     private final CowinApiClient cowinApiClient;
     private final VaccinePersistence vaccinePersistence;
     private final VaccineCentersProcessor vaccineCentersProcessor;
@@ -61,6 +56,24 @@ public class VaccineAvailability {
         });
     }
 
+    public void refreshVaccineAvailabilityFromCowinViaLambdaAsync() {
+        log.info("Refreshing Vaccine Availability from Cowin API via AWS Lambda asynchronously");
+        availabilityStats.reset();
+        availabilityStats.noteStartTime();
+
+        this.userRequestManager.fetchAllUserDistricts()
+                .parallelStream()
+                .filter(Objects::nonNull)
+                .peek(district -> availabilityStats.incrementProcessedDistricts())
+                .peek(district -> log.debug("processing district id {}", district.getId()))
+                .forEach(district -> cowinLambdaClient.processDistrict(district.getId()));
+
+        availabilityStats.noteEndTime();
+        final String message = String.format("[AVAILABILITY] Districts: %d, Time taken: %s", availabilityStats.processedDistricts(), availabilityStats.timeTaken());
+        log.info(message);
+        botService.notifyOwner(message);
+    }
+
     public void refreshVaccineAvailabilityFromCowinViaLambda() {
         log.info("Refreshing Vaccine Availability from Cowin API via AWS Lambda");
         availabilityStats.reset();
@@ -76,8 +89,8 @@ public class VaccineAvailability {
                 .filter(vaccineCentersProcessor::areVaccineCentersAvailable)
                 .filter(vaccineCentersProcessor::areVaccineCentersAvailableFor18plus)
                 .forEach(vaccineCenters -> {
-                    vaccinePersistence.persistVaccineCenters(vaccineCenters);
-                    sendUpdatedPincodesToKafka(vaccineCenters);
+                    vaccineCentersProcessor.persistVaccineCenters(vaccineCenters);
+                    vaccineCentersProcessor.sendUpdatedPincodesToKafka(vaccineCenters);
                 });
 
         availabilityStats.noteEndTime();
@@ -86,16 +99,6 @@ public class VaccineAvailability {
                 availabilityStats.failedApiCalls(), availabilityStats.timeTaken());
         log.info(message);
         botService.notifyOwner(message);
-    }
-
-    private void sendUpdatedPincodesToKafka(VaccineCenters vaccineCenters) {
-        vaccineCenters.getCenters()
-                .stream()
-                .filter(Center::areVaccineCentersAvailableFor18plus)
-                .map(Center::getPincode)
-                .map(String::valueOf)
-                .distinct()
-                .forEach(pincode -> updatedPincodesKafkaTemplate.send(updatedPincodesTopic, pincode, pincode));
     }
 
     private void measureApiCalls(VaccineCenters vaccineCenters) {

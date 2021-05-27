@@ -3,6 +3,9 @@ package org.covid19.vaccinetracker.availability;
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.model.VaccineCenters;
+import org.covid19.vaccinetracker.persistence.VaccinePersistence;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -13,6 +16,31 @@ import static java.util.Objects.nonNull;
 
 @Component
 public class VaccineCentersProcessor {
+    @Value("${topic.updated.pincodes}")
+    private String updatedPincodesTopic;
+
+    private final VaccinePersistence vaccinePersistence;
+    private final KafkaTemplate<String, String> updatedPincodesKafkaTemplate;
+
+    public VaccineCentersProcessor(VaccinePersistence vaccinePersistence, KafkaTemplate<String, String> updatedPincodesKafkaTemplate) {
+        this.vaccinePersistence = vaccinePersistence;
+        this.updatedPincodesKafkaTemplate = updatedPincodesKafkaTemplate;
+    }
+
+    public void persistVaccineCenters(VaccineCenters vaccineCenters) {
+        vaccinePersistence.persistVaccineCenters(vaccineCenters);
+    }
+
+    public void sendUpdatedPincodesToKafka(VaccineCenters vaccineCenters) {
+        vaccineCenters.getCenters()
+                .stream()
+                .filter(Center::areVaccineCentersAvailableFor18plus)
+                .map(Center::getPincode)
+                .map(String::valueOf)
+                .distinct()
+                .forEach(pincode -> updatedPincodesKafkaTemplate.send(updatedPincodesTopic, pincode, pincode));
+    }
+
     public boolean areVaccineCentersAvailable(VaccineCenters vaccineCenters) {
         return nonNull(vaccineCenters) && nonNull(vaccineCenters.centers) && !vaccineCenters.centers.isEmpty();
     }
