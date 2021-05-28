@@ -127,4 +127,11 @@ public class VaccineAvailability {
         log.info("Deleting Vaccine centers for {}", yesterday);
         this.vaccinePersistence.cleanupOldCenters(yesterday);
     }
+
+    @Scheduled(cron = "${jobs.cron.user.stats:-}", zone = "IST")
+    public void userStats() {
+        int size = userRequestManager.userRequestSize();
+        log.info("Users count: {}", size);
+        botService.notifyOwner(String.format("User count: %d", size));
+    }
 }

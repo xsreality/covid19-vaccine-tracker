@@ -37,6 +37,16 @@ public class UserRequestManager {
         this.kafkaStateStores = kafkaStateStores;
     }
 
+    public int userRequestSize() {
+        int size = 0;
+        final KeyValueIterator<String, UserRequest> it = this.kafkaStateStores.userRequests();
+        while (it.hasNext()) {
+            size++;
+            it.next();
+        }
+        return size;
+    }
+
     public Set<District> fetchAllUserDistricts() {
         final Set<District> userDistricts = new HashSet<>();
         final KeyValueIterator<String, District> districts = this.kafkaStateStores.userDistricts();
@@ -96,9 +106,8 @@ public class UserRequestManager {
     }
 
     /**
-     * Reads the user requests state store and
-     * produces each request again to the user-requests topic
-     * Useful when adding new topology that needs to be populated
+     * Reads the user requests state store and produces each request again to the user-requests
+     * topic Useful when adding new topology that needs to be populated
      */
     public void regenerateUserRequests() {
         final KeyValueIterator<String, UserRequest> requests = kafkaStateStores.userRequests();
