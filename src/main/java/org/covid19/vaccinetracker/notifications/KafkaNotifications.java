@@ -14,6 +14,7 @@ import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -39,14 +40,17 @@ public class KafkaNotifications {
     private final VaccinePersistence vaccinePersistence;
     private final VaccineCentersProcessor vaccineCentersProcessor;
     private final BotService botService;
+    private final NotificationStats stats;
 
     public KafkaNotifications(StreamsBuilder streamsBuilder, KTable<String, UsersByPincode> usersByPincodeTable,
-                              VaccinePersistence vaccinePersistence, VaccineCentersProcessor vaccineCentersProcessor, BotService botService) {
+                              VaccinePersistence vaccinePersistence, VaccineCentersProcessor vaccineCentersProcessor,
+                              BotService botService, NotificationStats stats) {
         this.streamsBuilder = streamsBuilder;
         this.usersByPincodeTable = usersByPincodeTable;
         this.vaccinePersistence = vaccinePersistence;
         this.vaccineCentersProcessor = vaccineCentersProcessor;
         this.botService = botService;
+        this.stats = stats;
     }
 
     @Bean
@@ -61,18 +65,38 @@ public class KafkaNotifications {
         stream.foreach((pincode, users) -> {
             log.debug("Building notifications for pincode {} and users {}", pincode, users);
             final VaccineCenters vaccineCenters = vaccinePersistence.fetchVaccineCentersByPincode(pincode);
+            stats.incrementProcessedPincodes();
             users.forEach(user -> Stream.ofNullable(vaccineCenters)
+                    .peek(vc -> stats.incrementUserRequests())
                     .filter(centersWithData())
                     .map(eligibleCentersFor(user))
                     .peek(logEmptyCenters(pincode))
                     .filter(eligibleCentersWithData())
                     .forEach(eligibleCenters -> {
-                        botService.notify(user, eligibleCenters);
+                        if (botService.notify(user, eligibleCenters)) {
+                            stats.incrementNotificationsSent();
+                        } else {
+                            stats.incrementNotificationsErrors();
+                        }
                         vaccinePersistence.markProcessed(vaccineCenters); // mark processed
                     }));
         });
 
         return stream;
+    }
+
+    /*
+     * Crude way to measure notification stats in async scenario
+     */
+    @Scheduled(cron = "${jobs.cron.notification.stats:-}", zone = "IST")
+    public void logAndResetStats() {
+        log.info("[NOTIFICATION] Users: {}, Pincodes: {}, Sent: {}, Errors: {}",
+                stats.userRequests(), stats.processedPincodes(),
+                stats.notificationsSent(), stats.notificationsErrors());
+        botService.notifyOwner(String.format("[NOTIFICATION] Users: %d, Pincodes: %d, Sent: %d, Errors: %d",
+                stats.userRequests(), stats.processedPincodes(),
+                stats.notificationsSent(), stats.notificationsErrors()));
+        stats.reset();
     }
 
     @NotNull
