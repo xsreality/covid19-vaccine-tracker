@@ -83,6 +83,8 @@ public class KafkaNotifications {
                                 stats.incrementNotificationsErrors();
                             }
                             cache.updateUser(user, eligibleCenters);
+                        } else {
+                            log.debug("No difference in slots data since {} was last notified", user);
                         }
                         vaccinePersistence.markProcessed(vaccineCenters); // mark processed
                     }));
