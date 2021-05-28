@@ -11,7 +11,7 @@ This repository stores the source code of the Telegram Bot CoWIN Alerts availabl
 
 ## Architecture
 
-![image](https://user-images.githubusercontent.com/4991449/120035430-e46ed800-bffe-11eb-9c92-40546511756b.png)
+![image](https://user-images.githubusercontent.com/4991449/120037514-0cac0600-c002-11eb-86c8-bc63a6c960c0.png)
 
 ## Screenshots
 
