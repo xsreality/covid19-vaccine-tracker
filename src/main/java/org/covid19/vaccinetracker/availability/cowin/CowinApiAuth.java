@@ -1,4 +1,4 @@
-package org.covid19.vaccinetracker.cowin;
+package org.covid19.vaccinetracker.availability.cowin;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.math.NumberUtils;

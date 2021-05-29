@@ -1,4 +1,4 @@
-package org.covid19.vaccinetracker.cowin;
+package org.covid19.vaccinetracker.availability.cowin;
 
 public class CowinException extends RuntimeException {
     private int statusCode;
