@@ -1,4 +1,4 @@
-package org.covid19.vaccinetracker.model;
+package org.covid19.vaccinetracker.availability.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;

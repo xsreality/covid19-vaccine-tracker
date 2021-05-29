@@ -2,8 +2,8 @@ package org.covid19.vaccinetracker.availability.cowin;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.covid19.vaccinetracker.model.ConfirmOtpResponse;
-import org.covid19.vaccinetracker.model.GenerateOtpResponse;
+import org.covid19.vaccinetracker.availability.model.ConfirmOtpResponse;
+import org.covid19.vaccinetracker.availability.model.GenerateOtpResponse;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;

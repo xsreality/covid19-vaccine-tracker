@@ -1,7 +1,7 @@
 package org.covid19.vaccinetracker.availability.cowin;
 
-import org.covid19.vaccinetracker.model.ConfirmOtpResponse;
-import org.covid19.vaccinetracker.model.GenerateOtpResponse;
+import org.covid19.vaccinetracker.availability.model.ConfirmOtpResponse;
+import org.covid19.vaccinetracker.availability.model.GenerateOtpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
