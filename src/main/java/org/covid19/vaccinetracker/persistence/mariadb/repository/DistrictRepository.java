@@ -1,7 +1,7 @@
 package org.covid19.vaccinetracker.persistence.mariadb.repository;
 
-import org.covid19.vaccinetracker.persistence.mariadb.entity.District;
-import org.covid19.vaccinetracker.persistence.mariadb.entity.State;
+import org.covid19.vaccinetracker.userrequests.model.District;
+import org.covid19.vaccinetracker.userrequests.model.State;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;

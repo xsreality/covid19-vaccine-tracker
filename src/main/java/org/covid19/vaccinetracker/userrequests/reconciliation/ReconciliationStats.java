@@ -1,4 +1,4 @@
-package org.covid19.vaccinetracker.availability.reconciliation;
+package org.covid19.vaccinetracker.userrequests.reconciliation;
 
 import org.springframework.stereotype.Component;
 

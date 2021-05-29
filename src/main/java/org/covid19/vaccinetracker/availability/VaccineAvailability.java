@@ -102,20 +102,6 @@ public class VaccineAvailability {
         }
     }
 
-    /**
-     * Return pincodes that are requested by users but not available in DB.
-     *
-     * @return List of pincodes
-     */
-    public List<String> missingPincodes() {
-        return userRequestManager.fetchAllUserRequests()
-                .stream()
-                .flatMap(userRequest -> userRequest.getPincodes().stream())
-                .distinct()
-                .filter(pincode -> !vaccinePersistence.pincodeExists(pincode))
-                .collect(Collectors.toList());
-    }
-
     @Scheduled(cron = "${jobs.cron.db.cleanup:-}", zone = "IST")
     public void cleanupOldVaccineCenters() {
         String yesterday = Utils.yesterdayIST();

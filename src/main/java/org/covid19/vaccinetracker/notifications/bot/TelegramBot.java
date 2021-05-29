@@ -1,8 +1,8 @@
 package org.covid19.vaccinetracker.notifications.bot;
 
 import org.covid19.vaccinetracker.model.Center;
-import org.covid19.vaccinetracker.model.UserRequest;
-import org.covid19.vaccinetracker.persistence.mariadb.entity.State;
+import org.covid19.vaccinetracker.userrequests.model.UserRequest;
+import org.covid19.vaccinetracker.userrequests.model.State;
 import org.covid19.vaccinetracker.persistence.mariadb.repository.StateRepository;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.jetbrains.annotations.NotNull;

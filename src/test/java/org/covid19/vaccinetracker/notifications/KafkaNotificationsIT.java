@@ -2,14 +2,15 @@ package org.covid19.vaccinetracker.notifications;
 
 import org.covid19.vaccinetracker.availability.UpdatedPincodesProducerConfig;
 import org.covid19.vaccinetracker.availability.VaccineCentersProcessor;
-import org.covid19.vaccinetracker.notifications.bot.BotService;
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
-import org.covid19.vaccinetracker.model.UserRequest;
+import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.covid19.vaccinetracker.model.VaccineCenters;
+import org.covid19.vaccinetracker.notifications.bot.BotService;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.persistence.kafka.KafkaStateStores;
 import org.covid19.vaccinetracker.persistence.kafka.KafkaStreamsConfig;
+import org.covid19.vaccinetracker.userrequests.MetadataStore;
 import org.covid19.vaccinetracker.userrequests.UserRequestProducerConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,6 +62,9 @@ public class KafkaNotificationsIT {
 
     @MockBean
     private VaccinePersistence vaccinePersistence;
+
+    @MockBean
+    private MetadataStore metadataStore;
 
     @MockBean
     private NotificationCache cache;

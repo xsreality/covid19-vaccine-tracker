@@ -1,17 +1,15 @@
 package org.covid19.vaccinetracker.availability.cowin;
 
 import org.covid19.vaccinetracker.availability.VaccineAvailability;
-import org.covid19.vaccinetracker.model.Center;
-import org.covid19.vaccinetracker.model.Session;
-import org.covid19.vaccinetracker.model.UserRequest;
+import org.covid19.vaccinetracker.userrequests.reconciliation.PincodeReconciliation;
+import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.covid19.vaccinetracker.model.UsersByPincode;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.notifications.DistrictNotifications;
 import org.covid19.vaccinetracker.notifications.VaccineCentersNotification;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
-import org.covid19.vaccinetracker.persistence.mariadb.entity.District;
-import org.covid19.vaccinetracker.availability.reconciliation.PincodeReconciliation;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
+import org.covid19.vaccinetracker.userrequests.model.District;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -22,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -78,7 +75,7 @@ public class Api {
 
     @GetMapping("/fetch/missingPincodes")
     public ResponseEntity<List<String>> fetchMissingPincodes() {
-        return ResponseEntity.ok(vaccineAvailability.missingPincodes());
+        return ResponseEntity.ok(userRequestManager.missingPincodes());
     }
 
     @PostMapping("/notify")
@@ -124,17 +121,6 @@ public class Api {
     @DeleteMapping("/delete/user_request")
     public ResponseEntity<?> removeUserRequest(@RequestParam final String chatId) {
         this.userRequestManager.acceptUserRequest(chatId, emptyList());
-        return ResponseEntity.ok().build();
-    }
-
-    @GetMapping("/add/dummy_vaccine_center")
-    public ResponseEntity<?> addUserRequest(@RequestParam final String pincode) {
-        Center center = Center.builder().centerId(123456).name("Test Vaccine Center").stateName("state").districtName("district").pincode(Integer.parseInt(pincode))
-                .sessions(Collections.singletonList(Session.builder().vaccine("COVISHIELD").sessionId("xxx").date("04-05-2021").minAgeLimit(18).availableCapacity(5).build()))
-                .build();
-        VaccineCenters vaccineCenters = new VaccineCenters();
-        vaccineCenters.setCenters(Collections.singletonList(center));
-        this.vaccinePersistence.persistVaccineCenters(pincode, vaccineCenters);
         return ResponseEntity.ok().build();
     }
 

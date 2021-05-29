@@ -4,10 +4,10 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.state.KeyValueIterator;
-import org.covid19.vaccinetracker.model.UserRequest;
+import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.covid19.vaccinetracker.model.UsersByPincode;
 import org.covid19.vaccinetracker.persistence.kafka.KafkaStateStores;
-import org.covid19.vaccinetracker.persistence.mariadb.entity.District;
+import org.covid19.vaccinetracker.userrequests.model.District;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,10 +32,12 @@ public class UserRequestManager {
 
     private final KafkaTemplate<String, UserRequest> kafkaTemplate;
     private final KafkaStateStores kafkaStateStores;
+    private final MetadataStore metadataStore;
 
-    public UserRequestManager(KafkaTemplate<String, UserRequest> kafkaTemplate, KafkaStateStores kafkaStateStores) {
+    public UserRequestManager(KafkaTemplate<String, UserRequest> kafkaTemplate, KafkaStateStores kafkaStateStores, MetadataStore metadataStore) {
         this.kafkaTemplate = kafkaTemplate;
         this.kafkaStateStores = kafkaStateStores;
+        this.metadataStore = metadataStore;
     }
 
     public int userRequestSize() {
@@ -127,6 +130,20 @@ public class UserRequestManager {
             count.getAndIncrement();
         });
         log.info("Reloaded {} user requests", count);
+    }
+
+    /**
+     * Return pincodes that are requested by users but not available in DB.
+     *
+     * @return List of pincodes
+     */
+    public List<String> missingPincodes() {
+        return fetchAllUserRequests()
+                .stream()
+                .flatMap(userRequest -> userRequest.getPincodes().stream())
+                .distinct()
+                .filter(pincode -> !metadataStore.pincodeExists(pincode))
+                .collect(Collectors.toList());
     }
 
     @NotNull

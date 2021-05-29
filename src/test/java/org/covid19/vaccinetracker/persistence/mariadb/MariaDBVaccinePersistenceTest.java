@@ -4,12 +4,8 @@ import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
-import org.covid19.vaccinetracker.persistence.mariadb.entity.District;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.SessionEntity;
-import org.covid19.vaccinetracker.persistence.mariadb.entity.State;
 import org.covid19.vaccinetracker.persistence.mariadb.repository.CenterRepository;
-import org.covid19.vaccinetracker.persistence.mariadb.repository.DistrictRepository;
-import org.covid19.vaccinetracker.persistence.mariadb.repository.PincodeRepository;
 import org.covid19.vaccinetracker.persistence.mariadb.repository.SessionRepository;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +18,6 @@ import java.util.Optional;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -32,17 +27,13 @@ public class MariaDBVaccinePersistenceTest {
     private CenterRepository centerRepository;
     @Autowired
     private SessionRepository sessionRepository;
-    @Autowired
-    private DistrictRepository districtRepository;
-    @Autowired
-    private PincodeRepository pincodeRepository;
 
     private VaccinePersistence vaccinePersistence;
 
     @BeforeEach
     public void beforeSetup() {
-        this.vaccinePersistence = new MariaDBVaccinePersistence(centerRepository, sessionRepository,
-                districtRepository, pincodeRepository);
+        this.vaccinePersistence = new MariaDBVaccinePersistence(centerRepository, sessionRepository
+        );
     }
 
     @Test
@@ -74,12 +65,6 @@ public class MariaDBVaccinePersistenceTest {
     }
 
     @Test
-    public void testFetchDistrictsByPincode() {
-        final District expected = new District(201, "Charkhi Dadri", new State(12, "Haryana"));
-        assertEquals(singletonList(expected), vaccinePersistence.fetchDistrictsByPincode("127310"));
-    }
-
-    @Test
     public void testMarkProcessed() {
         final VaccineCenters vaccineCenters = buildVaccineCenters();
         vaccinePersistence.markProcessed(vaccineCenters);
@@ -94,18 +79,6 @@ public class MariaDBVaccinePersistenceTest {
         vaccinePersistence.persistVaccineCenters(vaccineCenters);
         assertTrue(sessionRepository.findById("32bbb37e-7cb4-4942-bd92-ac56d86490f9").isPresent());
         assertTrue(centerRepository.findById(1205L).isPresent());
-    }
-
-    @Test
-    public void testPincodeExists() {
-        assertTrue(vaccinePersistence.pincodeExists("127310"));
-        assertFalse(vaccinePersistence.pincodeExists("440017"));
-    }
-
-    @Test
-    public void testFetchDistrictByNameAndState() {
-        final District expected = new District(201, "Charkhi Dadri", new State(12, "Haryana"));
-        assertEquals(expected, vaccinePersistence.fetchDistrictByNameAndState("Charkhi Dadri", "Haryana"));
     }
 
     @NotNull

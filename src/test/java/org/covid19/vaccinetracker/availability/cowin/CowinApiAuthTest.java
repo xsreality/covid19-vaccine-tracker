@@ -1,7 +1,7 @@
 package org.covid19.vaccinetracker.availability.cowin;
 
-import org.covid19.vaccinetracker.model.ConfirmOtpResponse;
-import org.covid19.vaccinetracker.model.GenerateOtpResponse;
+import org.covid19.vaccinetracker.availability.model.ConfirmOtpResponse;
+import org.covid19.vaccinetracker.availability.model.GenerateOtpResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

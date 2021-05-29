@@ -2,7 +2,7 @@ package org.covid19.vaccinetracker.userrequests;
 
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.Serdes;
-import org.covid19.vaccinetracker.model.UserRequest;
+import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

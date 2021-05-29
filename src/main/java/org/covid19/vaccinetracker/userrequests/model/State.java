@@ -1,4 +1,4 @@
-package org.covid19.vaccinetracker.persistence.mariadb.entity;
+package org.covid19.vaccinetracker.userrequests.model;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
