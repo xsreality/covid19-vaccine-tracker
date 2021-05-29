@@ -5,11 +5,10 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.covid19.vaccinetracker.model.UserRequest;
-import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.persistence.kafka.KafkaStateStores;
 import org.covid19.vaccinetracker.persistence.kafka.KafkaStreamsConfig;
-import org.covid19.vaccinetracker.persistence.mariadb.entity.District;
-import org.covid19.vaccinetracker.persistence.mariadb.entity.State;
+import org.covid19.vaccinetracker.userrequests.model.District;
+import org.covid19.vaccinetracker.userrequests.model.State;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,7 +57,7 @@ public class UserRequestManagerIT {
 
     @SuppressWarnings("unused")
     @MockBean
-    private VaccinePersistence vaccinePersistence;
+    private MetadataStore metadataStore;
 
     @Autowired
     private UserRequestManager userRequestManager;
@@ -125,7 +124,7 @@ public class UserRequestManagerIT {
     @Test
     public void testFetchAllUserDistricts() throws Exception {
         District aDistrict = new District(1, "Shahdara", new State(1, "Delhi"));
-        when(vaccinePersistence.fetchDistrictsByPincode("110092")).thenReturn(singletonList(aDistrict));
+        when(metadataStore.fetchDistrictsByPincode("110092")).thenReturn(singletonList(aDistrict));
         kafkaTemplate.send(userRequestsTopic, "999888", new UserRequest("999888", asList("110092", "110093"), null)).get();
         await().atMost(1, SECONDS).until(() -> userRequestManager.fetchAllUserDistricts().size() >= 1);
     }

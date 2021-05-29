@@ -1,4 +1,4 @@
-package org.covid19.vaccinetracker.model;
+package org.covid19.vaccinetracker.userrequests.model;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -6,7 +6,7 @@ import com.google.gson.GsonBuilder;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.Serializer;
-import org.covid19.vaccinetracker.persistence.mariadb.entity.District;
+import org.covid19.vaccinetracker.userrequests.model.District;
 
 import java.nio.charset.StandardCharsets;
 

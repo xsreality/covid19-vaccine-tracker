@@ -13,13 +13,13 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 import org.apache.kafka.streams.state.WindowStore;
-import org.covid19.vaccinetracker.model.DistrictSerde;
+import org.covid19.vaccinetracker.userrequests.model.DistrictSerde;
 import org.covid19.vaccinetracker.model.UserRequest;
 import org.covid19.vaccinetracker.model.UserRequestSerde;
 import org.covid19.vaccinetracker.model.UsersByPincode;
 import org.covid19.vaccinetracker.model.UsersByPincodeSerde;
-import org.covid19.vaccinetracker.persistence.VaccinePersistence;
-import org.covid19.vaccinetracker.persistence.mariadb.entity.District;
+import org.covid19.vaccinetracker.userrequests.model.District;
+import org.covid19.vaccinetracker.userrequests.MetadataStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
@@ -52,14 +52,14 @@ public class KafkaStreamsConfig {
     private String usersByPincodeTopic;
 
     private final KafkaProperties kafkaProperties;
-    private final VaccinePersistence vaccinePersistence;
+    private final MetadataStore metadataStore;
 
     private static final String UNIQUE_DISTRICTS_STORE = "unique-districts-store";
     private static final String USERS_BY_PINCODE_AGGREGATE_STORE = "users-by-pincode-aggregate-store";
 
-    public KafkaStreamsConfig(KafkaProperties kafkaProperties, VaccinePersistence vaccinePersistence) {
+    public KafkaStreamsConfig(KafkaProperties kafkaProperties, MetadataStore metadataStore) {
         this.kafkaProperties = kafkaProperties;
-        this.vaccinePersistence = vaccinePersistence;
+        this.metadataStore = metadataStore;
     }
 
     @Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_CONFIG_BEAN_NAME)
@@ -103,7 +103,7 @@ public class KafkaStreamsConfig {
                 .peek((key, value) -> log.debug("districts streaming record {}", value))
                 .filter((userId, userRequest) -> nonNull(userRequest.getPincodes()) && !userRequest.getPincodes().isEmpty())
                 .flatMapValues((userId, userRequest) -> userRequest.getPincodes())
-                .flatMapValues((userId, pincode) -> vaccinePersistence.fetchDistrictsByPincode(pincode))
+                .flatMapValues((userId, pincode) -> metadataStore.fetchDistrictsByPincode(pincode))
                 .transform(() -> new DeduplicationTransformer<>(windowSize.toMillis(), (key, value) -> value, UNIQUE_DISTRICTS_STORE), UNIQUE_DISTRICTS_STORE)
                 .map((userId, district) -> new KeyValue<>(district.getId(), district))
                 .to(userDistrictsTopic, Produced.with(Serdes.Integer(), new DistrictSerde()));

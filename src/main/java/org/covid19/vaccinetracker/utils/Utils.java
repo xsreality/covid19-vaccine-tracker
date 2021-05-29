@@ -7,7 +7,7 @@ import com.nimbusds.jwt.JWTParser;
 import org.apache.commons.lang3.StringUtils;
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
-import org.covid19.vaccinetracker.persistence.mariadb.entity.State;
+import org.covid19.vaccinetracker.userrequests.model.State;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 
 import java.text.ParseException;

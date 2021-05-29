@@ -1,6 +1,6 @@
 package org.covid19.vaccinetracker.persistence.mariadb;
 
-import org.covid19.vaccinetracker.persistence.mariadb.entity.State;
+import org.covid19.vaccinetracker.userrequests.model.State;
 import org.covid19.vaccinetracker.persistence.mariadb.repository.CenterRepository;
 import org.covid19.vaccinetracker.persistence.mariadb.repository.DistrictRepository;
 import org.covid19.vaccinetracker.persistence.mariadb.repository.PincodeRepository;

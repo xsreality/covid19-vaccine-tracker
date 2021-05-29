@@ -1,12 +1,12 @@
-package org.covid19.vaccinetracker.availability.reconciliation;
+package org.covid19.vaccinetracker.userrequests.reconciliation;
 
-import org.covid19.vaccinetracker.notifications.bot.BotService;
 import org.covid19.vaccinetracker.availability.cowin.CowinApiClient;
 import org.covid19.vaccinetracker.model.UserRequest;
 import org.covid19.vaccinetracker.model.VaccineCenters;
-import org.covid19.vaccinetracker.persistence.VaccinePersistence;
-import org.covid19.vaccinetracker.persistence.mariadb.entity.District;
-import org.covid19.vaccinetracker.persistence.mariadb.entity.Pincode;
+import org.covid19.vaccinetracker.notifications.bot.BotService;
+import org.covid19.vaccinetracker.userrequests.model.District;
+import org.covid19.vaccinetracker.userrequests.model.Pincode;
+import org.covid19.vaccinetracker.userrequests.MetadataStore;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -21,16 +21,16 @@ import static java.util.Objects.isNull;
 @Slf4j
 @Service
 public class PincodeReconciliation {
-    private final VaccinePersistence vaccinePersistence;
+    private final MetadataStore metadataStore;
     private final CowinApiClient cowinApiClient;
     private final ReconciliationStats reconciliationStats;
     private final UserRequestManager userRequestManager;
     private final BotService botService;
 
-    public PincodeReconciliation(VaccinePersistence vaccinePersistence, CowinApiClient cowinApiClient,
+    public PincodeReconciliation(MetadataStore metadataStore, CowinApiClient cowinApiClient,
                                  ReconciliationStats reconciliationStats, UserRequestManager userRequestManager,
                                  BotService botService) {
-        this.vaccinePersistence = vaccinePersistence;
+        this.metadataStore = metadataStore;
         this.cowinApiClient = cowinApiClient;
         this.reconciliationStats = reconciliationStats;
         this.userRequestManager = userRequestManager;
@@ -56,7 +56,7 @@ public class PincodeReconciliation {
                     return;
                 }
                 processedPincodes.add(pincode);
-                if (vaccinePersistence.pincodeExists(pincode)) {    // no reconciliation needed
+                if (metadataStore.pincodeExists(pincode)) {    // no reconciliation needed
                     log.debug("No reconciliation needed for pincode {}", pincode);
                     return;
                 }
@@ -71,13 +71,13 @@ public class PincodeReconciliation {
                 }
                 String districtName = vaccineCenters.getCenters().get(0).getDistrictName();
                 String stateName = vaccineCenters.getCenters().get(0).getStateName();
-                District district = vaccinePersistence.fetchDistrictByNameAndState(districtName, stateName);
+                District district = metadataStore.fetchDistrictByNameAndState(districtName, stateName);
                 if (isNull(district)) {
                     log.warn("No district found in DB for name {}", districtName);
                     reconciliationStats.incrementFailedWithUnknownDistrict();
                     return;
                 }
-                this.vaccinePersistence.persistPincode(Pincode.builder()
+                this.metadataStore.persistPincode(Pincode.builder()
                         .pincode(pincode)
                         .district(district)
                         .build());

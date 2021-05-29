@@ -5,12 +5,8 @@ import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.CenterEntity;
-import org.covid19.vaccinetracker.persistence.mariadb.entity.District;
-import org.covid19.vaccinetracker.persistence.mariadb.entity.Pincode;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.SessionEntity;
 import org.covid19.vaccinetracker.persistence.mariadb.repository.CenterRepository;
-import org.covid19.vaccinetracker.persistence.mariadb.repository.DistrictRepository;
-import org.covid19.vaccinetracker.persistence.mariadb.repository.PincodeRepository;
 import org.covid19.vaccinetracker.persistence.mariadb.repository.SessionRepository;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
@@ -31,15 +27,10 @@ import static java.util.Objects.nonNull;
 public class MariaDBVaccinePersistence implements VaccinePersistence {
     private final CenterRepository centerRepository;
     private final SessionRepository sessionRepository;
-    private final DistrictRepository districtRepository;
-    private final PincodeRepository pincodeRepository;
 
-    public MariaDBVaccinePersistence(CenterRepository centerRepository, SessionRepository sessionRepository,
-                                     DistrictRepository districtRepository, PincodeRepository pincodeRepository) {
+    public MariaDBVaccinePersistence(CenterRepository centerRepository, SessionRepository sessionRepository) {
         this.centerRepository = centerRepository;
         this.sessionRepository = sessionRepository;
-        this.districtRepository = districtRepository;
-        this.pincodeRepository = pincodeRepository;
     }
 
     @Override
@@ -74,16 +65,6 @@ public class MariaDBVaccinePersistence implements VaccinePersistence {
         VaccineCenters vaccineCenters = new VaccineCenters();
         vaccineCenters.setCenters(centers);
         return vaccineCenters;
-    }
-
-    @Override
-    public List<VaccineCenters> fetchAllVaccineCenters() {
-        return null;
-    }
-
-    @Override
-    public List<District> fetchDistrictsByPincode(String pincode) {
-        return districtRepository.findDistrictByPincode(pincode);
     }
 
     @Override
@@ -136,21 +117,6 @@ public class MariaDBVaccinePersistence implements VaccinePersistence {
                     .build());
         });
         return centerEntities;
-    }
-
-    @Override
-    public boolean pincodeExists(String pincode) {
-        return this.pincodeRepository.existsByPincode(pincode);
-    }
-
-    @Override
-    public District fetchDistrictByNameAndState(String districtName, String stateName) {
-        return this.districtRepository.findDistrictByDistrictNameAndState(districtName, stateName);
-    }
-
-    @Override
-    public void persistPincode(Pincode pincode) {
-        this.pincodeRepository.save(pincode);
     }
 
     @Transactional

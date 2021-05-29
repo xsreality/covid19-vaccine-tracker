@@ -8,7 +8,7 @@ import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.covid19.vaccinetracker.model.UserRequest;
 import org.covid19.vaccinetracker.model.UsersByPincode;
-import org.covid19.vaccinetracker.persistence.mariadb.entity.District;
+import org.covid19.vaccinetracker.userrequests.model.District;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
