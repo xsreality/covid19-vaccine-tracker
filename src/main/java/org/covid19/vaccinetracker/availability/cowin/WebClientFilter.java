@@ -1,4 +1,4 @@
-package org.covid19.vaccinetracker.cowin;
+package org.covid19.vaccinetracker.availability.cowin;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.ClientRequest;

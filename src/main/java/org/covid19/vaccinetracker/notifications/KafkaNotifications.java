@@ -6,7 +6,7 @@ import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 import org.covid19.vaccinetracker.availability.VaccineCentersProcessor;
-import org.covid19.vaccinetracker.bot.BotService;
+import org.covid19.vaccinetracker.notifications.bot.BotService;
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.UsersByPincode;
 import org.covid19.vaccinetracker.model.VaccineCenters;

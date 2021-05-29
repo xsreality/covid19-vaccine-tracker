@@ -1,10 +1,9 @@
 package org.covid19.vaccinetracker.availability;
 
 import org.covid19.vaccinetracker.availability.aws.CowinLambdaWrapper;
-import org.covid19.vaccinetracker.bot.BotService;
-import org.covid19.vaccinetracker.cowin.CowinApiClient;
+import org.covid19.vaccinetracker.availability.cowin.CowinApiClient;
 import org.covid19.vaccinetracker.model.VaccineCenters;
-import org.covid19.vaccinetracker.notifications.VaccineCentersNotification;
+import org.covid19.vaccinetracker.notifications.bot.BotService;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.covid19.vaccinetracker.utils.Utils;
@@ -27,30 +26,25 @@ public class VaccineAvailability {
     private final VaccineCentersProcessor vaccineCentersProcessor;
     private final UserRequestManager userRequestManager;
     private final AvailabilityStats availabilityStats;
-    private final VaccineCentersNotification vaccineCentersNotification;
     private final BotService botService;
     private final CowinLambdaWrapper cowinLambdaWrapper;
 
     public VaccineAvailability(CowinApiClient cowinApiClient, VaccinePersistence vaccinePersistence,
                                VaccineCentersProcessor vaccineCentersProcessor, UserRequestManager userRequestManager,
-                               AvailabilityStats availabilityStats, VaccineCentersNotification vaccineCentersNotification,
+                               AvailabilityStats availabilityStats,
                                BotService botService, CowinLambdaWrapper cowinLambdaWrapper) {
         this.cowinApiClient = cowinApiClient;
         this.vaccinePersistence = vaccinePersistence;
         this.vaccineCentersProcessor = vaccineCentersProcessor;
         this.userRequestManager = userRequestManager;
         this.availabilityStats = availabilityStats;
-        this.vaccineCentersNotification = vaccineCentersNotification;
         this.botService = botService;
         this.cowinLambdaWrapper = cowinLambdaWrapper;
     }
 
     @Scheduled(cron = "${jobs.cron.vaccine.availability:-}", zone = "IST")
     public void refreshVaccineAvailabilityFromCowinAndTriggerNotifications() {
-        Executors.newSingleThreadExecutor().submit(() -> {
-            this.refreshVaccineAvailabilityFromCowinViaLambdaAsync();
-//            this.vaccineCentersNotification.checkUpdatesAndSendNotifications();
-        });
+        Executors.newSingleThreadExecutor().submit(this::refreshVaccineAvailabilityFromCowinViaLambdaAsync);
     }
 
     public void refreshVaccineAvailabilityFromCowinViaLambdaAsync() {
@@ -71,6 +65,7 @@ public class VaccineAvailability {
         botService.notifyOwner(message);
     }
 
+    @Deprecated
     public void refreshVaccineAvailabilityFromCowinViaLambda() {
         log.info("Refreshing Vaccine Availability from Cowin API via AWS Lambda");
         availabilityStats.reset();

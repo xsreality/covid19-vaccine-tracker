@@ -1,4 +1,4 @@
-package org.covid19.vaccinetracker.bot;
+package org.covid19.vaccinetracker.notifications.bot;
 
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.UserRequest;

@@ -2,7 +2,7 @@ package org.covid19.vaccinetracker.notifications;
 
 import org.covid19.vaccinetracker.availability.UpdatedPincodesProducerConfig;
 import org.covid19.vaccinetracker.availability.VaccineCentersProcessor;
-import org.covid19.vaccinetracker.bot.BotService;
+import org.covid19.vaccinetracker.notifications.bot.BotService;
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.model.UserRequest;

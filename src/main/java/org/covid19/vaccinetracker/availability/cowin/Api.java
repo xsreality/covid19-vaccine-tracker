@@ -1,4 +1,4 @@
-package org.covid19.vaccinetracker.cowin;
+package org.covid19.vaccinetracker.availability.cowin;
 
 import org.covid19.vaccinetracker.availability.VaccineAvailability;
 import org.covid19.vaccinetracker.model.Center;
@@ -10,7 +10,7 @@ import org.covid19.vaccinetracker.notifications.DistrictNotifications;
 import org.covid19.vaccinetracker.notifications.VaccineCentersNotification;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.District;
-import org.covid19.vaccinetracker.reconciliation.PincodeReconciliation;
+import org.covid19.vaccinetracker.availability.reconciliation.PincodeReconciliation;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.springframework.http.ResponseEntity;

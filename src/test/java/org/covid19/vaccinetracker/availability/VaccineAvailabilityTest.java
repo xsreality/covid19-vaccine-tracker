@@ -1,8 +1,8 @@
 package org.covid19.vaccinetracker.availability;
 
 import org.covid19.vaccinetracker.availability.aws.CowinLambdaWrapper;
-import org.covid19.vaccinetracker.bot.BotService;
-import org.covid19.vaccinetracker.cowin.CowinApiClient;
+import org.covid19.vaccinetracker.notifications.bot.BotService;
+import org.covid19.vaccinetracker.availability.cowin.CowinApiClient;
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.model.VaccineCenters;
@@ -64,7 +64,7 @@ public class VaccineAvailabilityTest {
         AvailabilityStats availabilityStats = new AvailabilityStats();
         VaccineAvailability vaccineAvailability = new VaccineAvailability(cowinApiClient, vaccinePersistence,
                 new VaccineCentersProcessor(vaccinePersistence, updatedPincodesKafkaTemplate), userRequestManager, availabilityStats,
-                notification, botService, cowinLambdaWrapper);
+                botService, cowinLambdaWrapper);
         vaccineAvailability.refreshVaccineAvailabilityFromCowinViaLambda();
 
         verify(vaccinePersistence, times(1)).persistVaccineCenters(vaccineCenters);
@@ -83,7 +83,7 @@ public class VaccineAvailabilityTest {
         AvailabilityStats availabilityStats = new AvailabilityStats();
         VaccineAvailability vaccineAvailability = new VaccineAvailability(cowinApiClient, vaccinePersistence,
                 new VaccineCentersProcessor(vaccinePersistence, updatedPincodesKafkaTemplate), userRequestManager, availabilityStats,
-                notification, botService, cowinLambdaWrapper);
+                botService, cowinLambdaWrapper);
         vaccineAvailability.refreshVaccineAvailabilityFromCowinViaLambda();
 
         verify(vaccinePersistence, times(0)).persistVaccineCenters(any());
