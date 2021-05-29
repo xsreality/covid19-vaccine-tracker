@@ -6,16 +6,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.UserNotification;
+import org.covid19.vaccinetracker.persistence.mariadb.entity.UserNotificationId;
 import org.covid19.vaccinetracker.persistence.mariadb.repository.UserNotificationRepository;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
-
-import static java.util.Objects.isNull;
 
 @Slf4j
 @Component
@@ -29,9 +29,13 @@ public class NotificationCache {
     }
 
     public boolean isNewNotification(String user, String pincode, List<Center> centers) {
-        final UserNotification fromCache = this.repository.findUserNotificationByUserIdAndPincode(user, pincode);
+        final Optional<UserNotification> fromCache = this.repository.findById(
+                UserNotificationId.builder()
+                        .userId(user)
+                        .pincode(pincode)
+                        .build());
 
-        if (isNull(fromCache)) {
+        if (fromCache.isEmpty()) {
             return true;
         }
 
@@ -40,7 +44,7 @@ public class NotificationCache {
             return true;
         }
 
-        return !DigestUtils.sha256Hex(bytes).equals(fromCache.getNotificationHash());
+        return !DigestUtils.sha256Hex(bytes).equals(fromCache.get().getNotificationHash());
     }
 
     public void updateUser(String user, String pincode, List<Center> centers) {
@@ -48,8 +52,10 @@ public class NotificationCache {
         String notificationHash = bytes == null ? "unknown" : DigestUtils.sha256Hex(bytes);
         this.repository.save(
                 UserNotification.builder()
-                        .userId(user)
-                        .pincode(pincode)
+                        .userNotificationId(UserNotificationId.builder()
+                                .userId(user)
+                                .pincode(pincode)
+                                .build())
                         .notificationHash(notificationHash)
                         .notifiedAt(LocalDateTime.now())
                         .build());

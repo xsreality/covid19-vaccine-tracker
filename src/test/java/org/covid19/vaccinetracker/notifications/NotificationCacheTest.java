@@ -6,6 +6,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.UserNotification;
+import org.covid19.vaccinetracker.persistence.mariadb.entity.UserNotificationId;
 import org.covid19.vaccinetracker.persistence.mariadb.repository.UserNotificationRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,8 +41,10 @@ public class NotificationCacheTest {
                         .build()))
                 .build());
         this.repository.save(UserNotification.builder()
-                .userId("userA")
-                .pincode("110022")
+                .userNotificationId(UserNotificationId.builder()
+                        .userId("userA")
+                        .pincode("110022")
+                        .build())
                 .notificationHash(DigestUtils.sha256Hex(objectMapper.writeValueAsBytes(old)))
                 .build());
 
@@ -64,8 +67,10 @@ public class NotificationCacheTest {
                         .build()))
                 .build());
         this.repository.save(UserNotification.builder()
-                .userId("userA")
-                .pincode("110022")
+                .userNotificationId(UserNotificationId.builder()
+                        .userId("userA")
+                        .pincode("110022")
+                        .build())
                 .notificationHash(DigestUtils.sha256Hex(objectMapper.writeValueAsBytes(old)))
                 .build());
 

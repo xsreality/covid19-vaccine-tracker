@@ -10,12 +10,11 @@ time_zone = "+00:00";
 
 CREATE TABLE `user_notifications`
 (
-    `id`                varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
     `user_id`           varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
     `pincode`           varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
     `notification_hash` varchar(255) COLLATE utf8mb4_unicode_ci,
     `notified_at`       timestamp,
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`user_id`, `pincode`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
