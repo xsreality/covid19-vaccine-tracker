@@ -12,9 +12,10 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
+
+import static java.util.Objects.isNull;
 
 @Slf4j
 @Component
@@ -27,10 +28,10 @@ public class NotificationCache {
         this.objectMapper = objectMapper;
     }
 
-    public boolean isNewNotification(String user, List<Center> centers) {
-        final Optional<UserNotification> fromCache = this.repository.findById(user);
+    public boolean isNewNotification(String user, String pincode, List<Center> centers) {
+        final UserNotification fromCache = this.repository.findUserNotificationByUserIdAndPincode(user, pincode);
 
-        if (fromCache.isEmpty()) {
+        if (isNull(fromCache)) {
             return true;
         }
 
@@ -39,15 +40,16 @@ public class NotificationCache {
             return true;
         }
 
-        return !DigestUtils.sha256Hex(bytes).equals(fromCache.get().getNotificationHash());
+        return !DigestUtils.sha256Hex(bytes).equals(fromCache.getNotificationHash());
     }
 
-    public void updateUser(String user, List<Center> centers) {
+    public void updateUser(String user, String pincode, List<Center> centers) {
         byte[] bytes = serialize(centers);
         String notificationHash = bytes == null ? "unknown" : DigestUtils.sha256Hex(bytes);
         this.repository.save(
                 UserNotification.builder()
                         .userId(user)
+                        .pincode(pincode)
                         .notificationHash(notificationHash)
                         .notifiedAt(LocalDateTime.now())
                         .build());

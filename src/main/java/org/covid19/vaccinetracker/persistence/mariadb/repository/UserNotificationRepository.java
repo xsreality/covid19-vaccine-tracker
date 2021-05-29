@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UserNotificationRepository extends JpaRepository<UserNotification, String> {
+    UserNotification findUserNotificationByUserIdAndPincode(String userId, String pincode);
 }

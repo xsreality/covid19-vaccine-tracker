@@ -75,16 +75,16 @@ public class KafkaNotifications {
                     .peek(logEmptyCenters(pincode))
                     .filter(eligibleCentersWithData())
                     .forEach(eligibleCenters -> {
-                        if (cache.isNewNotification(user, eligibleCenters)) {
-                            log.debug("Slots data changed since {} was last notified", user);
+                        if (cache.isNewNotification(user, pincode, eligibleCenters)) {
+                            log.debug("Slots data changed for pincode {} since {} was last notified", pincode, user);
                             if (botService.notify(user, eligibleCenters)) {
                                 stats.incrementNotificationsSent();
                             } else {
                                 stats.incrementNotificationsErrors();
                             }
-                            cache.updateUser(user, eligibleCenters);
+                            cache.updateUser(user, pincode, eligibleCenters);
                         } else {
-                            log.debug("No difference in slots data since {} was last notified", user);
+                            log.debug("No difference in slots data for pincode {} since {} was last notified", pincode, user);
                         }
                         vaccinePersistence.markProcessed(vaccineCenters); // mark processed
                     }));

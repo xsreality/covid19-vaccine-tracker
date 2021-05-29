@@ -41,22 +41,23 @@ public class NotificationCacheTest {
                 .build());
         this.repository.save(UserNotification.builder()
                 .userId("userA")
+                .pincode("110022")
                 .notificationHash(DigestUtils.sha256Hex(objectMapper.writeValueAsBytes(old)))
                 .build());
 
-        List<Center> updated = List.of(Center.builder().centerId(123).name("abc")
+        List<Center> updated = List.of(Center.builder().centerId(123).pincode(110022).name("abc")
                 .sessions(List.of(Session.builder()
                         .availableCapacity(5)   // capacity changed
                         .availableCapacityDose1(5)
                         .build()))
                 .build());
 
-        assertTrue(cache.isNewNotification("userA", updated));
+        assertTrue(cache.isNewNotification("userA", "110022", updated));
     }
 
     @Test
     public void testOldNotification() throws Exception {
-        List<Center> old = List.of(Center.builder().centerId(123).name("abc")
+        List<Center> old = List.of(Center.builder().centerId(123).pincode(110022).name("abc")
                 .sessions(List.of(Session.builder()
                         .availableCapacity(10)
                         .availableCapacityDose1(10)
@@ -64,14 +65,15 @@ public class NotificationCacheTest {
                 .build());
         this.repository.save(UserNotification.builder()
                 .userId("userA")
+                .pincode("110022")
                 .notificationHash(DigestUtils.sha256Hex(objectMapper.writeValueAsBytes(old)))
                 .build());
 
-        assertFalse(cache.isNewNotification("userA", old));
+        assertFalse(cache.isNewNotification("userA", "110022", old));
     }
 
     @Test
     public void testNewNotificationWhenFirstTime() {
-        assertTrue(cache.isNewNotification("userA", List.of()));
+        assertTrue(cache.isNewNotification("userA", "110022", List.of()));
     }
 }
