@@ -4,7 +4,7 @@ import org.covid19.vaccinetracker.availability.VaccineCentersProcessor;
 import org.covid19.vaccinetracker.notifications.bot.BotService;
 import org.covid19.vaccinetracker.availability.cowin.CowinApiClient;
 import org.covid19.vaccinetracker.model.Center;
-import org.covid19.vaccinetracker.model.UserRequest;
+import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;

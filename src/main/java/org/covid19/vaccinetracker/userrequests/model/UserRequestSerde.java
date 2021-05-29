@@ -1,4 +1,4 @@
-package org.covid19.vaccinetracker.model;
+package org.covid19.vaccinetracker.userrequests.model;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

@@ -2,7 +2,7 @@ package org.covid19.vaccinetracker.availability.cowin;
 
 import org.covid19.vaccinetracker.availability.VaccineAvailability;
 import org.covid19.vaccinetracker.userrequests.reconciliation.PincodeReconciliation;
-import org.covid19.vaccinetracker.model.UserRequest;
+import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.covid19.vaccinetracker.model.UsersByPincode;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.notifications.DistrictNotifications;

@@ -4,7 +4,7 @@ import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.covid19.vaccinetracker.model.UserRequest;
+import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.covid19.vaccinetracker.persistence.kafka.KafkaStateStores;
 import org.covid19.vaccinetracker.persistence.kafka.KafkaStreamsConfig;
 import org.covid19.vaccinetracker.userrequests.model.District;

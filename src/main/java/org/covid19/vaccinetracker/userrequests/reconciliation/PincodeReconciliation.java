@@ -1,7 +1,7 @@
 package org.covid19.vaccinetracker.userrequests.reconciliation;
 
 import org.covid19.vaccinetracker.availability.cowin.CowinApiClient;
-import org.covid19.vaccinetracker.model.UserRequest;
+import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.notifications.bot.BotService;
 import org.covid19.vaccinetracker.userrequests.model.District;

@@ -1,4 +1,4 @@
-package org.covid19.vaccinetracker.model;
+package org.covid19.vaccinetracker.userrequests.model;
 
 import java.util.List;
 
