@@ -9,6 +9,7 @@ topic:
   user.requests: "user-requests"
   user.districts: "user-districts"
   user.bypincode: "users-by-pincode"
+  updated.pincodes: "updated-pincodes"
 
 spring:
   flyway:
@@ -22,3 +23,7 @@ spring:
       hibernate:
         hbm2ddl:
           import_files_sql_extractor: org.hibernate.tool.hbm2ddl.MultipleLinesSqlCommandExtractor
+
+logging:
+  level:
+    org.covid19.vaccinetracker: DEBUG

@@ -41,16 +41,18 @@ public class KafkaNotifications {
     private final VaccineCentersProcessor vaccineCentersProcessor;
     private final BotService botService;
     private final NotificationStats stats;
+    private final NotificationCache cache;
 
     public KafkaNotifications(StreamsBuilder streamsBuilder, KTable<String, UsersByPincode> usersByPincodeTable,
                               VaccinePersistence vaccinePersistence, VaccineCentersProcessor vaccineCentersProcessor,
-                              BotService botService, NotificationStats stats) {
+                              BotService botService, NotificationStats stats, NotificationCache cache) {
         this.streamsBuilder = streamsBuilder;
         this.usersByPincodeTable = usersByPincodeTable;
         this.vaccinePersistence = vaccinePersistence;
         this.vaccineCentersProcessor = vaccineCentersProcessor;
         this.botService = botService;
         this.stats = stats;
+        this.cache = cache;
     }
 
     @Bean
@@ -73,10 +75,16 @@ public class KafkaNotifications {
                     .peek(logEmptyCenters(pincode))
                     .filter(eligibleCentersWithData())
                     .forEach(eligibleCenters -> {
-                        if (botService.notify(user, eligibleCenters)) {
-                            stats.incrementNotificationsSent();
+                        if (cache.isNewNotification(user, eligibleCenters)) {
+                            log.debug("Slots data changed since {} was last notified", user);
+                            if (botService.notify(user, eligibleCenters)) {
+                                stats.incrementNotificationsSent();
+                            } else {
+                                stats.incrementNotificationsErrors();
+                            }
+                            cache.updateUser(user, eligibleCenters);
                         } else {
-                            stats.incrementNotificationsErrors();
+                            log.debug("No difference in slots data since {} was last notified", user);
                         }
                         vaccinePersistence.markProcessed(vaccineCenters); // mark processed
                     }));

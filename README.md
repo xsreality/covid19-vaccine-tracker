@@ -13,6 +13,12 @@ This repository stores the source code of the Telegram Bot CoWIN Alerts availabl
 
 ![image](https://user-images.githubusercontent.com/4991449/120037514-0cac0600-c002-11eb-86c8-bc63a6c960c0.png)
 
+### Design Goals
+* Send notifications as soon as new Vaccination slots are available.
+* Store critical data (like user requests) in Kafka to achieve RPO = 0
+* Store non-critical data (like Vaccine slots which can be recovered from CoWIN API)
+ outside Kafka to keep costs low.
+
 ## Screenshots
 
 <div>

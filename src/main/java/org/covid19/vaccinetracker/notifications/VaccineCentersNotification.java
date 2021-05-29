@@ -21,8 +21,10 @@ import lombok.extern.slf4j.Slf4j;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
+@SuppressWarnings("DeprecatedIsStillUsed")
 @Slf4j
 @Service
+@Deprecated(forRemoval = true, since = "0.2.7")
 public class VaccineCentersNotification {
     @Value("${users.over45}")
     private List<String> usersOver45;
