@@ -37,7 +37,7 @@ public class VaccineCentersProcessorTest {
 
     @BeforeEach
     public void setup() {
-        processor = new VaccineCentersProcessor(vaccinePersistence, userRequestManager, List.of("user_who_wants_45_alerts"));
+        processor = new VaccineCentersProcessor(vaccinePersistence, userRequestManager, List.of("special_user"));
     }
 
     @Test
@@ -68,13 +68,14 @@ public class VaccineCentersProcessorTest {
     @Test
     public void testEligibleVaccineCenters_WhenNullCenters_ReturnEmpty() {
         VaccineCenters vaccineCenters = new VaccineCenters(null);
-        assertThat(processor.eligibleVaccineCenters(vaccineCenters, ""), is(List.of()));
+        assertThat(processor.eligibleVaccineCenters(vaccineCenters, "123"), is(List.of()));
     }
 
     @Test
-    public void testEligibleVaccineCenters_WhenValidCentersFor18_44() {
+    public void testEligibleVaccineCenters_WhenValidCentersFor18_44_NoUserPrefs() {
+        when(userRequestManager.getUserAgePreference("user_who_wants_18_alerts")).thenReturn(AGE_18_44); // default
         VaccineCenters vaccineCenters = createCentersWithData();
-        List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "");
+        List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "user_who_wants_18_alerts");
         assertThat(actual, is(not(emptyList())));
         assertThat(actual.size(), is(1));
         assertThat(actual.get(0).getSessions().size(), is(1));
@@ -82,9 +83,9 @@ public class VaccineCentersProcessorTest {
     }
 
     @Test
-    public void testEligibleVaccineCenters_WhenValidCentersFor45AndAbove() {
+    public void testEligibleVaccineCenters_WhenValidCentersFor45AndAbove_SpecialUser() {
         VaccineCenters vaccineCenters = createCentersWithData();
-        List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "user_who_wants_45_alerts");
+        List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "special_user");
         assertThat(actual, is(not(emptyList())));
         assertThat(actual.size(), is(1));
         assertThat(actual.get(0).getSessions().size(), is(2));
@@ -95,7 +96,7 @@ public class VaccineCentersProcessorTest {
         when(userRequestManager.getUserAgePreference("123")).thenReturn(AGE_18_44);
 
         VaccineCenters vaccineCenters = createCentersWithData();
-        List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "");
+        List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "123");
         assertThat(actual, is(not(emptyList())));
         assertThat(actual.size(), is(1));
         assertThat(actual.get(0).getSessions().size(), is(1));
@@ -107,7 +108,7 @@ public class VaccineCentersProcessorTest {
         when(userRequestManager.getUserAgePreference("123")).thenReturn(AGE_45);
 
         VaccineCenters vaccineCenters = createCentersWithData();
-        List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "");
+        List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "123");
         assertThat(actual, is(not(emptyList())));
         assertThat(actual.size(), is(1));
         assertThat(actual.get(0).getSessions().size(), is(1));
@@ -119,7 +120,7 @@ public class VaccineCentersProcessorTest {
         when(userRequestManager.getUserAgePreference("123")).thenReturn(AGE_BOTH);
 
         VaccineCenters vaccineCenters = createCentersWithData();
-        List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "");
+        List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "123");
         assertThat(actual, is(not(emptyList())));
         assertThat(actual.size(), is(1));
         assertThat(actual.get(0).getSessions().size(), is(2));

@@ -5,11 +5,13 @@ import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
+import org.covid19.vaccinetracker.userrequests.model.Age;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
 
@@ -45,18 +47,11 @@ public class VaccineCentersProcessor {
         }
 
         vaccineCenters.centers.forEach(center -> {
-            List<Session> eligibleSessions = new ArrayList<>();
-            center.sessions.forEach(session -> {
-                if (usersOver45.contains(user)) { // some users should be alerted for 45 too
-                    if (session.ageLimit18AndAbove() && session.hasCapacity()) {
-                        eligibleSessions.add(session);
-                    }
-                } else {
-                    if (session.ageLimitExactly18() && session.hasCapacity()) {
-                        eligibleSessions.add(session);
-                    }
-                }
-            });
+            List<Session> eligibleSessions = center.getSessions().stream()
+                    .filter(Session::hasCapacity)
+                    .filter(session -> specialUser(session, user) || eligibleCenterForUser(session, user))
+                    .collect(Collectors.toList());
+
             if (!eligibleSessions.isEmpty()) {
                 Center eligibleCenter = buildCenter(center);
                 eligibleCenter.setSessions(eligibleSessions);
@@ -64,6 +59,30 @@ public class VaccineCentersProcessor {
             }
         });
         return eligibleCenters;
+    }
+
+    private boolean eligibleCenterForUser(Session session, String user) {
+        final Age userAgePreference = userRequestManager.getUserAgePreference(user);
+        if (sessionAndUserValidFor18(session, userAgePreference)
+                || sessionAndUserValidFor45(session, userAgePreference)) {
+            return true;
+        }
+        if (Age.AGE_BOTH.equals(userAgePreference)) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean sessionAndUserValidFor45(Session session, Age userAgePreference) {
+        return Age.AGE_45.equals(userAgePreference) && session.ageLimitExactly45();
+    }
+
+    private boolean sessionAndUserValidFor18(Session session, Age userAgePreference) {
+        return Age.AGE_18_44.equals(userAgePreference) && session.ageLimitExactly18();
+    }
+
+    private boolean specialUser(Session session, String user) {
+        return usersOver45.contains(user) && session.ageLimit18AndAbove();
     }
 
     private Center buildCenter(Center center) {
