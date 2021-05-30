@@ -4,7 +4,6 @@ import org.covid19.vaccinetracker.availability.UpdatedPincodesProducerConfig;
 import org.covid19.vaccinetracker.availability.VaccineCentersProcessor;
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
-import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.notifications.bot.BotService;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
@@ -12,6 +11,7 @@ import org.covid19.vaccinetracker.persistence.kafka.KafkaStateStores;
 import org.covid19.vaccinetracker.persistence.kafka.KafkaStreamsConfig;
 import org.covid19.vaccinetracker.userrequests.MetadataStore;
 import org.covid19.vaccinetracker.userrequests.UserRequestProducerConfig;
+import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,6 +63,7 @@ public class KafkaNotificationsIT {
     @MockBean
     private VaccinePersistence vaccinePersistence;
 
+    @SuppressWarnings("unused")
     @MockBean
     private MetadataStore metadataStore;
 
@@ -86,8 +87,8 @@ public class KafkaNotificationsIT {
 
     @BeforeEach
     public void setup() {
-        userRequestKafkaTemplate.send(userRequestsTopic, "userA", new UserRequest("userA", List.of("110022"), null));
-        userRequestKafkaTemplate.send(userRequestsTopic, "userB", new UserRequest("userB", List.of("110023"), null));
+        userRequestKafkaTemplate.send(userRequestsTopic, "userA", new UserRequest("userA", List.of("110022"), null, null));
+        userRequestKafkaTemplate.send(userRequestsTopic, "userB", new UserRequest("userB", List.of("110023"), null, null));
     }
 
     @Test

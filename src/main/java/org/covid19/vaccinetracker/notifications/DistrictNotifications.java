@@ -30,7 +30,7 @@ public class DistrictNotifications {
     @Scheduled(cron = "${jobs.cron.district.notifications:-}", zone = "IST")
     public void sendDistrictNotifications() {
         final VaccineCenters vaccineCenters = cowinApiClient.fetchSessionsByDistrict(MUMBAI_DISTRICT_ID);
-        final List<Center> eligibleCenters = vaccineCentersProcessor.eligibleVaccineCenters(vaccineCenters, false);
+        final List<Center> eligibleCenters = vaccineCentersProcessor.eligibleVaccineCenters(vaccineCenters, "999999");
         if (eligibleCenters.isEmpty()) {
             log.debug("No eligible vaccine centers found for district update");
             return;

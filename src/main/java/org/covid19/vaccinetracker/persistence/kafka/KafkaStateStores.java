@@ -6,6 +6,7 @@ import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
+import org.covid19.vaccinetracker.userrequests.model.Age;
 import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.covid19.vaccinetracker.model.UsersByPincode;
 import org.covid19.vaccinetracker.userrequests.model.District;
@@ -21,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 
 import static java.util.Optional.ofNullable;
+import static org.covid19.vaccinetracker.userrequests.model.Age.AGE_18_44;
 
 @Slf4j
 @Configuration
@@ -62,7 +64,7 @@ public class KafkaStateStores {
 
     public List<String> pincodesForUser(String userId) {
         return ofNullable(userRequestsStore.get(userId))
-                .orElseGet(() -> new UserRequest(userId, List.of(), null))
+                .orElseGet(() -> new UserRequest(userId, List.of(), AGE_18_44.toString(), null))
                 .getPincodes();
     }
 

@@ -1,15 +1,14 @@
 package org.covid19.vaccinetracker.notifications;
 
 import org.covid19.vaccinetracker.availability.VaccineCentersProcessor;
-import org.covid19.vaccinetracker.notifications.bot.BotService;
 import org.covid19.vaccinetracker.availability.cowin.CowinApiClient;
 import org.covid19.vaccinetracker.model.Center;
-import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.covid19.vaccinetracker.model.VaccineCenters;
+import org.covid19.vaccinetracker.notifications.bot.BotService;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
+import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.covid19.vaccinetracker.utils.Utils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -19,16 +18,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 
 import static java.util.Objects.isNull;
-import static java.util.Objects.nonNull;
 
 @SuppressWarnings("DeprecatedIsStillUsed")
 @Slf4j
 @Service
 @Deprecated(forRemoval = true, since = "0.2.7")
 public class VaccineCentersNotification {
-    @Value("${users.over45}")
-    private List<String> usersOver45;
-
     private final BotService botService;
     private final UserRequestManager userRequestManager;
     private final VaccinePersistence vaccinePersistence;
@@ -77,7 +72,7 @@ public class VaccineCentersNotification {
                     }
                 }
                 cache.putIfAbsent(pincode, vaccineCenters); // update local cache
-                List<Center> eligibleCenters = vaccineCentersProcessor.eligibleVaccineCenters(vaccineCenters, usersOver45.contains(userRequest.getChatId()));
+                List<Center> eligibleCenters = vaccineCentersProcessor.eligibleVaccineCenters(vaccineCenters, userRequest.getChatId());
                 if (eligibleCenters.isEmpty()) {
                     log.debug("No eligible vaccine centers found for pin code {}", pincode);
                     return;
@@ -139,7 +134,7 @@ public class VaccineCentersNotification {
                     }
                 }
                 cache.putIfAbsent(pincode, vaccineCenters); // update local cache
-                List<Center> eligibleCenters = vaccineCentersProcessor.eligibleVaccineCenters(vaccineCenters, usersOver45.contains(userRequest.getChatId()));
+                List<Center> eligibleCenters = vaccineCentersProcessor.eligibleVaccineCenters(vaccineCenters, userRequest.getChatId());
                 if (eligibleCenters.isEmpty()) {
                     log.debug("No eligible vaccine centers found for pin code {}", pincode);
                     return;
@@ -164,12 +159,5 @@ public class VaccineCentersNotification {
         } catch (InterruptedException e) {
             // eat
         }
-    }
-
-    /*
-     * Return true if user was notified within last 24 hours.
-     */
-    private boolean userWasNotifiedRecently(String lastNotifiedAt) {
-        return nonNull(lastNotifiedAt) && !Utils.past15mins(lastNotifiedAt);
     }
 }

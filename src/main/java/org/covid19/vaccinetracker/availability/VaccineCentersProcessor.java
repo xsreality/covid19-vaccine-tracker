@@ -5,7 +5,6 @@ import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -19,26 +18,17 @@ public class VaccineCentersProcessor {
     @Value("${topic.updated.pincodes}")
     private String updatedPincodesTopic;
 
-    private final VaccinePersistence vaccinePersistence;
-    private final KafkaTemplate<String, String> updatedPincodesKafkaTemplate;
+    @Value("${users.over45}")
+    private List<String> usersOver45;
 
-    public VaccineCentersProcessor(VaccinePersistence vaccinePersistence, KafkaTemplate<String, String> updatedPincodesKafkaTemplate) {
+    private final VaccinePersistence vaccinePersistence;
+
+    public VaccineCentersProcessor(VaccinePersistence vaccinePersistence) {
         this.vaccinePersistence = vaccinePersistence;
-        this.updatedPincodesKafkaTemplate = updatedPincodesKafkaTemplate;
     }
 
     public void persistVaccineCenters(VaccineCenters vaccineCenters) {
         vaccinePersistence.persistVaccineCenters(vaccineCenters);
-    }
-
-    public void sendUpdatedPincodesToKafka(VaccineCenters vaccineCenters) {
-        vaccineCenters.getCenters()
-                .stream()
-                .filter(Center::areVaccineCentersAvailableFor18plus)
-                .map(Center::getPincode)
-                .map(String::valueOf)
-                .distinct()
-                .forEach(pincode -> updatedPincodesKafkaTemplate.send(updatedPincodesTopic, pincode, pincode));
     }
 
     public boolean areVaccineCentersAvailable(VaccineCenters vaccineCenters) {
@@ -58,7 +48,7 @@ public class VaccineCentersProcessor {
                 && (session.availableCapacity == (session.availableCapacityDose1 + session.availableCapacityDose2));
     }
 
-    public List<Center> eligibleVaccineCenters(VaccineCenters vaccineCenters, boolean shouldAlertAbove45) {
+    public List<Center> eligibleVaccineCenters(VaccineCenters vaccineCenters, String user) {
         List<Center> eligibleCenters = new ArrayList<>();
 
         if (isNull(vaccineCenters.centers)) {
@@ -68,7 +58,7 @@ public class VaccineCentersProcessor {
         vaccineCenters.centers.forEach(center -> {
             List<Session> eligibleSessions = new ArrayList<>();
             center.sessions.forEach(session -> {
-                if (shouldAlertAbove45) { // some users should be alerted for 45 too
+                if (usersOver45.contains(user)) { // some users should be alerted for 45 too
                     if (session.ageLimit18AndAbove() && session.hasCapacity()) {
                         eligibleSessions.add(session);
                     }

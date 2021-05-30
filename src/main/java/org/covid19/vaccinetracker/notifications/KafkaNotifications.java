@@ -6,14 +6,15 @@ import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 import org.covid19.vaccinetracker.availability.VaccineCentersProcessor;
-import org.covid19.vaccinetracker.notifications.bot.BotService;
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.UsersByPincode;
 import org.covid19.vaccinetracker.model.VaccineCenters;
+import org.covid19.vaccinetracker.notifications.bot.BotService;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -32,9 +33,6 @@ public class KafkaNotifications {
     @Value("${topic.updated.pincodes}")
     private String updatedPincodesTopic;
 
-    @Value("${users.over45}")
-    private List<String> usersOver45;
-
     private final StreamsBuilder streamsBuilder;
     private final KTable<String, UsersByPincode> usersByPincodeTable;
     private final VaccinePersistence vaccinePersistence;
@@ -42,10 +40,12 @@ public class KafkaNotifications {
     private final BotService botService;
     private final NotificationStats stats;
     private final NotificationCache cache;
+    private final KafkaTemplate<String, String> updatedPincodesKafkaTemplate;
 
     public KafkaNotifications(StreamsBuilder streamsBuilder, KTable<String, UsersByPincode> usersByPincodeTable,
                               VaccinePersistence vaccinePersistence, VaccineCentersProcessor vaccineCentersProcessor,
-                              BotService botService, NotificationStats stats, NotificationCache cache) {
+                              BotService botService, NotificationStats stats,
+                              NotificationCache cache, KafkaTemplate<String, String> updatedPincodesKafkaTemplate) {
         this.streamsBuilder = streamsBuilder;
         this.usersByPincodeTable = usersByPincodeTable;
         this.vaccinePersistence = vaccinePersistence;
@@ -53,6 +53,7 @@ public class KafkaNotifications {
         this.botService = botService;
         this.stats = stats;
         this.cache = cache;
+        this.updatedPincodesKafkaTemplate = updatedPincodesKafkaTemplate;
     }
 
     @Bean
@@ -107,6 +108,16 @@ public class KafkaNotifications {
         stats.reset();
     }
 
+    public void sendUpdatedPincodesToKafka(VaccineCenters vaccineCenters) {
+        vaccineCenters.getCenters()
+                .stream()
+                .filter(Center::areVaccineCentersAvailableFor18plus)
+                .map(Center::getPincode)
+                .map(String::valueOf)
+                .distinct()
+                .forEach(pincode -> updatedPincodesKafkaTemplate.send(updatedPincodesTopic, pincode, pincode));
+    }
+
     @NotNull
     private Predicate<List<Center>> eligibleCentersWithData() {
         return centers -> !centers.isEmpty();
@@ -123,7 +134,7 @@ public class KafkaNotifications {
 
     @NotNull
     private Function<VaccineCenters, List<Center>> eligibleCentersFor(String user) {
-        return vc -> vaccineCentersProcessor.eligibleVaccineCenters(vc, usersOver45.contains(user));
+        return vc -> vaccineCentersProcessor.eligibleVaccineCenters(vc, user);
     }
 
     @NotNull

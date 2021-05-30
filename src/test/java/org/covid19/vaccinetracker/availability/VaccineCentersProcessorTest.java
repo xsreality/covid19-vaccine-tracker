@@ -24,7 +24,7 @@ public class VaccineCentersProcessorTest {
 
     @BeforeEach
     public void setup() {
-        processor = new VaccineCentersProcessor(vaccinePersistence, updatedPincodesKafkaTemplate);
+        processor = new VaccineCentersProcessor(vaccinePersistence);
     }
 
     @Test
