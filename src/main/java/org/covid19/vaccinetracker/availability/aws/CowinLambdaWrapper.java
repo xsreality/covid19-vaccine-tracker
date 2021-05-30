@@ -54,8 +54,8 @@ public class CowinLambdaWrapper implements DisposableBean {
     }
 
     public void processDistrict(int districtId) {
-        Stream.ofNullable(createLambdaEvent(districtId))
-                .map(this::createInvokeRequest)
+        Stream.ofNullable(createCalendarByDistrictLambdaEvent(districtId))
+                .map(this::createCalendarByDistrictInvokeRequest)
                 .forEach(invokeRequest -> awsLambdaAsync.invokeAsync(invokeRequest, asyncHandler()));
     }
 
@@ -85,8 +85,15 @@ public class CowinLambdaWrapper implements DisposableBean {
     }
 
     public Stream<Optional<VaccineCenters>> fetchSessionsByDistrict(int districtId) {
-        return Stream.ofNullable(createLambdaEvent(districtId))
-                .map(this::createInvokeRequest)
+        return Stream.ofNullable(createCalendarByDistrictLambdaEvent(districtId))
+                .map(this::createCalendarByDistrictInvokeRequest)
+                .map(awsLambda::invoke)
+                .map(this::toVaccineCenters);
+    }
+
+    public Stream<Optional<VaccineCenters>> fetchSessionsByPincode(String pincode) {
+        return Stream.ofNullable(createCalendarByPinLambdaEvent(pincode))
+                .map(this::createCalendarByPinInvokeRequest)
                 .map(awsLambda::invoke)
                 .map(this::toVaccineCenters);
     }
@@ -99,40 +106,46 @@ public class CowinLambdaWrapper implements DisposableBean {
                 .filter(Objects::nonNull)
                 .peek(this::logIfInvalidStatusCode)
                 .filter(this::statusCode200)
-                .map(LambdaResponse::getPayload)
+                .map(CalendarByDistrictLambdaResponse::getPayload)
                 .findFirst();
     }
 
-    private boolean statusCode200(LambdaResponse lambdaResponse) {
-        return "200".equals(lambdaResponse.getStatusCode());
+    private boolean statusCode200(CalendarByDistrictLambdaResponse calendarByDistrictLambdaResponse) {
+        return "200".equals(calendarByDistrictLambdaResponse.getStatusCode());
     }
 
-    private InvokeRequest createInvokeRequest(String event) {
+    private InvokeRequest createCalendarByDistrictInvokeRequest(String event) {
         return new InvokeRequest()
-                .withFunctionName(awsConfig.getLambdaFunctionArn())
+                .withFunctionName(awsConfig.getCalendarByDistrictLambdaArn())
                 .withPayload(event);
     }
 
-    private void logIfInvalidStatusCode(LambdaResponse lambdaResponse) {
-        if (!"200".equals(lambdaResponse.getStatusCode())) {
-            log.info("Got invalid status code {} for district {}", lambdaResponse.getStatusCode(), lambdaResponse.getDistrictId());
+    private InvokeRequest createCalendarByPinInvokeRequest(String event) {
+        return new InvokeRequest()
+                .withFunctionName(awsConfig.getCalendarByPinLambdaArn())
+                .withPayload(event);
+    }
+
+    private void logIfInvalidStatusCode(CalendarByDistrictLambdaResponse calendarByDistrictLambdaResponse) {
+        if (!"200".equals(calendarByDistrictLambdaResponse.getStatusCode())) {
+            log.info("Got invalid status code {} for district {}", calendarByDistrictLambdaResponse.getStatusCode(), calendarByDistrictLambdaResponse.getDistrictId());
         }
     }
 
     @Nullable
-    private LambdaResponse parseLambdaResponseJson(String responseJson) {
+    private CalendarByDistrictLambdaResponse parseLambdaResponseJson(String responseJson) {
         try {
-            return objectMapper.readValue(responseJson, LambdaResponse.class);
+            return objectMapper.readValue(responseJson, CalendarByDistrictLambdaResponse.class);
         } catch (JsonProcessingException e) {
             log.error("Error parsing response from Lambda: {}", e.getMessage());
             return null;
         }
     }
 
-    private String createLambdaEvent(int districtId) {
+    private String createCalendarByDistrictLambdaEvent(int districtId) {
         try {
             return objectMapper.writeValueAsString(
-                    LambdaEvent.builder()
+                    CalendarByDistrictLambdaEvent.builder()
                             .districtId(String.valueOf(districtId))
                             .date(Utils.todayIST())
                             .bearerToken("")
@@ -140,6 +153,20 @@ public class CowinLambdaWrapper implements DisposableBean {
             );
         } catch (JsonProcessingException e) {
             log.error("Error serializing lambdaEvent for district {}", districtId);
+            return null;
+        }
+    }
+
+    private String createCalendarByPinLambdaEvent(String pincode) {
+        try {
+            return objectMapper.writeValueAsString(
+                    CalendarByPinLambdaEvent.builder()
+                            .pincode(pincode)
+                            .date(Utils.todayIST())
+                            .build()
+            );
+        } catch (JsonProcessingException e) {
+            log.error("Error serializing lambdaEvent for pincode {}", pincode);
             return null;
         }
     }
@@ -161,7 +188,7 @@ public class CowinLambdaWrapper implements DisposableBean {
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-class LambdaEvent {
+class CalendarByDistrictLambdaEvent {
     @JsonProperty("district_id")
     private String districtId;
     private String date;
@@ -172,10 +199,29 @@ class LambdaEvent {
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-class LambdaResponse {
+class CalendarByDistrictLambdaResponse {
     @JsonProperty("status_code")
     private String statusCode;
     private VaccineCenters payload;
     @JsonProperty("district_id")
     private String districtId;
+}
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+class CalendarByPinLambdaEvent {
+    private String pincode;
+    private String date;
+}
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+class CalendarByPinLambdaResponse {
+    @JsonProperty("status_code")
+    private String statusCode;
+    private VaccineCenters payload;
+    private String pincode;
 }
