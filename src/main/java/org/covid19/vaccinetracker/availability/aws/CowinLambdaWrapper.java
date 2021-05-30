@@ -11,8 +11,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.covid19.vaccinetracker.availability.VaccineCentersProcessor;
+import org.covid19.vaccinetracker.notifications.VaccineCentersProcessor;
 import org.covid19.vaccinetracker.model.VaccineCenters;
+import org.covid19.vaccinetracker.notifications.KafkaNotifications;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,15 +42,17 @@ public class CowinLambdaWrapper implements DisposableBean {
     private final AWSLambdaAsync awsLambdaAsync;
     private final ObjectMapper objectMapper;
     private final VaccineCentersProcessor vaccineCentersProcessor;
+    private final KafkaNotifications kafkaNotifications;
     private final ExecutorService districtsProcessorExecutor;
 
     public CowinLambdaWrapper(AWSConfig awsConfig, AWSLambda awsLambda, AWSLambdaAsync awsLambdaAsync,
-                              ObjectMapper objectMapper, VaccineCentersProcessor vaccineCentersProcessor) {
+                              ObjectMapper objectMapper, VaccineCentersProcessor vaccineCentersProcessor, KafkaNotifications kafkaNotifications) {
         this.awsConfig = awsConfig;
         this.awsLambda = awsLambda;
         this.awsLambdaAsync = awsLambdaAsync;
         this.objectMapper = objectMapper;
         this.vaccineCentersProcessor = vaccineCentersProcessor;
+        this.kafkaNotifications = kafkaNotifications;
         this.districtsProcessorExecutor = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("vaccinelambda-%d").build());
     }
 
@@ -76,19 +79,12 @@ public class CowinLambdaWrapper implements DisposableBean {
                                 .filter(Objects::nonNull)
                                 .forEach(vaccineCenters -> {
                                     vaccineCentersProcessor.persistVaccineCenters(vaccineCenters); // DB
-                                    vaccineCentersProcessor.sendUpdatedPincodesToKafka(vaccineCenters); // Kafka
+                                    kafkaNotifications.sendUpdatedPincodesToKafka(vaccineCenters); // Kafka
                                     log.debug("Processing completed.");
                                 })
                 );
             }
         };
-    }
-
-    public Stream<Optional<VaccineCenters>> fetchSessionsByDistrict(int districtId) {
-        return Stream.ofNullable(createCalendarByDistrictLambdaEvent(districtId))
-                .map(this::createCalendarByDistrictInvokeRequest)
-                .map(awsLambda::invoke)
-                .map(this::toVaccineCenters);
     }
 
     public Stream<Optional<VaccineCenters>> fetchSessionsByPincode(String pincode) {

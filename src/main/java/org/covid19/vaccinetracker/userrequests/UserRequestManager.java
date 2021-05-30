@@ -4,10 +4,11 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.state.KeyValueIterator;
-import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.covid19.vaccinetracker.model.UsersByPincode;
 import org.covid19.vaccinetracker.persistence.kafka.KafkaStateStores;
+import org.covid19.vaccinetracker.userrequests.model.Age;
 import org.covid19.vaccinetracker.userrequests.model.District;
+import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -23,6 +24,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
+
+import static org.covid19.vaccinetracker.userrequests.model.Age.AGE_18_44;
 
 @Slf4j
 @Component
@@ -85,7 +88,7 @@ public class UserRequestManager {
     }
 
     public void acceptUserRequest(String userId, List<String> pincodes) {
-        UserRequest request = new UserRequest(userId, pincodes, null);
+        UserRequest request = new UserRequest(userId, pincodes, AGE_18_44.toString(), null);
         kafkaTemplate.setProducerListener(producerListener());
         try {
             kafkaTemplate.send(userRequestsTopic, userId, request).get();
@@ -95,7 +98,7 @@ public class UserRequestManager {
     }
 
     public void updateUserRequestLastNotifiedAt(UserRequest userRequest, String lastNotifiedAt) {
-        UserRequest updatedUserRequest = new UserRequest(userRequest.getChatId(), userRequest.getPincodes(), lastNotifiedAt);
+        UserRequest updatedUserRequest = new UserRequest(userRequest.getChatId(), userRequest.getPincodes(), userRequest.getAge(), lastNotifiedAt);
         kafkaTemplate.setProducerListener(producerListener());
         try {
             kafkaTemplate.send(userRequestsTopic, userRequest.getChatId(), updatedUserRequest).get();
@@ -119,7 +122,7 @@ public class UserRequestManager {
             List<String> updatedPincodes = entry.value.getPincodes();
             updatedPincodes.add("999999");
 
-            kafkaTemplate.send(userRequestsTopic, entry.key, new UserRequest(entry.value.getChatId(), updatedPincodes, entry.value.getLastNotifiedAt()));
+            kafkaTemplate.send(userRequestsTopic, entry.key, new UserRequest(entry.value.getChatId(), updatedPincodes, entry.value.getAge(), entry.value.getLastNotifiedAt()));
             try {
                 Thread.sleep(10);
             } catch (InterruptedException e) {
@@ -159,5 +162,16 @@ public class UserRequestManager {
                 log.error("Error producing record {}", producerRecord, exception);
             }
         };
+    }
+
+    public UserRequest fetchUserRequest(String userId) {
+        return kafkaStateStores.userRequestById(userId).orElse(null);
+    }
+
+    public Age getUserAgePreference(String userId) {
+        return kafkaStateStores.userRequestById(userId)
+                .map(UserRequest::getAge)
+                .map(Age::find)
+                .orElse(AGE_18_44); // default to 18-44 only.
     }
 }

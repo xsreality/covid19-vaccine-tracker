@@ -1,6 +1,5 @@
 package org.covid19.vaccinetracker.notifications;
 
-import org.covid19.vaccinetracker.availability.VaccineCentersProcessor;
 import org.covid19.vaccinetracker.notifications.bot.BotService;
 import org.covid19.vaccinetracker.availability.cowin.CowinApiClient;
 import org.covid19.vaccinetracker.model.Center;
@@ -30,7 +29,7 @@ public class DistrictNotifications {
     @Scheduled(cron = "${jobs.cron.district.notifications:-}", zone = "IST")
     public void sendDistrictNotifications() {
         final VaccineCenters vaccineCenters = cowinApiClient.fetchSessionsByDistrict(MUMBAI_DISTRICT_ID);
-        final List<Center> eligibleCenters = vaccineCentersProcessor.eligibleVaccineCenters(vaccineCenters, false);
+        final List<Center> eligibleCenters = vaccineCentersProcessor.eligibleVaccineCenters(vaccineCenters, "999999");
         if (eligibleCenters.isEmpty()) {
             log.debug("No eligible vaccine centers found for district update");
             return;

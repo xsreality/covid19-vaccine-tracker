@@ -42,6 +42,10 @@ public class Session {
         return minAgeLimit == 18;
     }
 
+    public boolean ageLimitExactly45() {
+        return minAgeLimit == 45;
+    }
+
     public boolean hasCapacity() {
         return (availableCapacityDose1 > 1)
                 && (availableCapacity == (availableCapacityDose1 + availableCapacityDose2));
