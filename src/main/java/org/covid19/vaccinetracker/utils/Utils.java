@@ -163,15 +163,20 @@ public class Utils {
     public static String buildNotificationMessage(List<Center> eligibleCenters) {
         StringBuilder text = new StringBuilder();
         for (Center center : eligibleCenters) {
-            text.append(String.format("<b>%s (%s %s)</b>\n<pre>\n", center.name, center.districtName, center.pincode));
+            text.append(String.format("<b>%s (%s %s)</b>\n<pre>", center.name, center.districtName, center.pincode));
             for (Session session : center.sessions) {
-                text.append(String.format("%s doses of %s for %s+ age group available on %s ", session.availableCapacityDose1, session.vaccine, session.minAgeLimit, session.date));
+                text.append(String.format("\n%s doses of %s for %s+ age group available on %s ", session.availableCapacityDose1, session.vaccine, session.minAgeLimit, session.date));
                 text.append(String.format(localizedNotificationText(center.getStateName()) + "\n", session.minAgeLimit, session.vaccine, session.availableCapacityDose1, session.date));
             }
             text.append("</pre>\n");
         }
-        text.append("For registration, please visit <a href=\"https://selfregistration.cowin.gov.in/\">CoWIN Website</a>\n");
-        return text.toString();
+        // telegram messages cannot be larger than 4KB
+        if (text.toString().length() > 4096) {
+            return text.substring(0, 4090) + "</pre>";
+        } else {
+            text.append("For registration, please visit <a href=\"https://selfregistration.cowin.gov.in/\">CoWIN Website</a>\n");
+            return text.toString();
+        }
     }
 
     public static String localizedNotificationText(String stateName) {

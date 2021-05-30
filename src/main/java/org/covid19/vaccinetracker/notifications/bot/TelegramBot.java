@@ -1,9 +1,9 @@
 package org.covid19.vaccinetracker.notifications.bot;
 
 import org.covid19.vaccinetracker.model.Center;
-import org.covid19.vaccinetracker.userrequests.model.UserRequest;
-import org.covid19.vaccinetracker.userrequests.model.State;
 import org.covid19.vaccinetracker.persistence.mariadb.repository.StateRepository;
+import org.covid19.vaccinetracker.userrequests.model.State;
+import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.BeansException;
@@ -56,11 +56,11 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
     public Ability start() {
         return Ability.builder().name("start").info("Subscribe to Covid19 Vaccine Tracker")
                 .locality(ALL).privacy(PUBLIC).input(0).action(ctx -> {
-                    String message = "Welcome to COVID19 Vaccine Tracker! कोविड-19 वैक्सीन ट्रैकर में आपका स्वागत है!\n\n" +
+                    String message = String.format("Hi %s! Welcome to COVID19 Vaccine Tracker! कोविड-19 वैक्सीन ट्रैकर में आपका स्वागत है!\n\n" +
                             "To automatically receive notification when Vaccine becomes available near you, send your pin code.\n" +
                             "जब आपके पास वैक्सीन उपलब्ध हो जाता है तो अपने आप ही सूचना प्राप्त करने के लिए अपना पिन कोड भेजें।\n\n" +
                             "Stay safe, wear masks and keep social distancing!\n" +
-                            "सुरक्षित रहें, मास्क पहनें और सामाजिक दूरी बनाए रखें!";
+                            "सुरक्षित रहें, मास्क पहनें और सामाजिक दूरी बनाए रखें!", getFirstName(ctx.update()));
                     silent.send(message, ctx.chatId());
                 }).build();
     }
@@ -70,7 +70,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                 .locality(ALL).privacy(PUBLIC).input(0).action(ctx -> {
                     String chatId = getChatId(ctx.update());
                     this.botBackend.cancelUserRequest(chatId);
-                    String message = "Okay, I will no longer send you any alerts. ठीक है, मैं अब आपको कोई अलर्ट नहीं भेजूंगी।";
+                    String message = String.format("Okay %s, I will no longer send you any alerts. ठीक है, मैं अब आपको कोई अलर्ट नहीं भेजूंगी।", getFirstName(ctx.update()));
                     silent.send(message, ctx.chatId());
                 }).build();
     }
@@ -118,13 +118,14 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                             return;
                         }
                         String chatId = getChatId(ctx.update());
+                        String firstName = getFirstName(ctx.update());
                         this.botBackend.acceptUserRequest(chatId, pincodesAsList);
                         State state = this.stateRepository.findByPincode(pincodesAsList.get(0));
                         String localizedAckMessage = Utils.localizedAckText(state);
-                        silent.send("Okay! I will notify you when vaccine is available in centers near your location.\n" +
+                        silent.send(String.format("Okay %s! I will notify you when vaccine is available in centers near your location.\n" +
                                 "You can set multiple pincodes by sending them together separated by comma (,). Maximum 3 pincodes are allowed.\n" +
                                 "Make sure notification is turned on for this bot so you don't miss any alerts!\n\n" +
-                                localizedAckMessage, ctx.chatId());
+                                localizedAckMessage, firstName), ctx.chatId());
 
                         // send an update to Bot channel
                         String channelMsg = String.format("%s (%s, %s) set notification preference for pincode(s) %s",
@@ -143,6 +144,12 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
         return update.hasMessage() ?
                 String.valueOf(update.getMessage().getChatId()) :
                 String.valueOf(update.getCallbackQuery().getMessage().getChatId());
+    }
+
+    private String getFirstName(Update update) {
+        return update.hasMessage() ?
+                String.valueOf(update.getMessage().getChat().getFirstName()) :
+                String.valueOf(update.getCallbackQuery().getMessage().getChat().getFirstName());
     }
 
     @Override
