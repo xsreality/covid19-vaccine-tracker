@@ -1,8 +1,6 @@
 package org.covid19.vaccinetracker.availability.cowin;
 
 import org.covid19.vaccinetracker.availability.VaccineAvailability;
-import org.covid19.vaccinetracker.userrequests.reconciliation.PincodeReconciliation;
-import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.covid19.vaccinetracker.model.UsersByPincode;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.notifications.DistrictNotifications;
@@ -10,6 +8,8 @@ import org.covid19.vaccinetracker.notifications.VaccineCentersNotification;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.covid19.vaccinetracker.userrequests.model.District;
+import org.covid19.vaccinetracker.userrequests.model.UserRequest;
+import org.covid19.vaccinetracker.userrequests.reconciliation.PincodeReconciliation;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -138,7 +138,7 @@ public class Api {
 
     @PostMapping("/trigger/reconcile")
     public ResponseEntity<?> triggerPincodesReconciliation() {
-        Executors.newSingleThreadExecutor().submit(() -> this.pincodeReconciliation.reconcilePincodesFromCowin(userRequestManager.fetchAllUserRequests()));
+        Executors.newSingleThreadExecutor().submit(() -> this.pincodeReconciliation.reconcilePincodesFromLambda(userRequestManager.fetchAllUserRequests()));
         return ResponseEntity.ok().build();
     }
 

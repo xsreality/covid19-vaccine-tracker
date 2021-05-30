@@ -17,7 +17,8 @@ import lombok.Data;
 @ConfigurationProperties(prefix = "aws")
 @Data
 public class AWSConfig {
-    private String lambdaFunctionArn;
+    private String calendarByDistrictLambdaArn;
+    private String calendarByPinLambdaArn;
 
     @Bean
     public AWSLambda awsLambda() {

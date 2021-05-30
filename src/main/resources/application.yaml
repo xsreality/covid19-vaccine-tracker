@@ -19,7 +19,7 @@ jobs:
   cron:
     vaccine.availability: "0 0/5 6-23 * * *"
     district.notifications: "-"
-    pincode.reconciliation: "-"
+    pincode.reconciliation: "0 1 6-23 * * *"
     cowin.api.auth: "-"
     db.cleanup: "0 55 23 * * *"
     notification.stats: "0 4/5 6-23 * * *"
