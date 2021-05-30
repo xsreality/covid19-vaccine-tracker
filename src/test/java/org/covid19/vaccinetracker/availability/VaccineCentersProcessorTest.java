@@ -13,12 +13,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
+import static java.util.Collections.emptyList;
+import static org.covid19.vaccinetracker.userrequests.model.Age.AGE_18_44;
+import static org.covid19.vaccinetracker.userrequests.model.Age.AGE_45;
+import static org.covid19.vaccinetracker.userrequests.model.Age.AGE_BOTH;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class VaccineCentersProcessorTest {
@@ -32,7 +37,7 @@ public class VaccineCentersProcessorTest {
 
     @BeforeEach
     public void setup() {
-        processor = new VaccineCentersProcessor(vaccinePersistence, List.of("user_who_wants_45_alerts"));
+        processor = new VaccineCentersProcessor(vaccinePersistence, userRequestManager, List.of("user_who_wants_45_alerts"));
     }
 
     @Test
@@ -70,7 +75,7 @@ public class VaccineCentersProcessorTest {
     public void testEligibleVaccineCenters_WhenValidCentersFor18_44() {
         VaccineCenters vaccineCenters = createCentersWithData();
         List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "");
-        assertThat(actual, is(not(List.of())));
+        assertThat(actual, is(not(emptyList())));
         assertThat(actual.size(), is(1));
         assertThat(actual.get(0).getSessions().size(), is(1));
         assertThat(actual.get(0).getSessions().get(0).getSessionId(), is(equalTo("session_for_18")));
@@ -80,10 +85,46 @@ public class VaccineCentersProcessorTest {
     public void testEligibleVaccineCenters_WhenValidCentersFor45AndAbove() {
         VaccineCenters vaccineCenters = createCentersWithData();
         List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "user_who_wants_45_alerts");
-        System.out.println(actual);
-        assertThat(actual, is(not(List.of())));
+        assertThat(actual, is(not(emptyList())));
         assertThat(actual.size(), is(1));
         assertThat(actual.get(0).getSessions().size(), is(2));
+    }
+
+    @Test
+    public void testEligibleVaccineCenters_WhenUserHasAge18Preference() {
+        when(userRequestManager.getUserAgePreference("123")).thenReturn(AGE_18_44);
+
+        VaccineCenters vaccineCenters = createCentersWithData();
+        List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "");
+        assertThat(actual, is(not(emptyList())));
+        assertThat(actual.size(), is(1));
+        assertThat(actual.get(0).getSessions().size(), is(1));
+        assertThat(actual.get(0).getSessions().get(0).getSessionId(), is(equalTo("session_for_18")));
+    }
+
+    @Test
+    public void testEligibleVaccineCenters_WhenUserHasAge45Preference() {
+        when(userRequestManager.getUserAgePreference("123")).thenReturn(AGE_45);
+
+        VaccineCenters vaccineCenters = createCentersWithData();
+        List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "");
+        assertThat(actual, is(not(emptyList())));
+        assertThat(actual.size(), is(1));
+        assertThat(actual.get(0).getSessions().size(), is(1));
+        assertThat(actual.get(0).getSessions().get(0).getSessionId(), is(equalTo("session_for_45")));
+    }
+
+    @Test
+    public void testEligibleVaccineCenters_WhenUserHasAgeBothPreference() {
+        when(userRequestManager.getUserAgePreference("123")).thenReturn(AGE_BOTH);
+
+        VaccineCenters vaccineCenters = createCentersWithData();
+        List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "");
+        assertThat(actual, is(not(emptyList())));
+        assertThat(actual.size(), is(1));
+        assertThat(actual.get(0).getSessions().size(), is(2));
+        assertTrue(actual.get(0).getSessions().stream().anyMatch(session -> "session_for_18".equals(session.getSessionId())));
+        assertTrue(actual.get(0).getSessions().stream().anyMatch(session -> "session_for_45".equals(session.getSessionId())));
     }
 
     private VaccineCenters createCentersWithData() {

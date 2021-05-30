@@ -18,11 +18,14 @@ public class VaccineCentersProcessor {
     private final List<String> usersOver45;
 
     private final VaccinePersistence vaccinePersistence;
+    private final UserRequestManager userRequestManager;
 
     public VaccineCentersProcessor(VaccinePersistence vaccinePersistence,
+                                   UserRequestManager userRequestManager,
                                    @Value("${users.over45}") List<String> usersOver45) {
         this.vaccinePersistence = vaccinePersistence;
         this.usersOver45 = usersOver45;
+        this.userRequestManager = userRequestManager;
     }
 
     public void persistVaccineCenters(VaccineCenters vaccineCenters) {

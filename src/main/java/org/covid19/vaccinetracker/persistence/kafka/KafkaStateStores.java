@@ -6,16 +6,16 @@ import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
-import org.covid19.vaccinetracker.userrequests.model.Age;
-import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.covid19.vaccinetracker.model.UsersByPincode;
 import org.covid19.vaccinetracker.userrequests.model.District;
+import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.StreamsBuilderFactoryBean;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -60,6 +60,11 @@ public class KafkaStateStores {
 
     public KeyValueIterator<String, UserRequest> userRequests() {
         return userRequestsStore.all();
+    }
+
+    public Optional<UserRequest> userRequestById(String userId) {
+        return Optional.ofNullable(userId)
+                .map(s -> userRequestsStore.get(userId));
     }
 
     public List<String> pincodesForUser(String userId) {

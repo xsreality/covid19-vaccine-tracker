@@ -6,6 +6,7 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.covid19.vaccinetracker.model.UsersByPincode;
 import org.covid19.vaccinetracker.persistence.kafka.KafkaStateStores;
+import org.covid19.vaccinetracker.userrequests.model.Age;
 import org.covid19.vaccinetracker.userrequests.model.District;
 import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.jetbrains.annotations.NotNull;
@@ -161,5 +162,16 @@ public class UserRequestManager {
                 log.error("Error producing record {}", producerRecord, exception);
             }
         };
+    }
+
+    public UserRequest fetchUserRequest(String userId) {
+        return kafkaStateStores.userRequestById(userId).orElse(null);
+    }
+
+    public Age getUserAgePreference(String userId) {
+        return kafkaStateStores.userRequestById(userId)
+                .map(UserRequest::getAge)
+                .map(Age::find)
+                .orElse(AGE_18_44); // default to 18-44 only.
     }
 }

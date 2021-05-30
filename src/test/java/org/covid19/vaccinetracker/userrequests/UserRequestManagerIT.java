@@ -33,6 +33,11 @@ import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
+import static org.covid19.vaccinetracker.userrequests.model.Age.AGE_18_44;
+import static org.covid19.vaccinetracker.userrequests.model.Age.AGE_45;
+import static org.covid19.vaccinetracker.userrequests.model.Age.AGE_BOTH;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -152,6 +157,38 @@ public class UserRequestManagerIT {
         kafkaTemplate.send(userRequestsTopic, "112233", new UserRequest("112233", List.of(), null, null)).get();
         // verify store contains no references to user 112233
         await().atMost(5, SECONDS).until(() -> !extractUsers("847226").contains("112233"));
+    }
+
+    @Test
+    public void testGetUserAgePreferenceFor18() throws Exception {
+        final String userId = "user_with_age_pref_18";
+        kafkaTemplate.send(userRequestsTopic, userId, new UserRequest(userId, List.of("751010"), AGE_18_44.toString(), null)).get();
+        await().atMost(1, SECONDS).until(() -> nonNull(userRequestManager.fetchUserRequest(userId)));
+        assertThat(userRequestManager.getUserAgePreference(userId), is(equalTo(AGE_18_44)));
+    }
+
+    @Test
+    public void testGetUserAgePreferenceFor45() throws Exception {
+        final String userId = "user_with_age_pref_45";
+        kafkaTemplate.send(userRequestsTopic, userId, new UserRequest(userId, List.of("751010"), AGE_45.toString(), null)).get();
+        await().atMost(1, SECONDS).until(() -> nonNull(userRequestManager.fetchUserRequest(userId)));
+        assertThat(userRequestManager.getUserAgePreference(userId), is(equalTo(AGE_45)));
+    }
+
+    @Test
+    public void testGetUserAgePreferenceForBoth() throws Exception {
+        final String userId = "user_with_age_pref_both";
+        kafkaTemplate.send(userRequestsTopic, userId, new UserRequest(userId, List.of("751010"), AGE_BOTH.toString(), null)).get();
+        await().atMost(1, SECONDS).until(() -> nonNull(userRequestManager.fetchUserRequest(userId)));
+        assertThat(userRequestManager.getUserAgePreference(userId), is(equalTo(AGE_BOTH)));
+    }
+
+    @Test
+    public void testGetUserAgePreferenceWhenNotSet() throws Exception {
+        String userId = "user_with_age_pref_not_set";
+        kafkaTemplate.send(userRequestsTopic, userId, new UserRequest(userId, List.of("751010"), null, null)).get();
+        await().atMost(1, SECONDS).until(() -> nonNull(userRequestManager.fetchUserRequest(userId)));
+        assertThat(userRequestManager.getUserAgePreference(userId), is(equalTo(AGE_18_44)));
     }
 
     private Set<String> extractUsers(String pincode) {
