@@ -1,14 +1,22 @@
 package org.covid19.vaccinetracker.availability;
 
+import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
+import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
+import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.kafka.core.KafkaTemplate;
 
+import java.util.List;
+
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -20,11 +28,11 @@ public class VaccineCentersProcessorTest {
     private VaccinePersistence vaccinePersistence;
 
     @Mock
-    private KafkaTemplate<String, String> updatedPincodesKafkaTemplate;
+    private UserRequestManager userRequestManager;
 
     @BeforeEach
     public void setup() {
-        processor = new VaccineCentersProcessor(vaccinePersistence);
+        processor = new VaccineCentersProcessor(vaccinePersistence, List.of("user_who_wants_45_alerts"));
     }
 
     @Test
@@ -50,5 +58,61 @@ public class VaccineCentersProcessorTest {
                 .availableCapacityDose1(0)
                 .availableCapacityDose2(8)
                 .build()), "False if dose1 is zero (ignore dose2)");
+    }
+
+    @Test
+    public void testEligibleVaccineCenters_WhenNullCenters_ReturnEmpty() {
+        VaccineCenters vaccineCenters = new VaccineCenters(null);
+        assertThat(processor.eligibleVaccineCenters(vaccineCenters, ""), is(List.of()));
+    }
+
+    @Test
+    public void testEligibleVaccineCenters_WhenValidCentersFor18_44() {
+        VaccineCenters vaccineCenters = createCentersWithData();
+        List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "");
+        assertThat(actual, is(not(List.of())));
+        assertThat(actual.size(), is(1));
+        assertThat(actual.get(0).getSessions().size(), is(1));
+        assertThat(actual.get(0).getSessions().get(0).getSessionId(), is(equalTo("session_for_18")));
+    }
+
+    @Test
+    public void testEligibleVaccineCenters_WhenValidCentersFor45AndAbove() {
+        VaccineCenters vaccineCenters = createCentersWithData();
+        List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "user_who_wants_45_alerts");
+        System.out.println(actual);
+        assertThat(actual, is(not(List.of())));
+        assertThat(actual.size(), is(1));
+        assertThat(actual.get(0).getSessions().size(), is(2));
+    }
+
+    private VaccineCenters createCentersWithData() {
+        return new VaccineCenters(List.of(
+                Center.builder()
+                        .centerId(123)
+                        .name("RAJIV GANDHI SUPER SPECIALITY")
+                        .pincode(110022)
+                        .districtName("Shahdara")
+                        .stateName("Delhi")
+                        .sessions(List.of(
+                                Session.builder()
+                                        .sessionId("session_for_18")
+                                        .vaccine("COVISHIELD")
+                                        .availableCapacity(5)
+                                        .availableCapacityDose1(5)
+                                        .availableCapacityDose2(0)
+                                        .minAgeLimit(18)
+                                        .date("15-05-2021")
+                                        .build(),
+                                Session.builder()
+                                        .sessionId("session_for_45")
+                                        .vaccine("COVAXIN")
+                                        .availableCapacity(5)
+                                        .availableCapacityDose1(5)
+                                        .availableCapacityDose2(0)
+                                        .minAgeLimit(45)
+                                        .date("15-05-2021")
+                                        .build()))
+                        .build()));
     }
 }

@@ -4,6 +4,7 @@ import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
+import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -11,36 +12,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Objects.isNull;
-import static java.util.Objects.nonNull;
 
 @Component
 public class VaccineCentersProcessor {
-    @Value("${topic.updated.pincodes}")
-    private String updatedPincodesTopic;
-
-    @Value("${users.over45}")
-    private List<String> usersOver45;
+    private final List<String> usersOver45;
 
     private final VaccinePersistence vaccinePersistence;
 
-    public VaccineCentersProcessor(VaccinePersistence vaccinePersistence) {
+    public VaccineCentersProcessor(VaccinePersistence vaccinePersistence,
+                                   @Value("${users.over45}") List<String> usersOver45) {
         this.vaccinePersistence = vaccinePersistence;
+        this.usersOver45 = usersOver45;
     }
 
     public void persistVaccineCenters(VaccineCenters vaccineCenters) {
         vaccinePersistence.persistVaccineCenters(vaccineCenters);
-    }
-
-    public boolean areVaccineCentersAvailable(VaccineCenters vaccineCenters) {
-        return nonNull(vaccineCenters) && nonNull(vaccineCenters.centers) && !vaccineCenters.centers.isEmpty();
-    }
-
-    public boolean areVaccineCentersAvailableFor18plus(VaccineCenters vaccineCenters) {
-        return nonNull(vaccineCenters.centers) && vaccineCenters.centers
-                .stream()
-                .anyMatch(center -> center.sessions
-                        .stream()
-                        .anyMatch(session -> session.ageLimit18AndAbove() && session.hasCapacity()));
     }
 
     public boolean hasCapacity(Session session) {
