@@ -1,7 +1,6 @@
 package org.covid19.vaccinetracker.notifications;
 
 import org.covid19.vaccinetracker.availability.UpdatedPincodesProducerConfig;
-import org.covid19.vaccinetracker.availability.VaccineCentersProcessor;
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.model.VaccineCenters;
@@ -45,7 +44,6 @@ import static org.mockito.Mockito.when;
         KafkaStateStores.class,
         KafkaStreamsConfig.class,
         KafkaNotifications.class,
-        VaccineCentersProcessor.class,
         NotificationStats.class
 })
 @EmbeddedKafka(
@@ -62,6 +60,9 @@ public class KafkaNotificationsIT {
 
     @MockBean
     private VaccinePersistence vaccinePersistence;
+
+    @MockBean
+    private VaccineCentersProcessor vaccineCentersProcessor;
 
     @SuppressWarnings("unused")
     @MockBean
@@ -98,6 +99,7 @@ public class KafkaNotificationsIT {
 
         final VaccineCenters data = createCentersWithData();
         when(vaccinePersistence.fetchVaccineCentersByPincode("110022")).thenReturn(data);
+        when(vaccineCentersProcessor.eligibleVaccineCenters(any(), anyString())).thenReturn(data.getCenters());
         when(cache.isNewNotification(anyString(), anyString(), any())).thenReturn(true);
         when(botService.notify(anyString(), any())).thenReturn(true);
 

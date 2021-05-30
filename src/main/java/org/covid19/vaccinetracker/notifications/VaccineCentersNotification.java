@@ -1,6 +1,5 @@
 package org.covid19.vaccinetracker.notifications;
 
-import org.covid19.vaccinetracker.availability.VaccineCentersProcessor;
 import org.covid19.vaccinetracker.availability.cowin.CowinApiClient;
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.VaccineCenters;

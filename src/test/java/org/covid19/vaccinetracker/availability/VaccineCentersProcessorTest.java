@@ -3,6 +3,7 @@ package org.covid19.vaccinetracker.availability;
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.model.VaccineCenters;
+import org.covid19.vaccinetracker.notifications.VaccineCentersProcessor;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.junit.jupiter.api.BeforeEach;
