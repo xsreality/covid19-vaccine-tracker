@@ -82,7 +82,9 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                 .locality(ALL).privacy(PUBLIC).input(0).action(ctx -> {
                     String chatId = getChatId(ctx.update());
                     this.botBackend.cancelUserRequest(chatId);
-                    String message = String.format("Okay %s, I will no longer send you any alerts. ठीक है, मैं अब आपको कोई अलर्ट नहीं भेजूंगी।", getFirstName(ctx.update()));
+                    String message = String.format("Okay %s, I will no longer send you any alerts. ठीक है, मैं अब आपको कोई अलर्ट नहीं भेजूंगी।\n\n" +
+                            "I hope you were able to book vaccine slot with my help. Please send feedback to @xsreality\n" +
+                            "मुझे आशा है कि आप मेरी मदद से वैक्सीन स्लॉट बुक करने में सक्षम थे। कृपया प्रतिक्रिया भेजें @xsreality", getFirstName(ctx.update()));
                     silent.send(message, ctx.chatId());
                 }).build();
     }
@@ -152,17 +154,20 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
         Reply age18Flow = Reply.of((bot, upd) -> {
             removeKeyboard(upd);
             botBackend.updateAgePreference(getChatId(upd), AGE_18_44);
-        }, hasMessageWith("18-44"));
+            silent.execute(SendMessage.builder().chatId(getChatId(upd)).text("I have updated your age preference to 18-44").build());
+        }, hasMessage("18-44"));
 
         Reply age45Flow = Reply.of((bot, upd) -> {
             removeKeyboard(upd);
             botBackend.updateAgePreference(getChatId(upd), AGE_45);
-        }, hasMessageWith("45+"));
+            silent.execute(SendMessage.builder().chatId(getChatId(upd)).text("I have updated your age preference to 45+").build());
+        }, hasMessage("45+"));
 
         Reply ageBothFlow = Reply.of((bot, upd) -> {
             removeKeyboard(upd);
             botBackend.updateAgePreference(getChatId(upd), AGE_BOTH);
-        }, hasMessageWith("both"));
+            silent.execute(SendMessage.builder().chatId(getChatId(upd)).text("I have updated your age preference to both 18-44 and 45+").build());
+        }, hasMessage("both"));
 
         return ReplyFlow.builder(db, 110)
                 .action((bot, update) -> silent.execute(BotUtils.buildAgeSelectionKeyboard(getChatId(update))))
@@ -183,6 +188,17 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
     @NotNull
     private Predicate<Update> hasMessageWith(String msg) {
         return upd -> Flag.MESSAGE.test(upd) && upd.getMessage().getText().equalsIgnoreCase(msg);
+    }
+
+
+    private Predicate<Update> hasMessage(String desired) {
+        return upd -> {
+            if (upd.hasCallbackQuery()) {
+                String actual = upd.getCallbackQuery().getData();
+                return actual.equalsIgnoreCase(desired);
+            }
+            return false;
+        };
     }
 
     private Predicate<Update> isCallbackOrMessage(String msg) {
