@@ -15,11 +15,15 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.telegram.abilitybots.api.bot.AbilityBot;
 import org.telegram.abilitybots.api.db.DBContext;
 import org.telegram.abilitybots.api.objects.Ability;
+import org.telegram.abilitybots.api.objects.Flag;
 import org.telegram.abilitybots.api.objects.MessageContext;
+import org.telegram.abilitybots.api.objects.Reply;
+import org.telegram.abilitybots.api.objects.ReplyFlow;
 import org.telegram.abilitybots.api.sender.SilentSender;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -27,10 +31,14 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import lombok.extern.slf4j.Slf4j;
 
 import static java.util.Objects.nonNull;
+import static org.covid19.vaccinetracker.userrequests.model.Age.AGE_18_44;
+import static org.covid19.vaccinetracker.userrequests.model.Age.AGE_45;
+import static org.covid19.vaccinetracker.userrequests.model.Age.AGE_BOTH;
 import static org.telegram.abilitybots.api.objects.Flag.MESSAGE;
 import static org.telegram.abilitybots.api.objects.Locality.ALL;
 import static org.telegram.abilitybots.api.objects.Privacy.PUBLIC;
@@ -138,6 +146,48 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                     }
                 })
                 .build();
+    }
+
+    public ReplyFlow ageSelectionFlow() {
+        Reply age18Flow = Reply.of((bot, upd) -> {
+            removeKeyboard(upd);
+            botBackend.updateAgePreference(getChatId(upd), AGE_18_44);
+        }, hasMessageWith("18-44"));
+
+        Reply age45Flow = Reply.of((bot, upd) -> {
+            removeKeyboard(upd);
+            botBackend.updateAgePreference(getChatId(upd), AGE_45);
+        }, hasMessageWith("45+"));
+
+        Reply ageBothFlow = Reply.of((bot, upd) -> {
+            removeKeyboard(upd);
+            botBackend.updateAgePreference(getChatId(upd), AGE_BOTH);
+        }, hasMessageWith("both"));
+
+        return ReplyFlow.builder(db, 110)
+                .action((bot, update) -> silent.execute(BotUtils.buildAgeSelectionKeyboard(getChatId(update))))
+                .onlyIf(isCallbackOrMessage("/age"))
+                .next(age18Flow)
+                .next(age45Flow)
+                .next(ageBothFlow)
+                .build();
+    }
+
+    private void removeKeyboard(Update upd) {
+        DeleteMessage msg = new DeleteMessage();
+        msg.setChatId(getChatId(upd));
+        msg.setMessageId(upd.getCallbackQuery().getMessage().getMessageId());
+        silent.execute(msg);
+    }
+
+    @NotNull
+    private Predicate<Update> hasMessageWith(String msg) {
+        return upd -> Flag.MESSAGE.test(upd) && upd.getMessage().getText().equalsIgnoreCase(msg);
+    }
+
+    private Predicate<Update> isCallbackOrMessage(String msg) {
+        return upd -> (upd.hasMessage() && upd.getMessage().hasText() && upd.getMessage().getText().equalsIgnoreCase(msg)) ||
+                (upd.hasCallbackQuery() && upd.getCallbackQuery().getData().equalsIgnoreCase(msg));
     }
 
     private String getUserName(MessageContext ctx) {

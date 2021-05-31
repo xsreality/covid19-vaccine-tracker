@@ -111,6 +111,12 @@ public class UserRequestManager {
         return this.kafkaStateStores.usersByPincode(pincode);
     }
 
+    public void updateAgePreference(String userId, Age age) {
+        this.kafkaStateStores.userRequestById(userId)
+                .map(ur -> new UserRequest(ur.getChatId(), ur.getPincodes(), age.toString(), ur.getLastNotifiedAt()))
+                .ifPresent(updated -> kafkaTemplate.send(userRequestsTopic, updated));
+    }
+
     /**
      * Reads the user requests state store and produces each request again to the user-requests
      * topic Useful when adding new topology that needs to be populated
