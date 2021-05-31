@@ -1,5 +1,7 @@
 package org.covid19.vaccinetracker.notifications.bot;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.persistence.mariadb.repository.StateRepository;
 import org.covid19.vaccinetracker.userrequests.model.State;
@@ -14,6 +16,7 @@ import org.telegram.abilitybots.api.bot.AbilityBot;
 import org.telegram.abilitybots.api.db.DBContext;
 import org.telegram.abilitybots.api.objects.Ability;
 import org.telegram.abilitybots.api.objects.MessageContext;
+import org.telegram.abilitybots.api.sender.SilentSender;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -37,7 +40,6 @@ import static org.telegram.abilitybots.api.objects.Privacy.PUBLIC;
 public class TelegramBot extends AbilityBot implements BotService, ApplicationContextAware {
     private static Long CHAT_ID;
     private static Long CHANNEL_ID;
-    private TelegramConfig telegramConfig;
     private BotBackend botBackend;
     private KafkaTemplate<String, UserRequest> userRequestKafkaTemplate;
     private StateRepository stateRepository;
@@ -60,7 +62,9 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                             "To automatically receive notification when Vaccine becomes available near you, send your pin code.\n" +
                             "जब आपके पास वैक्सीन उपलब्ध हो जाता है तो अपने आप ही सूचना प्राप्त करने के लिए अपना पिन कोड भेजें।\n\n" +
                             "Stay safe, wear masks and keep social distancing!\n" +
-                            "सुरक्षित रहें, मास्क पहनें और सामाजिक दूरी बनाए रखें!", getFirstName(ctx.update()));
+                            "सुरक्षित रहें, मास्क पहनें और सामाजिक दूरी बनाए रखें!\n\n" +
+                            "Note: I will not send alerts from midnight to 6AM in morning so that you can sleep peacefully :-)\n" +
+                            "मैं आधी रात से सुबह 6 बजे तक अलर्ट नहीं भेजूंगा ताकि आप चैन से सो सकें :-)", getFirstName(ctx.update()));
                     silent.send(message, ctx.chatId());
                 }).build();
     }
@@ -78,7 +82,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
     public Ability subscriptions() {
         return Ability.builder().name("subscriptions").info("Show my subscriptions")
                 .locality(ALL).privacy(PUBLIC).input(0).action(ctx -> {
-                    String chatId = getChatId(ctx.update());
+                    String chatId = String.valueOf(ctx.chatId());
                     final List<String> pincodes = this.botBackend.fetchUserSubscriptions(chatId);
                     String message;
                     if (pincodes.isEmpty()) {
@@ -98,15 +102,15 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                 .privacy(PUBLIC).locality(ALL)
                 .input(0)
                 .action(ctx -> {
-                    if (telegramConfig.getBlackListUsers().contains(getChatId(ctx.update()))) {
-                        log.info("Ignoring message from blacklisted user {}", getChatId(ctx.update()));
-                        return;
-                    }
                     if (ctx.update().hasMessage() && ctx.update().getMessage().hasText()) {
                         String pincodes = ctx.update().getMessage().getText();
                         if (!Utils.allValidPincodes(pincodes)) {
-                            String msg = "Send valid pincode to receive notification when vaccine becomes available in your area.\n\n" +
-                                    "जब आपके क्षेत्र में वैक्सीन उपलब्ध हो जाए तो अधिसूचना प्राप्त करने के लिए पिन कोड भेजें।";
+                            String msg = "Send valid pincode to receive notification when vaccine becomes available in your area.\n" +
+                                    "जब आपके क्षेत्र में वैक्सीन उपलब्ध हो जाए तो अधिसूचना प्राप्त करने के लिए पिन कोड भेजें।\n\n" +
+                                    "/subscriptions - To see your current subscriptions. अपने वर्तमान पिनकोड देखने के लिए.\n\n" +
+                                    "/stop - To stop receiving alerts. अलर्ट प्राप्त करना बंद करने के लिए.\n\n" +
+                                    "Note: I will not send alerts from midnight to 6AM in morning so that you can sleep peacefully :-)\n" +
+                                    "मैं आधी रात से सुबह 6 बजे तक अलर्ट नहीं भेजूंगा ताकि आप चैन से सो सकें :-)";
                             silent.send(msg, ctx.chatId());
                             return;
                         }
@@ -160,7 +164,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                 .text(text)
                 .parseMode(ParseMode.HTML)
                 .build();
-        log.info("Sending notification to {} with text \"{}\"", userId, text);
+        log.info("Sending notification to {} for pincode {}", userId, eligibleCenters.get(0).getPincode());
         try {
             this.execute(telegramMessage);
             return true;
@@ -180,7 +184,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
         this.botBackend = (BotBackend) applicationContext.getBean("botBackend");
         this.stateRepository = (StateRepository) applicationContext.getBean("stateRepository");
 //        TelegramBot telegramBot = (TelegramBot) applicationContext.getBean("telegramBot");
-        this.telegramConfig = (TelegramConfig) applicationContext.getBean("telegramConfig");
+        TelegramConfig telegramConfig = (TelegramConfig) applicationContext.getBean("telegramConfig");
         if (telegramConfig.isEnabled()) {
             try {
                 TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
@@ -189,5 +193,10 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                 throw new IllegalStateException("Unable to register Telegram bot", e);
             }
         }
+    }
+
+    @VisibleForTesting
+    void setSilent(SilentSender sender) {
+        this.silent = sender;
     }
 }
