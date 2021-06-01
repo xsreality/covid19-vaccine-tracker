@@ -33,6 +33,7 @@ import java.util.function.Predicate;
 
 import lombok.extern.slf4j.Slf4j;
 
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static org.covid19.vaccinetracker.userrequests.model.Age.AGE_18_44;
 import static org.covid19.vaccinetracker.userrequests.model.Age.AGE_45;
@@ -93,12 +94,14 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
         return Ability.builder().name("subscriptions").info("Show my subscriptions")
                 .locality(ALL).privacy(PUBLIC).input(0).action(ctx -> {
                     String chatId = String.valueOf(ctx.chatId());
-                    final List<String> pincodes = this.botBackend.fetchUserSubscriptions(chatId);
+                    final UserRequest user = this.botBackend.fetchUserSubscriptions(chatId);
                     String message;
-                    if (pincodes.isEmpty()) {
+                    if (user.getPincodes().isEmpty()) {
                         message = "You have no pincodes subscribed. Just send pincodes separated by comma (,) to subscribe.";
                     } else {
-                        message = String.format("You are currently subscribed to pincodes: %s", Utils.joinPincodes(pincodes));
+                        message = String.format("You are currently subscribed to pincodes: %s\n\n" +
+                                        "Your age preference: %s",
+                                Utils.joinPincodes(user.getPincodes()), isNull(user.getAge()) ? "18-44" : user.getAge());
                     }
                     silent.send(message, ctx.chatId());
                     notifyOwner(String.format("%s (%s, %s) viewed existing subscriptions.",
