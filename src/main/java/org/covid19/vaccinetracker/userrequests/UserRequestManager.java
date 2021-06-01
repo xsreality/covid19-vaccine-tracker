@@ -88,12 +88,14 @@ public class UserRequestManager {
     }
 
     public void acceptUserRequest(String userId, List<String> pincodes) {
-        UserRequest request = new UserRequest(userId, pincodes, AGE_18_44.toString(), null);
+        final UserRequest request = kafkaStateStores.userRequestById(userId)
+                .map(existing -> new UserRequest(existing.getChatId(), pincodes, existing.getAge(), null))
+                .orElse(new UserRequest(userId, pincodes, AGE_18_44.toString(), null));
         kafkaTemplate.setProducerListener(producerListener());
         try {
             kafkaTemplate.send(userRequestsTopic, userId, request).get();
         } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException("Error producing user request to Kafka", e);
+            log.error("Error producing user request to Kafka: {}", e.getMessage());
         }
     }
 
@@ -103,12 +105,24 @@ public class UserRequestManager {
         try {
             kafkaTemplate.send(userRequestsTopic, userRequest.getChatId(), updatedUserRequest).get();
         } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException("Error producing user request to Kafka", e);
+            log.error("Error producing user request to Kafka: {}", e.getMessage());
         }
     }
 
     public UsersByPincode fetchUsersByPincode(String pincode) {
         return this.kafkaStateStores.usersByPincode(pincode);
+    }
+
+    public void updateAgePreference(String userId, Age age) {
+        this.kafkaStateStores.userRequestById(userId)
+                .map(ur -> new UserRequest(ur.getChatId(), ur.getPincodes(), age.toString(), ur.getLastNotifiedAt()))
+                .ifPresent(updated -> {
+                    try {
+                        kafkaTemplate.send(userRequestsTopic, updated.getChatId(), updated).get();
+                    } catch (InterruptedException | ExecutionException e) {
+                        log.error("Error producing user request to Kafka: {}", e.getMessage());
+                    }
+                });
     }
 
     /**

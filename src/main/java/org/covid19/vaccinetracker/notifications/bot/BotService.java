@@ -6,6 +6,7 @@ import java.util.List;
 
 public interface BotService {
     boolean notify(String userId, List<Center> vaccineCenters);
+    boolean notify(String userId, String text);
 
     void notifyOwner(String message);
 }

@@ -5,6 +5,7 @@ import org.covid19.vaccinetracker.model.UsersByPincode;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.notifications.DistrictNotifications;
 import org.covid19.vaccinetracker.notifications.VaccineCentersNotification;
+import org.covid19.vaccinetracker.notifications.bot.BotService;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.covid19.vaccinetracker.userrequests.model.District;
@@ -40,9 +41,10 @@ public class Api {
     private final PincodeReconciliation pincodeReconciliation;
     private final DistrictNotifications districtNotifications;
     private final CowinApiAuth cowinApiAuth;
+    private final BotService botService;
 
     public Api(CowinApiClient cowinApiClient, VaccineAvailability vaccineAvailability, VaccineCentersNotification notifications,
-               VaccinePersistence vaccinePersistence, UserRequestManager userRequestManager, PincodeReconciliation pincodeReconciliation, DistrictNotifications districtNotifications, CowinApiAuth cowinApiAuth) {
+               VaccinePersistence vaccinePersistence, UserRequestManager userRequestManager, PincodeReconciliation pincodeReconciliation, DistrictNotifications districtNotifications, CowinApiAuth cowinApiAuth, BotService botService) {
         this.cowinApiClient = cowinApiClient;
         this.vaccineAvailability = vaccineAvailability;
         this.notifications = notifications;
@@ -51,6 +53,7 @@ public class Api {
         this.pincodeReconciliation = pincodeReconciliation;
         this.districtNotifications = districtNotifications;
         this.cowinApiAuth = cowinApiAuth;
+        this.botService = botService;
     }
 
     @GetMapping("/fetch/cowin")
@@ -152,6 +155,26 @@ public class Api {
     @GetMapping("/generateOtp")
     public ResponseEntity<?> generateOtp() {
         Executors.newSingleThreadExecutor().submit(this.cowinApiAuth::refreshCowinToken);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/bot/owner")
+    public ResponseEntity<?> botNotifyOwner(@RequestBody String body) {
+        this.botService.notifyOwner(body);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/bot/all")
+    public ResponseEntity<?> botNotifyEverybody(@RequestBody String body) {
+        Executors.newSingleThreadExecutor().submit(() -> userRequestManager.fetchAllUserRequests()
+                .forEach(userRequest -> {
+                    this.botService.notify(userRequest.getChatId(), body);
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        // ignore
+                    }
+                }));
         return ResponseEntity.ok().build();
     }
 }
