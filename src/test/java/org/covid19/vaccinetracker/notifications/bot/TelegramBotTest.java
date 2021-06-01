@@ -15,6 +15,7 @@ import org.telegram.abilitybots.api.db.MapDBContext;
 import org.telegram.abilitybots.api.objects.MessageContext;
 import org.telegram.abilitybots.api.sender.SilentSender;
 import org.telegram.telegrambots.meta.api.objects.Chat;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 
@@ -22,6 +23,7 @@ import java.io.IOException;
 import java.util.List;
 
 import static org.covid19.vaccinetracker.notifications.bot.TestUtils.USER;
+import static org.covid19.vaccinetracker.notifications.bot.TestUtils.mockFullUpdate;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -66,6 +68,11 @@ public class TelegramBotTest {
     public void testSubscriptionsWithNoPincodes() {
         Update update = mock(Update.class);
         MessageContext context = MessageContext.newContext(update, new User(), CHAT_ID, bot);
+        Chat chat = mock(Chat.class);
+        when(chat.getFirstName()).thenReturn(USER.getFirstName());
+        Message message = mock(Message.class);
+        when(update.getMessage()).thenReturn(message);
+        when(update.getMessage().getChat()).thenReturn(chat);
 
         when(botBackend.fetchUserSubscriptions(USER_ID)).thenReturn(List.of());
         bot.subscriptions().action().accept(context);
@@ -77,6 +84,11 @@ public class TelegramBotTest {
     public void testSubscriptionsWithPincodes() {
         Update update = mock(Update.class);
         MessageContext context = MessageContext.newContext(update, new User(), CHAT_ID, bot);
+        Chat chat = mock(Chat.class);
+        when(chat.getFirstName()).thenReturn(USER.getFirstName());
+        Message message = mock(Message.class);
+        when(update.getMessage()).thenReturn(message);
+        when(update.getMessage().getChat()).thenReturn(chat);
 
         when(botBackend.fetchUserSubscriptions(USER_ID)).thenReturn(List.of("110022", "122001"));
         bot.subscriptions().action().accept(context);
@@ -86,7 +98,7 @@ public class TelegramBotTest {
 
     @Test
     public void testCatchAll_WithInvalidPincode() {
-        Update update = TestUtils.mockFullUpdate(bot, USER, "Random message");
+        Update update = mockFullUpdate(bot, USER, "Random message");
         MessageContext context = MessageContext.newContext(update, USER, CHAT_ID, bot);
 
         bot.catchAll().action().accept(context);
@@ -101,7 +113,7 @@ public class TelegramBotTest {
 
     @Test
     public void testCatchAll_WithMoreThanThreePincodes() {
-        Update update = TestUtils.mockFullUpdate(bot, USER, "110092, 110093, 110094, 110095");
+        Update update = mockFullUpdate(bot, USER, "110092, 110093, 110094, 110095");
         MessageContext context = MessageContext.newContext(update, USER, CHAT_ID, bot);
 
         bot.catchAll().action().accept(context);
@@ -112,7 +124,7 @@ public class TelegramBotTest {
 
     @Test
     public void testCatchAll_WithValidPincode() {
-        Update update = TestUtils.mockFullUpdate(bot, USER, "110092");
+        Update update = mockFullUpdate(bot, USER, "110092");
         Chat chat = mock(Chat.class);
         when(chat.getFirstName()).thenReturn(USER.getFirstName());
         when(update.getMessage().getChat()).thenReturn(chat);

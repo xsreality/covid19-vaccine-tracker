@@ -86,6 +86,8 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                             "I hope you were able to book vaccine slot with my help. Please send feedback to @xsreality\n" +
                             "मुझे आशा है कि आप मेरी मदद से वैक्सीन स्लॉट बुक करने में सक्षम थे। कृपया प्रतिक्रिया भेजें @xsreality", getFirstName(ctx.update()));
                     silent.send(message, ctx.chatId());
+                    notifyOwner(String.format("%s (%s, %s) stopped subscription.",
+                            Utils.translateName(ctx.update().getMessage().getChat()), chatId, getUserName(ctx)));
                 }).build();
     }
 
@@ -101,6 +103,8 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                         message = String.format("You are currently subscribed to pincodes: %s", Utils.joinPincodes(pincodes));
                     }
                     silent.send(message, ctx.chatId());
+                    notifyOwner(String.format("%s (%s, %s) viewed existing subscriptions.",
+                            Utils.translateName(ctx.update().getMessage().getChat()), chatId, getUserName(ctx)));
                 }).build();
     }
 
@@ -114,27 +118,21 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                 .action(ctx -> {
                     if (ctx.update().hasMessage() && ctx.update().getMessage().hasText()) {
                         String pincodes = ctx.update().getMessage().getText();
-                        if (!Utils.allValidPincodes(pincodes)) {
-                            String msg = "Send valid pincode to receive notification when vaccine becomes available in your area.\n" +
-                                    "जब आपके क्षेत्र में वैक्सीन उपलब्ध हो जाए तो अधिसूचना प्राप्त करने के लिए पिन कोड भेजें।\n\n" +
-                                    "/subscriptions - To see your current subscriptions. अपने वर्तमान पिनकोड देखने के लिए.\n\n" +
-                                    "/stop - To stop receiving alerts. अलर्ट प्राप्त करना बंद करने के लिए.\n\n" +
-                                    "Note: I will not send alerts from midnight to 6AM in morning so that you can sleep peacefully :-)\n" +
-                                    "मैं आधी रात से सुबह 6 बजे तक अलर्ट नहीं भेजूंगा ताकि आप चैन से सो सकें :-)";
-                            silent.send(msg, ctx.chatId());
+                        if (invalidPincodes(ctx, pincodes)) {
                             return;
                         }
+
                         List<String> pincodesAsList = Utils.splitPincodes(pincodes);
-                        if (pincodesAsList.size() > 3) {
-                            String msg = "Maximum 3 pincodes can be notified.\n\n" +
-                                    "अधिकतम 3 पिन कोड अधिसूचित किए जा सकते हैं।";
-                            silent.send(msg, ctx.chatId());
+                        if (tooManyPincodes(ctx, pincodesAsList)) {
                             return;
                         }
+
                         String chatId = getChatId(ctx.update());
                         String firstName = getFirstName(ctx.update());
+
                         this.botBackend.acceptUserRequest(chatId, pincodesAsList);
                         State state = this.stateRepository.findByPincode(pincodesAsList.get(0));
+
                         String localizedAckMessage = Utils.localizedAckText(state);
                         silent.send(String.format("Okay %s! I will notify you when vaccine is available in centers near your location.\n" +
                                 "You can set multiple pincodes by sending them together separated by comma (,). Maximum 3 pincodes are allowed.\n" +
@@ -142,9 +140,8 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                                 localizedAckMessage, firstName), ctx.chatId());
 
                         // send an update to Bot channel
-                        String channelMsg = String.format("%s (%s, %s) set notification preference for pincode(s) %s",
-                                Utils.translateName(ctx.update().getMessage().getChat()), chatId, getUserName(ctx), pincodes);
-                        silent.send(channelMsg, CHANNEL_ID);
+                        notifyOwner(String.format("%s (%s, %s) set notification preference for pincode(s) %s",
+                                Utils.translateName(ctx.update().getMessage().getChat()), chatId, getUserName(ctx), pincodes));
                     }
                 })
                 .build();
@@ -155,18 +152,24 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
             removeKeyboard(upd);
             botBackend.updateAgePreference(getChatId(upd), AGE_18_44);
             silent.execute(SendMessage.builder().chatId(getChatId(upd)).text("I have updated your age preference to 18-44").build());
+            notifyOwner(String.format("%s (%s, %s) set age preference to 18-44",
+                    Utils.translateName(upd.getMessage().getChat()), getChatId(upd), upd.getMessage().getChat().getUserName()));
         }, hasMessage("18-44"));
 
         Reply age45Flow = Reply.of((bot, upd) -> {
             removeKeyboard(upd);
             botBackend.updateAgePreference(getChatId(upd), AGE_45);
             silent.execute(SendMessage.builder().chatId(getChatId(upd)).text("I have updated your age preference to 45+").build());
+            notifyOwner(String.format("%s (%s, %s) set age preference to 45+",
+                    Utils.translateName(upd.getMessage().getChat()), getChatId(upd), upd.getMessage().getChat().getUserName()));
         }, hasMessage("45+"));
 
         Reply ageBothFlow = Reply.of((bot, upd) -> {
             removeKeyboard(upd);
             botBackend.updateAgePreference(getChatId(upd), AGE_BOTH);
             silent.execute(SendMessage.builder().chatId(getChatId(upd)).text("I have updated your age preference to both 18-44 and 45+").build());
+            notifyOwner(String.format("%s (%s, %s) set age preference to both 18-44 and 45+",
+                    Utils.translateName(upd.getMessage().getChat()), getChatId(upd), upd.getMessage().getChat().getUserName()));
         }, hasMessage("both"));
 
         return ReplyFlow.builder(db, 110)
@@ -176,6 +179,30 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                 .next(age45Flow)
                 .next(ageBothFlow)
                 .build();
+    }
+
+    private boolean tooManyPincodes(MessageContext ctx, List<String> pincodesAsList) {
+        if (pincodesAsList.size() > 3) {
+            String msg = "Maximum 3 pincodes can be notified.\n\n" +
+                    "अधिकतम 3 पिन कोड अधिसूचित किए जा सकते हैं।";
+            silent.send(msg, ctx.chatId());
+            return true;
+        }
+        return false;
+    }
+
+    private boolean invalidPincodes(MessageContext ctx, String pincodes) {
+        if (!Utils.allValidPincodes(pincodes)) {
+            String msg = "Send valid pincode to receive notification when vaccine becomes available in your area.\n" +
+                    "जब आपके क्षेत्र में वैक्सीन उपलब्ध हो जाए तो अधिसूचना प्राप्त करने के लिए पिन कोड भेजें।\n\n" +
+                    "/subscriptions - To see your current subscriptions. अपने वर्तमान पिनकोड देखने के लिए.\n\n" +
+                    "/stop - To stop receiving alerts. अलर्ट प्राप्त करना बंद करने के लिए.\n\n" +
+                    "Note: I will not send alerts from midnight to 6AM in morning so that you can sleep peacefully :-)\n" +
+                    "मैं आधी रात से सुबह 6 बजे तक अलर्ट नहीं भेजूंगा ताकि आप चैन से सो सकें :-)";
+            silent.send(msg, ctx.chatId());
+            return true;
+        }
+        return false;
     }
 
     private void removeKeyboard(Update upd) {
