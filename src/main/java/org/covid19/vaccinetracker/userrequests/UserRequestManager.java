@@ -87,9 +87,10 @@ public class UserRequestManager {
         return kafkaStateStores.pincodesForUser(userId);
     }
 
-    // TODO: check existing request and update
     public void acceptUserRequest(String userId, List<String> pincodes) {
-        UserRequest request = new UserRequest(userId, pincodes, AGE_18_44.toString(), null);
+        final UserRequest request = kafkaStateStores.userRequestById(userId)
+                .map(existing -> new UserRequest(existing.getChatId(), pincodes, AGE_18_44.toString(), null))
+                .orElse(new UserRequest(userId, pincodes, AGE_18_44.toString(), null));
         kafkaTemplate.setProducerListener(producerListener());
         try {
             kafkaTemplate.send(userRequestsTopic, userId, request).get();
