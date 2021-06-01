@@ -24,6 +24,7 @@ import java.util.List;
 
 import static org.covid19.vaccinetracker.notifications.bot.TestUtils.USER;
 import static org.covid19.vaccinetracker.notifications.bot.TestUtils.mockFullUpdate;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -141,6 +142,7 @@ public class TelegramBotTest {
                 "आप कई पिन कोड कॉमा (,) द्वारा अलग-अलग सेट कर सकते हैं। अधिकतम 3 पिन कोड की अनुमति है।\n" +
                 "सुनिश्चित करें कि अधिसूचना इस बॉट के लिए चालू है ताकि आप किसी भी अलर्ट को न भूलें!", CHAT_ID);
 
-        verify(silent, times(1)).send("Abhinav (0, username) set notification preference for pincode(s) 110092", CHAT_ID);
+        // notify bot owner
+        verify(silent, times(1)).execute(any());
     }
 }

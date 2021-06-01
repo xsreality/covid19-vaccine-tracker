@@ -24,13 +24,11 @@ import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Predicate;
 
 import lombok.extern.slf4j.Slf4j;
@@ -270,7 +268,22 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
 
     @Override
     public void notifyOwner(String text) {
-        final Optional<Message> send = silent.send(text, CHANNEL_ID);
+        SendMessage telegramMessage = SendMessage.builder()
+                .chatId(String.valueOf(CHANNEL_ID))
+                .text(text)
+                .parseMode(ParseMode.HTML)
+                .build();
+        silent.execute(telegramMessage);
+    }
+
+    @Override
+    public boolean notify(String chatId, String text) {
+        SendMessage telegramMessage = SendMessage.builder()
+                .chatId(chatId)
+                .text(text)
+                .parseMode(ParseMode.HTML)
+                .build();
+        return silent.execute(telegramMessage).isPresent();
     }
 
     @Override
