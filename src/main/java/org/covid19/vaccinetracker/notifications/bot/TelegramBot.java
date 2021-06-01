@@ -152,24 +152,25 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
             removeKeyboard(upd);
             botBackend.updateAgePreference(getChatId(upd), AGE_18_44);
             silent.execute(SendMessage.builder().chatId(getChatId(upd)).text("I have updated your age preference to 18-44").build());
-            notifyOwner(String.format("%s (%s, %s) set age preference to 18-44",
-                    Utils.translateName(upd.getMessage().getChat()), getChatId(upd), upd.getMessage().getChat().getUserName()));
+            silent.execute(SendMessage.builder().chatId(String.valueOf(CHANNEL_ID)).text("I have updated your age preference to 18-44").build());
+            notifyOwner(String.format("%s (%s) set age preference to 18-44",
+                    Utils.translateName(upd.getCallbackQuery().getMessage().getChat()), getChatId(upd)));
         }, hasMessage("18-44"));
 
         Reply age45Flow = Reply.of((bot, upd) -> {
             removeKeyboard(upd);
             botBackend.updateAgePreference(getChatId(upd), AGE_45);
             silent.execute(SendMessage.builder().chatId(getChatId(upd)).text("I have updated your age preference to 45+").build());
-            notifyOwner(String.format("%s (%s, %s) set age preference to 45+",
-                    Utils.translateName(upd.getMessage().getChat()), getChatId(upd), upd.getMessage().getChat().getUserName()));
+            notifyOwner(String.format("%s (%s) set age preference to 45+",
+                    Utils.translateName(upd.getCallbackQuery().getMessage().getChat()), getChatId(upd)));
         }, hasMessage("45+"));
 
         Reply ageBothFlow = Reply.of((bot, upd) -> {
             removeKeyboard(upd);
             botBackend.updateAgePreference(getChatId(upd), AGE_BOTH);
             silent.execute(SendMessage.builder().chatId(getChatId(upd)).text("I have updated your age preference to both 18-44 and 45+").build());
-            notifyOwner(String.format("%s (%s, %s) set age preference to both 18-44 and 45+",
-                    Utils.translateName(upd.getMessage().getChat()), getChatId(upd), upd.getMessage().getChat().getUserName()));
+            notifyOwner(String.format("%s (%s) set age preference to both 18-44 and 45+",
+                    Utils.translateName(upd.getCallbackQuery().getMessage().getChat()), getChatId(upd)));
         }, hasMessage("both"));
 
         return ReplyFlow.builder(db, 110)
@@ -276,7 +277,6 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
     public void setApplicationContext(@NotNull ApplicationContext applicationContext) throws BeansException {
         this.botBackend = (BotBackend) applicationContext.getBean("botBackend");
         this.stateRepository = (StateRepository) applicationContext.getBean("stateRepository");
-//        TelegramBot telegramBot = (TelegramBot) applicationContext.getBean("telegramBot");
         TelegramConfig telegramConfig = (TelegramConfig) applicationContext.getBean("telegramConfig");
         if (telegramConfig.isEnabled()) {
             try {

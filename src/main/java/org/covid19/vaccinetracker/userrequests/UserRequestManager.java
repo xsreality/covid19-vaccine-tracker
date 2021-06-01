@@ -89,7 +89,7 @@ public class UserRequestManager {
 
     public void acceptUserRequest(String userId, List<String> pincodes) {
         final UserRequest request = kafkaStateStores.userRequestById(userId)
-                .map(existing -> new UserRequest(existing.getChatId(), pincodes, AGE_18_44.toString(), null))
+                .map(existing -> new UserRequest(existing.getChatId(), pincodes, existing.getAge(), null))
                 .orElse(new UserRequest(userId, pincodes, AGE_18_44.toString(), null));
         kafkaTemplate.setProducerListener(producerListener());
         try {
