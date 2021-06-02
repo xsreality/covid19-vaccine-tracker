@@ -36,6 +36,9 @@ import static org.awaitility.Awaitility.await;
 import static org.covid19.vaccinetracker.userrequests.model.Age.AGE_18_44;
 import static org.covid19.vaccinetracker.userrequests.model.Age.AGE_45;
 import static org.covid19.vaccinetracker.userrequests.model.Age.AGE_BOTH;
+import static org.covid19.vaccinetracker.userrequests.model.Dose.DOSE_1;
+import static org.covid19.vaccinetracker.userrequests.model.Dose.DOSE_2;
+import static org.covid19.vaccinetracker.userrequests.model.Dose.DOSE_BOTH;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -83,7 +86,7 @@ public class UserRequestManagerIT {
         AtomicBoolean recordFound = new AtomicBoolean(false);
         records.forEach(record -> {
             if ("123456".equals(record.key())) {
-                assertThat(record, hasValue("{\"chatId\":\"123456\",\"pincodes\":[\"440022\",\"411038\"],\"age\":\"18-44\",\"lastNotifiedAt\":null}"));
+                assertThat(record, hasValue("{\"chatId\":\"123456\",\"pincodes\":[\"440022\",\"411038\"],\"age\":\"18-44\",\"dose\":\"1\",\"lastNotifiedAt\":null}"));
                 recordFound.set(true);
             }
         });
@@ -92,7 +95,7 @@ public class UserRequestManagerIT {
 
     @Test
     public void testFetchUserPincodes() throws Exception {
-        kafkaTemplate.send(userRequestsTopic, "931543", new UserRequest("931543", asList("110045", "110081"), null, null)).get();
+        kafkaTemplate.send(userRequestsTopic, "931543", new UserRequest("931543", asList("110045", "110081"), null, null, null)).get();
         await().atMost(1, SECONDS).until(() -> userRequestManager.fetchAllUserRequests().size() >= 1);
         assertEquals(asList("110045", "110081"), userRequestManager.fetchUserPincodes("931543"));
     }
@@ -100,7 +103,7 @@ public class UserRequestManagerIT {
     @Test
     public void testUpdateUserRequestLastNotifiedAt() {
         userRequestManager.updateUserRequestLastNotifiedAt(
-                new UserRequest("654321", asList("400026", "431122"), null, null),
+                new UserRequest("654321", asList("400026", "431122"), null, null, null),
                 "2021-05-09T20:51:55.415207+05:30");
         final Consumer<String, String> consumer = buildConsumer("update.user.requests.lastNotifiedAt.test");
         embeddedKafka.consumeFromEmbeddedTopics(consumer, userRequestsTopic);
@@ -108,7 +111,7 @@ public class UserRequestManagerIT {
         AtomicBoolean recordFound = new AtomicBoolean(false);
         records.forEach(record -> {
             if ("654321".equals(record.key())) {
-                assertThat(record, hasValue("{\"chatId\":\"654321\",\"pincodes\":[\"400026\",\"431122\"],\"age\":null,\"lastNotifiedAt\":\"2021-05-09T20:51:55.415207+05:30\"}"));
+                assertThat(record, hasValue("{\"chatId\":\"654321\",\"pincodes\":[\"400026\",\"431122\"],\"age\":null,\"dose\":null,\"lastNotifiedAt\":\"2021-05-09T20:51:55.415207+05:30\"}"));
                 recordFound.set(true);
             }
         });
@@ -117,7 +120,7 @@ public class UserRequestManagerIT {
 
     @Test
     public void testFetchAllUserRequests() throws Exception {
-        kafkaTemplate.send(userRequestsTopic, "456789", new UserRequest("456789", asList("360005", "110085"), null, null)).get();
+        kafkaTemplate.send(userRequestsTopic, "456789", new UserRequest("456789", asList("360005", "110085"), null, null, null)).get();
         await().atMost(1, SECONDS).until(() -> userRequestManager.fetchAllUserRequests().size() >= 1);
         assertTrue(userRequestManager.fetchAllUserRequests()
                 .stream()
@@ -130,23 +133,23 @@ public class UserRequestManagerIT {
     public void testFetchAllUserDistricts() throws Exception {
         District aDistrict = new District(1, "Shahdara", new State(1, "Delhi"));
         when(metadataStore.fetchDistrictsByPincode("110092")).thenReturn(singletonList(aDistrict));
-        kafkaTemplate.send(userRequestsTopic, "999888", new UserRequest("999888", asList("110092", "110093"), null, null)).get();
+        kafkaTemplate.send(userRequestsTopic, "999888", new UserRequest("999888", asList("110092", "110093"), null, null, null)).get();
         await().atMost(1, SECONDS).until(() -> userRequestManager.fetchAllUserDistricts().size() >= 1);
     }
 
     @Test
     public void testfetchAllUsersByPincode() throws Exception {
         // create user request and verify topology completed for usersByPincode
-        kafkaTemplate.send(userRequestsTopic, "112233", new UserRequest("112233", List.of("751010"), null, null)).get();
+        kafkaTemplate.send(userRequestsTopic, "112233", new UserRequest("112233", List.of("751010"), null, null, null)).get();
         await().atMost(5, SECONDS).until(() -> nonNull(userRequestManager.fetchUsersByPincode("751010")));
         await().atMost(5, SECONDS).until(() -> extractUsers("751010").contains("112233"));
 
         // Add another user request for same pincode and and verify store updated for usersByPincode
-        kafkaTemplate.send(userRequestsTopic, "112234", new UserRequest("112234", List.of("751010"), null, null)).get();
+        kafkaTemplate.send(userRequestsTopic, "112234", new UserRequest("112234", List.of("751010"), null, null, null)).get();
         await().atMost(5, SECONDS).until(() -> extractUsers("751010").containsAll(Set.of("112233", "112234")));
 
         // Update user request of 112233 from pincode 751010 to 847226
-        kafkaTemplate.send(userRequestsTopic, "112233", new UserRequest("112233", List.of("847226"), null, null)).get();
+        kafkaTemplate.send(userRequestsTopic, "112233", new UserRequest("112233", List.of("847226"), null, null, null)).get();
         // verify store updated for pincode 847226
         await().atMost(5, SECONDS).until(() -> nonNull(userRequestManager.fetchUsersByPincode("847226")));
         await().atMost(5, SECONDS).until(() -> extractUsers("847226").contains("112233"));
@@ -154,7 +157,7 @@ public class UserRequestManagerIT {
         await().atMost(5, SECONDS).until(() -> !extractUsers("751010").contains("112233"));
 
         // Terminate subscription of user 112233
-        kafkaTemplate.send(userRequestsTopic, "112233", new UserRequest("112233", List.of(), null, null)).get();
+        kafkaTemplate.send(userRequestsTopic, "112233", new UserRequest("112233", List.of(), null, null, null)).get();
         // verify store contains no references to user 112233
         await().atMost(5, SECONDS).until(() -> !extractUsers("847226").contains("112233"));
     }
@@ -162,7 +165,7 @@ public class UserRequestManagerIT {
     @Test
     public void testGetUserAgePreferenceFor18() throws Exception {
         final String userId = "user_with_age_pref_18";
-        kafkaTemplate.send(userRequestsTopic, userId, new UserRequest(userId, List.of("751010"), AGE_18_44.toString(), null)).get();
+        kafkaTemplate.send(userRequestsTopic, userId, new UserRequest(userId, List.of("751010"), AGE_18_44.toString(), null, null)).get();
         await().atMost(1, SECONDS).until(() -> nonNull(userRequestManager.fetchUserRequest(userId)));
         assertThat(userRequestManager.getUserAgePreference(userId), is(equalTo(AGE_18_44)));
     }
@@ -170,7 +173,7 @@ public class UserRequestManagerIT {
     @Test
     public void testGetUserAgePreferenceFor45() throws Exception {
         final String userId = "user_with_age_pref_45";
-        kafkaTemplate.send(userRequestsTopic, userId, new UserRequest(userId, List.of("751010"), AGE_45.toString(), null)).get();
+        kafkaTemplate.send(userRequestsTopic, userId, new UserRequest(userId, List.of("751010"), AGE_45.toString(), null, null)).get();
         await().atMost(1, SECONDS).until(() -> nonNull(userRequestManager.fetchUserRequest(userId)));
         assertThat(userRequestManager.getUserAgePreference(userId), is(equalTo(AGE_45)));
     }
@@ -178,7 +181,7 @@ public class UserRequestManagerIT {
     @Test
     public void testGetUserAgePreferenceForBoth() throws Exception {
         final String userId = "user_with_age_pref_both";
-        kafkaTemplate.send(userRequestsTopic, userId, new UserRequest(userId, List.of("751010"), AGE_BOTH.toString(), null)).get();
+        kafkaTemplate.send(userRequestsTopic, userId, new UserRequest(userId, List.of("751010"), AGE_BOTH.toString(), null, null)).get();
         await().atMost(1, SECONDS).until(() -> nonNull(userRequestManager.fetchUserRequest(userId)));
         assertThat(userRequestManager.getUserAgePreference(userId), is(equalTo(AGE_BOTH)));
     }
@@ -186,9 +189,41 @@ public class UserRequestManagerIT {
     @Test
     public void testGetUserAgePreferenceWhenNotSet() throws Exception {
         String userId = "user_with_age_pref_not_set";
-        kafkaTemplate.send(userRequestsTopic, userId, new UserRequest(userId, List.of("751010"), null, null)).get();
+        kafkaTemplate.send(userRequestsTopic, userId, new UserRequest(userId, List.of("751010"), null, null, null)).get();
         await().atMost(1, SECONDS).until(() -> nonNull(userRequestManager.fetchUserRequest(userId)));
         assertThat(userRequestManager.getUserAgePreference(userId), is(equalTo(AGE_18_44)));
+    }
+
+    @Test
+    public void testGetUserDosePreferenceForDose1() throws Exception {
+        final String userId = "user_with_dose_pref_1";
+        kafkaTemplate.send(userRequestsTopic, userId, new UserRequest(userId, List.of("415002"), null, DOSE_1.toString(), null)).get();
+        await().atMost(1, SECONDS).until(() -> nonNull(userRequestManager.fetchUserRequest(userId)));
+        assertThat(userRequestManager.getUserDosePreference(userId), is(equalTo(DOSE_1)));
+    }
+
+    @Test
+    public void testGetUserDosePreferenceForDose2() throws Exception {
+        final String userId = "user_with_dose_pref_2";
+        kafkaTemplate.send(userRequestsTopic, userId, new UserRequest(userId, List.of("415002"), null, DOSE_2.toString(), null)).get();
+        await().atMost(1, SECONDS).until(() -> nonNull(userRequestManager.fetchUserRequest(userId)));
+        assertThat(userRequestManager.getUserDosePreference(userId), is(equalTo(DOSE_2)));
+    }
+
+    @Test
+    public void testGetUserDosePreferenceForDoseBoth() throws Exception {
+        final String userId = "user_with_dose_pref_both";
+        kafkaTemplate.send(userRequestsTopic, userId, new UserRequest(userId, List.of("415002"), null, DOSE_BOTH.toString(), null)).get();
+        await().atMost(1, SECONDS).until(() -> nonNull(userRequestManager.fetchUserRequest(userId)));
+        assertThat(userRequestManager.getUserDosePreference(userId), is(equalTo(DOSE_BOTH)));
+    }
+
+    @Test
+    public void testGetUserDosePreferenceForDoseNotSet() throws Exception {
+        final String userId = "user_with_dose_pref_not_set";
+        kafkaTemplate.send(userRequestsTopic, userId, new UserRequest(userId, List.of("415002"), null, null, null)).get();
+        await().atMost(1, SECONDS).until(() -> nonNull(userRequestManager.fetchUserRequest(userId)));
+        assertThat(userRequestManager.getUserDosePreference(userId), is(equalTo(DOSE_1)));
     }
 
     private Set<String> extractUsers(String pincode) {

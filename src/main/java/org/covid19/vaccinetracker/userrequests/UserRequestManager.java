@@ -8,6 +8,7 @@ import org.covid19.vaccinetracker.model.UsersByPincode;
 import org.covid19.vaccinetracker.persistence.kafka.KafkaStateStores;
 import org.covid19.vaccinetracker.userrequests.model.Age;
 import org.covid19.vaccinetracker.userrequests.model.District;
+import org.covid19.vaccinetracker.userrequests.model.Dose;
 import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 
 import static org.covid19.vaccinetracker.userrequests.model.Age.AGE_18_44;
+import static org.covid19.vaccinetracker.userrequests.model.Dose.DOSE_1;
 
 @Slf4j
 @Component
@@ -89,8 +91,8 @@ public class UserRequestManager {
 
     public void acceptUserRequest(String userId, List<String> pincodes) {
         final UserRequest request = kafkaStateStores.userRequestById(userId)
-                .map(existing -> new UserRequest(existing.getChatId(), pincodes, existing.getAge(), null))
-                .orElse(new UserRequest(userId, pincodes, AGE_18_44.toString(), null));
+                .map(existing -> new UserRequest(existing.getChatId(), pincodes, existing.getAge(), existing.getDose(), null))
+                .orElse(new UserRequest(userId, pincodes, AGE_18_44.toString(), DOSE_1.toString(), null));
         kafkaTemplate.setProducerListener(producerListener());
         try {
             kafkaTemplate.send(userRequestsTopic, userId, request).get();
@@ -100,7 +102,7 @@ public class UserRequestManager {
     }
 
     public void updateUserRequestLastNotifiedAt(UserRequest userRequest, String lastNotifiedAt) {
-        UserRequest updatedUserRequest = new UserRequest(userRequest.getChatId(), userRequest.getPincodes(), userRequest.getAge(), lastNotifiedAt);
+        UserRequest updatedUserRequest = new UserRequest(userRequest.getChatId(), userRequest.getPincodes(), userRequest.getAge(), userRequest.getDose(), lastNotifiedAt);
         kafkaTemplate.setProducerListener(producerListener());
         try {
             kafkaTemplate.send(userRequestsTopic, userRequest.getChatId(), updatedUserRequest).get();
@@ -115,7 +117,7 @@ public class UserRequestManager {
 
     public void updateAgePreference(String userId, Age age) {
         this.kafkaStateStores.userRequestById(userId)
-                .map(ur -> new UserRequest(ur.getChatId(), ur.getPincodes(), age.toString(), ur.getLastNotifiedAt()))
+                .map(ur -> new UserRequest(ur.getChatId(), ur.getPincodes(), age.toString(), ur.getDose(), ur.getLastNotifiedAt()))
                 .ifPresent(updated -> {
                     try {
                         kafkaTemplate.send(userRequestsTopic, updated.getChatId(), updated).get();
@@ -136,7 +138,7 @@ public class UserRequestManager {
             List<String> updatedPincodes = entry.value.getPincodes();
             updatedPincodes.add("999999");
 
-            kafkaTemplate.send(userRequestsTopic, entry.key, new UserRequest(entry.value.getChatId(), updatedPincodes, entry.value.getAge(), entry.value.getLastNotifiedAt()));
+            kafkaTemplate.send(userRequestsTopic, entry.key, new UserRequest(entry.value.getChatId(), updatedPincodes, entry.value.getAge(), entry.value.getDose(), entry.value.getLastNotifiedAt()));
             try {
                 Thread.sleep(10);
             } catch (InterruptedException e) {
@@ -186,6 +188,15 @@ public class UserRequestManager {
         return kafkaStateStores.userRequestById(userId)
                 .map(UserRequest::getAge)
                 .map(Age::find)
-                .orElse(AGE_18_44); // default to 18-44 only.
+                .orElse(AGE_18_44)
+                ; // default to 18-44 only.
+    }
+
+    public Dose getUserDosePreference(String userId) {
+        return kafkaStateStores.userRequestById(userId)
+                .map(UserRequest::getDose)
+                .map(Dose::find)
+                .orElse(DOSE_1)
+                ; // default to dose 1
     }
 }

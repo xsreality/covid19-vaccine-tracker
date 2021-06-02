@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static org.covid19.vaccinetracker.userrequests.model.Age.AGE_18_44;
+import static org.covid19.vaccinetracker.userrequests.model.Dose.DOSE_1;
 
 @Slf4j
 @Configuration
@@ -73,7 +74,7 @@ public class KafkaStateStores {
 
     public List<String> pincodesForUser(String userId) {
         return ofNullable(userRequestsStore.get(userId))
-                .orElseGet(() -> new UserRequest(userId, List.of(), AGE_18_44.toString(), null))
+                .orElseGet(() -> new UserRequest(userId, List.of(), AGE_18_44.toString(), DOSE_1.toString(), null))
                 .getPincodes();
     }
 

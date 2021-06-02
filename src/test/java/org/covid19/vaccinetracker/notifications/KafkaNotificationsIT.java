@@ -89,8 +89,8 @@ public class KafkaNotificationsIT {
 
     @BeforeEach
     public void setup() {
-        userRequestKafkaTemplate.send(userRequestsTopic, "userA", new UserRequest("userA", List.of("110022"), null, null));
-        userRequestKafkaTemplate.send(userRequestsTopic, "userB", new UserRequest("userB", List.of("110023"), null, null));
+        userRequestKafkaTemplate.send(userRequestsTopic, "userA", new UserRequest("userA", List.of("110022"), null, null, null));
+        userRequestKafkaTemplate.send(userRequestsTopic, "userB", new UserRequest("userB", List.of("110023"), null, null, null));
     }
 
     @Test

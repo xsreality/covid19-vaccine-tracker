@@ -1,7 +1,6 @@
 package org.covid19.vaccinetracker.notifications.bot;
 
 import org.covid19.vaccinetracker.persistence.mariadb.repository.StateRepository;
-import org.covid19.vaccinetracker.userrequests.model.Age;
 import org.covid19.vaccinetracker.userrequests.model.State;
 import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.junit.jupiter.api.AfterEach;
@@ -28,6 +27,7 @@ import static org.covid19.vaccinetracker.notifications.bot.TestUtils.USER;
 import static org.covid19.vaccinetracker.notifications.bot.TestUtils.mockFullUpdate;
 import static org.covid19.vaccinetracker.userrequests.model.Age.AGE_18_44;
 import static org.covid19.vaccinetracker.userrequests.model.Age.AGE_45;
+import static org.covid19.vaccinetracker.userrequests.model.Dose.DOSE_1;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -79,7 +79,7 @@ public class TelegramBotTest {
         when(update.getMessage()).thenReturn(message);
         when(update.getMessage().getChat()).thenReturn(chat);
 
-        when(botBackend.fetchUserSubscriptions(USER_ID)).thenReturn(new UserRequest("user_id", List.of(), AGE_18_44.toString(), null));
+        when(botBackend.fetchUserSubscriptions(USER_ID)).thenReturn(new UserRequest("user_id", List.of(), AGE_18_44.toString(), DOSE_1.toString(), null));
         bot.subscriptions().action().accept(context);
 
         verify(silent, times(1)).send("You have no pincodes subscribed. Just send pincodes separated by comma (,) to subscribe.", CHAT_ID);
@@ -95,7 +95,7 @@ public class TelegramBotTest {
         when(update.getMessage()).thenReturn(message);
         when(update.getMessage().getChat()).thenReturn(chat);
 
-        when(botBackend.fetchUserSubscriptions(USER_ID)).thenReturn(new UserRequest("user_id", List.of("110022", "122001"), AGE_45.toString(), null));
+        when(botBackend.fetchUserSubscriptions(USER_ID)).thenReturn(new UserRequest("user_id", List.of("110022", "122001"), AGE_45.toString(), DOSE_1.toString(), null));
         bot.subscriptions().action().accept(context);
 
         verify(silent, times(1)).send("You are currently subscribed to pincodes: 110022,122001\n\n" +
