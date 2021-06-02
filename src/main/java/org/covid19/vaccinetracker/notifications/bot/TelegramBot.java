@@ -287,7 +287,13 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                 .text(text)
                 .parseMode(ParseMode.HTML)
                 .build();
-        return silent.execute(telegramMessage).isPresent();
+        try {
+            this.execute(telegramMessage);
+            return true;
+        } catch (TelegramApiException e) {
+            log.error("Error sending telegram message to user id {}, error message: {}", chatId, e.getMessage());
+            return false;
+        }
     }
 
     @Override
