@@ -143,9 +143,13 @@ public class TelegramBotTest {
         verify(silent, times(1)).send("Okay Abhinav! I will notify you when vaccine is available in centers near your location.\n" +
                 "You can set multiple pincodes by sending them together separated by comma (,). Maximum 3 pincodes are allowed.\n" +
                 "Make sure notification is turned on for this bot so you don't miss any alerts!\n\n" +
+                "Send /age to set your age preference.\n\n" +
+                "Send /subscriptions to view your current subscription.\n\n" +
                 "ठीक है! जब आपके स्थान के पास के केंद्रों में टीका उपलब्ध होगा तो मैं आपको सूचित करूँगा।\n" +
                 "आप कई पिन कोड कॉमा (,) द्वारा अलग-अलग सेट कर सकते हैं। अधिकतम 3 पिन कोड की अनुमति है।\n" +
-                "सुनिश्चित करें कि अधिसूचना इस बॉट के लिए चालू है ताकि आप किसी भी अलर्ट को न भूलें!", CHAT_ID);
+                "सुनिश्चित करें कि अधिसूचना इस बॉट के लिए चालू है ताकि आप किसी भी अलर्ट को न भूलें!\n\n" +
+                "अपनी आयु वरीयता निर्धारित करने के लिए /age भेजें।\n\n" +
+                "अपनी वर्तमान सदस्यता देखने के लिए /subscriptions भेजें।", CHAT_ID);
 
         // notify bot owner
         verify(silent, times(1)).execute(any());

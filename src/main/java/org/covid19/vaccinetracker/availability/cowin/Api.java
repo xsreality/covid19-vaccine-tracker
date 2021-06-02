@@ -170,11 +170,12 @@ public class Api {
                 .forEach(userRequest -> {
                     this.botService.notify(userRequest.getChatId(), body);
                     try {
-                        Thread.sleep(1000);
+                        Thread.sleep(5);
                     } catch (InterruptedException e) {
                         // ignore
                     }
                 }));
+        log.info("Broadcast completed for message {}", body);
         return ResponseEntity.ok().build();
     }
 }
