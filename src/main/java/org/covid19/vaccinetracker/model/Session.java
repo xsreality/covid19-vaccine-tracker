@@ -47,7 +47,15 @@ public class Session {
     }
 
     public boolean hasCapacity() {
-        return (availableCapacityDose1 > 1)
+        return (availableCapacityDose1 > 1 || availableCapacityDose2 > 1)
                 && (availableCapacity == (availableCapacityDose1 + availableCapacityDose2));
+    }
+
+    public boolean hasDose1Capacity() {
+        return availableCapacityDose1 > 1;
+    }
+
+    public boolean hasDose2Capacity() {
+        return availableCapacityDose2 > 1;
     }
 }
