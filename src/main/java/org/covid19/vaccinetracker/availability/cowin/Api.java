@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -159,22 +160,30 @@ public class Api {
     }
 
     @PostMapping("/bot/owner")
-    public ResponseEntity<?> botNotifyOwner(@RequestBody String body) {
+    public ResponseEntity<?> notifyOwner(@RequestBody String body) {
         this.botService.notifyOwner(body);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/bot/all")
-    public ResponseEntity<?> botNotifyEverybody(@RequestBody String body) {
+    public ResponseEntity<?> broadcast(@RequestBody String body) {
+        AtomicInteger total = new AtomicInteger(0);
+        AtomicInteger failed = new AtomicInteger(0);
         Executors.newSingleThreadExecutor().submit(() -> userRequestManager.fetchAllUserRequests()
                 .forEach(userRequest -> {
-                    this.botService.notify(userRequest.getChatId(), body);
+                    if (this.botService.notify(userRequest.getChatId(), body)) {
+                        total.incrementAndGet();
+                    } else {
+                        failed.incrementAndGet();
+                    }
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
                         // ignore
                     }
                 }));
+        log.info("Broadcast completed. Total: {}, Failed: {}", total.get(), failed.get());
+        this.botService.notifyOwner(String.format("Broadcast completed. Total: %d, Failed: %d", total.get(), failed.get()));
         return ResponseEntity.ok().build();
     }
 }

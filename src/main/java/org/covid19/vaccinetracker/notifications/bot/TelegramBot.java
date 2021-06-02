@@ -138,6 +138,8 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                         silent.send(String.format("Okay %s! I will notify you when vaccine is available in centers near your location.\n" +
                                 "You can set multiple pincodes by sending them together separated by comma (,). Maximum 3 pincodes are allowed.\n" +
                                 "Make sure notification is turned on for this bot so you don't miss any alerts!\n\n" +
+                                "Send /age to set your age preference.\n\n" +
+                                "Send /subscriptions to view your current subscription.\n\n" +
                                 localizedAckMessage, firstName), ctx.chatId());
 
                         // send an update to Bot channel
@@ -153,7 +155,6 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
             removeKeyboard(upd);
             botBackend.updateAgePreference(getChatId(upd), AGE_18_44);
             silent.execute(SendMessage.builder().chatId(getChatId(upd)).text("I have updated your age preference to 18-44").build());
-            silent.execute(SendMessage.builder().chatId(String.valueOf(CHANNEL_ID)).text("I have updated your age preference to 18-44").build());
             notifyOwner(String.format("%s (%s) set age preference to 18-44",
                     Utils.translateName(upd.getCallbackQuery().getMessage().getChat()), getChatId(upd)));
         }, hasMessage("18-44"));
@@ -286,7 +287,13 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                 .text(text)
                 .parseMode(ParseMode.HTML)
                 .build();
-        return silent.execute(telegramMessage).isPresent();
+        try {
+            this.execute(telegramMessage);
+            return true;
+        } catch (TelegramApiException e) {
+            log.error("Error sending telegram message to user id {}, error message: {}", chatId, e.getMessage());
+            return false;
+        }
     }
 
     @Override

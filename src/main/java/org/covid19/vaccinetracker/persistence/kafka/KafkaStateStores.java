@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 
 import lombok.extern.slf4j.Slf4j;
 
+import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static org.covid19.vaccinetracker.userrequests.model.Age.AGE_18_44;
 
@@ -63,6 +64,9 @@ public class KafkaStateStores {
     }
 
     public Optional<UserRequest> userRequestById(String userId) {
+        if (isNull(userRequestsStore)) {
+            return Optional.empty();
+        }
         return Optional.ofNullable(userId)
                 .map(s -> userRequestsStore.get(userId));
     }
