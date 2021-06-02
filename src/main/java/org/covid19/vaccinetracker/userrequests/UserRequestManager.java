@@ -127,6 +127,18 @@ public class UserRequestManager {
                 });
     }
 
+    public void updateDosePreference(String userId, Dose dose) {
+        this.kafkaStateStores.userRequestById(userId)
+                .map(ur -> new UserRequest(ur.getChatId(), ur.getPincodes(), ur.getAge(), dose.toString(), ur.getLastNotifiedAt()))
+                .ifPresent(updated -> {
+                    try {
+                        kafkaTemplate.send(userRequestsTopic, updated.getChatId(), updated).get();
+                    } catch (InterruptedException | ExecutionException e) {
+                        log.error("Error producing user request to Kafka: {}", e.getMessage());
+                    }
+                });
+    }
+
     /**
      * Reads the user requests state store and produces each request again to the user-requests
      * topic Useful when adding new topology that needs to be populated

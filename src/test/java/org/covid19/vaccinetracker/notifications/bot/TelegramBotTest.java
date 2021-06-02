@@ -144,6 +144,7 @@ public class TelegramBotTest {
                 "You can set multiple pincodes by sending them together separated by comma (,). Maximum 3 pincodes are allowed.\n" +
                 "Make sure notification is turned on for this bot so you don't miss any alerts!\n\n" +
                 "Send /age to set your age preference.\n\n" +
+                "Send /dose to set your dose preference.\n\n" +
                 "Send /subscriptions to view your current subscription.\n\n" +
                 "ठीक है! जब आपके स्थान के पास के केंद्रों में टीका उपलब्ध होगा तो मैं आपको सूचित करूँगा।\n" +
                 "आप कई पिन कोड कॉमा (,) द्वारा अलग-अलग सेट कर सकते हैं। अधिकतम 3 पिन कोड की अनुमति है।\n" +
