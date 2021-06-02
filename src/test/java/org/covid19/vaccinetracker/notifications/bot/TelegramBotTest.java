@@ -99,7 +99,8 @@ public class TelegramBotTest {
         bot.subscriptions().action().accept(context);
 
         verify(silent, times(1)).send("You are currently subscribed to pincodes: 110022,122001\n\n" +
-                "Your age preference: 45+", CHAT_ID);
+                "Your age preference: 45+\n\n" +
+                "Your dose preference: Dose 1", CHAT_ID);
     }
 
     @Test

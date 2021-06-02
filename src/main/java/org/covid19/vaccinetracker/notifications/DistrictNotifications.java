@@ -34,7 +34,7 @@ public class DistrictNotifications {
             log.debug("No eligible vaccine centers found for district update");
             return;
         }
-        if (botService.notify(MUMBAI_DISTRICT_CHANNEL_ID, eligibleCenters)) {
+        if (botService.notifyAvailability(MUMBAI_DISTRICT_CHANNEL_ID, eligibleCenters)) {
             log.info("Sending update for Mumbai district on dedicated channel with {} eligible centers", eligibleCenters.size());
         }
     }

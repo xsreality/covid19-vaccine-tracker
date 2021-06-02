@@ -9,9 +9,9 @@ import static java.util.Objects.isNull;
  * Dose preference
  */
 public enum Dose {
-    DOSE_1("1"),
-    DOSE_2("2"),
-    DOSE_BOTH("both");
+    DOSE_1("Dose 1"),
+    DOSE_2("Dose 2"),
+    DOSE_BOTH("Dose 1 and 2");
 
     private static final Map<String, Dose> BY_LABEL = new HashMap<>();
 

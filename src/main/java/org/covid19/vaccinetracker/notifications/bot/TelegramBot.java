@@ -103,8 +103,11 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                         message = "You have no pincodes subscribed. Just send pincodes separated by comma (,) to subscribe.";
                     } else {
                         message = String.format("You are currently subscribed to pincodes: %s\n\n" +
-                                        "Your age preference: %s",
-                                Utils.joinPincodes(user.getPincodes()), isNull(user.getAge()) ? "18-44" : user.getAge());
+                                        "Your age preference: %s\n\n" +
+                                        "Your dose preference: %s",
+                                Utils.joinPincodes(user.getPincodes()),
+                                isNull(user.getAge()) ? "18-44" : user.getAge(),
+                                isNull(user.getDose()) ? "Dose 1" : user.getDose());
                     }
                     silent.send(message, ctx.chatId());
                     notifyOwner(String.format("%s (%s, %s) viewed existing subscriptions.",
@@ -192,7 +195,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
         Reply dose1Flow = Reply.of((bot, upd) -> {
             removeKeyboard(upd);
             botBackend.updateDosePreference(getChatId(upd), DOSE_1);
-            silent.execute(SendMessage.builder().chatId(getChatId(upd)).text("I have updated your dose preference to 'Dose 1'").build());
+            silent.execute(SendMessage.builder().chatId(getChatId(upd)).text("I have updated your dose preference to 'First Dose'").build());
             notifyOwner(String.format("%s (%s) set dose preference to Dose1",
                     Utils.translateName(upd.getCallbackQuery().getMessage().getChat()), getChatId(upd)));
         }, hasMessage("dose1"));
@@ -200,15 +203,15 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
         Reply dose2Flow = Reply.of((bot, upd) -> {
             removeKeyboard(upd);
             botBackend.updateDosePreference(getChatId(upd), DOSE_2);
-            silent.execute(SendMessage.builder().chatId(getChatId(upd)).text("I have updated your dose preference to 'Dose 2'").build());
-            notifyOwner(String.format("%s (%s) set dose preference to Dose2+",
+            silent.execute(SendMessage.builder().chatId(getChatId(upd)).text("I have updated your dose preference to 'Second Dose'").build());
+            notifyOwner(String.format("%s (%s) set dose preference to Dose2",
                     Utils.translateName(upd.getCallbackQuery().getMessage().getChat()), getChatId(upd)));
         }, hasMessage("dose2"));
 
         Reply doseBothFlow = Reply.of((bot, upd) -> {
             removeKeyboard(upd);
             botBackend.updateDosePreference(getChatId(upd), DOSE_BOTH);
-            silent.execute(SendMessage.builder().chatId(getChatId(upd)).text("I have updated your dose preference to both Dose 1 and 2").build());
+            silent.execute(SendMessage.builder().chatId(getChatId(upd)).text("I have updated your dose preference to both First and Second Dose").build());
             notifyOwner(String.format("%s (%s) set dose preference to both Dose 1 and 2",
                     Utils.translateName(upd.getCallbackQuery().getMessage().getChat()), getChatId(upd)));
         }, hasMessage("both"));
@@ -291,7 +294,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
     }
 
     @Override
-    public boolean notify(String userId, List<Center> eligibleCenters) {
+    public boolean notifyAvailability(String userId, List<Center> eligibleCenters) {
         String text = Utils.buildNotificationMessage(eligibleCenters);
         SendMessage telegramMessage = SendMessage.builder()
                 .chatId(userId)

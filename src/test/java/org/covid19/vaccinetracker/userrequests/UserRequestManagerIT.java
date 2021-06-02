@@ -86,7 +86,7 @@ public class UserRequestManagerIT {
         AtomicBoolean recordFound = new AtomicBoolean(false);
         records.forEach(record -> {
             if ("123456".equals(record.key())) {
-                assertThat(record, hasValue("{\"chatId\":\"123456\",\"pincodes\":[\"440022\",\"411038\"],\"age\":\"18-44\",\"dose\":\"1\",\"lastNotifiedAt\":null}"));
+                assertThat(record, hasValue("{\"chatId\":\"123456\",\"pincodes\":[\"440022\",\"411038\"],\"age\":\"18-44\",\"dose\":\"Dose 1\",\"lastNotifiedAt\":null}"));
                 recordFound.set(true);
             }
         });
