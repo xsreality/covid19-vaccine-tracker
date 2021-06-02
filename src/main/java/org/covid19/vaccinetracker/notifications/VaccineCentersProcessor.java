@@ -7,11 +7,13 @@ import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.covid19.vaccinetracker.userrequests.model.Age;
 import org.covid19.vaccinetracker.userrequests.model.Dose;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -67,23 +69,31 @@ public class VaccineCentersProcessor {
 
     private boolean eligibleCenterForUser(Session session, String user) {
         return Stream.of(user)
-                .filter(u -> {
-                    // check age preference
-                    final Age userAgePreference = userRequestManager.getUserAgePreference(user);
-                    return sessionAndUserValidFor18(session, userAgePreference)
-                            || sessionAndUserValidFor45(session, userAgePreference)
-                            || AGE_BOTH.equals(userAgePreference);
-                })
-                .filter(u -> {
-                    // check dose preference
-                    final Dose userDosePreference = userRequestManager.getUserDosePreference(user);
-                    return sessionAndUserValidForDose1(session, userDosePreference)
-                            || sessionAndUserValidForDose2(session, userDosePreference)
-                            || DOSE_BOTH.equals(userDosePreference);
-                })
+                .filter(checkAgePreference(session))
+                .filter(checkDosePreference(session))
                 .map(u -> true)
                 .findFirst()
                 .orElse(false);
+    }
+
+    @NotNull
+    private Predicate<String> checkDosePreference(Session session) {
+        return u -> {
+            final Dose userDosePreference = userRequestManager.getUserDosePreference(u);
+            return sessionAndUserValidForDose1(session, userDosePreference)
+                    || sessionAndUserValidForDose2(session, userDosePreference)
+                    || DOSE_BOTH.equals(userDosePreference);
+        };
+    }
+
+    @NotNull
+    private Predicate<String> checkAgePreference(Session session) {
+        return u -> {
+            final Age userAgePreference = userRequestManager.getUserAgePreference(u);
+            return sessionAndUserValidFor18(session, userAgePreference)
+                    || sessionAndUserValidFor45(session, userAgePreference)
+                    || AGE_BOTH.equals(userAgePreference);
+        };
     }
 
     private boolean sessionAndUserValidFor45(Session session, Age userAgePreference) {
