@@ -9,6 +9,7 @@ import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.covid19.vaccinetracker.model.UsersByPincode;
 import org.covid19.vaccinetracker.userrequests.model.District;
 import org.covid19.vaccinetracker.userrequests.model.UserRequest;
+import org.covid19.vaccinetracker.userrequests.model.Vaccine;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -74,7 +75,7 @@ public class KafkaStateStores {
 
     public List<String> pincodesForUser(String userId) {
         return ofNullable(userRequestsStore.get(userId))
-                .orElseGet(() -> new UserRequest(userId, List.of(), AGE_18_44.toString(), DOSE_1.toString(), null))
+                .orElseGet(() -> new UserRequest(userId, List.of(), AGE_18_44.toString(), DOSE_1.toString(), Vaccine.ANY.toString(), null))
                 .getPincodes();
     }
 

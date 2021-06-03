@@ -10,5 +10,6 @@ public class UserRequest {
     List<String> pincodes;
     String age;
     String dose;
+    String vaccine;
     String lastNotifiedAt;
 }
