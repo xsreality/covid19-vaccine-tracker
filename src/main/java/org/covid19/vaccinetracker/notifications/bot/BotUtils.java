@@ -24,4 +24,21 @@ public class BotUtils {
         msg.setReplyMarkup(markup);
         return msg;
     }
+
+    public static SendMessage buildDoseSelectionKeyboard(String chatId) {
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        SendMessage msg = new SendMessage();
+        msg.setChatId(chatId);
+        msg.setText("Choose preferred dose");
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        row.add(InlineKeyboardButton.builder().text("Dose 1").callbackData("dose1").build());
+        row.add(InlineKeyboardButton.builder().text("Dose 2").callbackData("dose2").build());
+        row.add(InlineKeyboardButton.builder().text("Both").callbackData("both").build());
+        keyboard.add(row);
+
+        markup.setKeyboard(keyboard);
+        msg.setReplyMarkup(markup);
+        return msg;
+    }
 }

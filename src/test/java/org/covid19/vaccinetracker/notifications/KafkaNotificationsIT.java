@@ -89,8 +89,8 @@ public class KafkaNotificationsIT {
 
     @BeforeEach
     public void setup() {
-        userRequestKafkaTemplate.send(userRequestsTopic, "userA", new UserRequest("userA", List.of("110022"), null, null));
-        userRequestKafkaTemplate.send(userRequestsTopic, "userB", new UserRequest("userB", List.of("110023"), null, null));
+        userRequestKafkaTemplate.send(userRequestsTopic, "userA", new UserRequest("userA", List.of("110022"), null, null, null));
+        userRequestKafkaTemplate.send(userRequestsTopic, "userB", new UserRequest("userB", List.of("110023"), null, null, null));
     }
 
     @Test
@@ -102,13 +102,13 @@ public class KafkaNotificationsIT {
         when(vaccinePersistence.fetchVaccineCentersByPincode("110022")).thenReturn(data);
         when(vaccineCentersProcessor.eligibleVaccineCenters(any(), anyString())).thenReturn(data.getCenters());
         when(cache.isNewNotification(anyString(), anyString(), any())).thenReturn(true);
-        when(botService.notify(anyString(), anyList())).thenReturn(true);
+        when(botService.notifyAvailability(anyString(), anyList())).thenReturn(true);
 
         updatedPincodesKafkaTemplate.send(updatedPincodesTopic, "110022", "110022");
 
         await().atMost(2L, SECONDS).until(() -> stats.notificationsSent() >= 1);
 
-        verify(botService, times(1)).notify(anyString(), anyList());
+        verify(botService, times(1)).notifyAvailability(anyString(), anyList());
         verify(cache, times(1)).updateUser(anyString(), anyString(), any());
         verify(vaccinePersistence, times(1)).markProcessed(data);
     }
@@ -121,11 +121,11 @@ public class KafkaNotificationsIT {
         final VaccineCenters data = createCentersWithoutData();
         when(vaccinePersistence.fetchVaccineCentersByPincode("110023")).thenReturn(data);
         when(cache.isNewNotification(anyString(), anyString(), any())).thenReturn(true);
-        when(botService.notify(anyString(), anyList())).thenReturn(true);
+        when(botService.notifyAvailability(anyString(), anyList())).thenReturn(true);
 
         updatedPincodesKafkaTemplate.send(updatedPincodesTopic, "110023", "110023");
 
-        verify(botService, times(0)).notify(anyString(), anyList());
+        verify(botService, times(0)).notifyAvailability(anyString(), anyList());
         verify(cache, times(0)).updateUser(anyString(), anyString(), any());
         verify(vaccinePersistence, times(0)).markProcessed(data);
     }

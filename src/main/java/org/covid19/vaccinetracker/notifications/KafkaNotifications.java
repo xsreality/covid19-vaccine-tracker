@@ -77,7 +77,7 @@ public class KafkaNotifications {
                     .forEach(eligibleCenters -> {
                         if (cache.isNewNotification(user, pincode, eligibleCenters)) {
                             log.debug("Slots data changed for pincode {} since {} was last notified", pincode, user);
-                            if (botService.notify(user, eligibleCenters)) {
+                            if (botService.notifyAvailability(user, eligibleCenters)) {
                                 stats.incrementNotificationsSent();
                             } else {
                                 stats.incrementNotificationsErrors();

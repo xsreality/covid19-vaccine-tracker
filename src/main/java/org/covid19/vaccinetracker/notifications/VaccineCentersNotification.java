@@ -76,7 +76,7 @@ public class VaccineCentersNotification {
                     log.debug("No eligible vaccine centers found for pin code {}", pincode);
                     return;
                 }
-                if (botService.notify(userRequest.getChatId(), eligibleCenters)) {
+                if (botService.notifyAvailability(userRequest.getChatId(), eligibleCenters)) {
                     introduceDelay(10);
                     notificationStats.incrementNotificationsSent();
 //                    userRequestManager.updateUserRequestLastNotifiedAt(userRequest, Utils.currentTime());
@@ -138,7 +138,7 @@ public class VaccineCentersNotification {
                     log.debug("No eligible vaccine centers found for pin code {}", pincode);
                     return;
                 }
-                if (botService.notify(userRequest.getChatId(), eligibleCenters)) {
+                if (botService.notifyAvailability(userRequest.getChatId(), eligibleCenters)) {
                     notificationStats.incrementNotificationsSent();
                     userRequestManager.updateUserRequestLastNotifiedAt(userRequest, Utils.currentTime());
                 }

@@ -9,5 +9,6 @@ public class UserRequest {
     String chatId;
     List<String> pincodes;
     String age;
+    String dose;
     String lastNotifiedAt;
 }

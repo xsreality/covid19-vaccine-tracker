@@ -2,6 +2,7 @@ package org.covid19.vaccinetracker.notifications.bot;
 
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.covid19.vaccinetracker.userrequests.model.Age;
+import org.covid19.vaccinetracker.userrequests.model.Dose;
 import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.springframework.stereotype.Service;
 
@@ -34,5 +35,9 @@ public class BotBackend {
 
     public void updateAgePreference(String chatId, Age age) {
         userRequestManager.updateAgePreference(chatId, age);
+    }
+
+    public void updateDosePreference(String chatId, Dose dose) {
+        userRequestManager.updateDosePreference(chatId, dose);
     }
 }

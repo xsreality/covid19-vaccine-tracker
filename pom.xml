@@ -12,7 +12,7 @@
 
     <groupId>com.abhinav.covid19</groupId>
     <artifactId>covid19-vaccine-tracker</artifactId>
-    <version>0.2.15-SNAPSHOT</version>
+    <version>0.2.16-SNAPSHOT</version>
     <name>covid19-vaccine-tracker</name>
     <description>CoWIN Vaccine Alerts</description>
     <properties>

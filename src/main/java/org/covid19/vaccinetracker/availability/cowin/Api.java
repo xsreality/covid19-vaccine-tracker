@@ -169,21 +169,24 @@ public class Api {
     public ResponseEntity<?> broadcast(@RequestBody String body) {
         AtomicInteger total = new AtomicInteger(0);
         AtomicInteger failed = new AtomicInteger(0);
-        Executors.newSingleThreadExecutor().submit(() -> userRequestManager.fetchAllUserRequests()
-                .forEach(userRequest -> {
-                    if (this.botService.notify(userRequest.getChatId(), body)) {
-                        total.incrementAndGet();
-                    } else {
-                        failed.incrementAndGet();
-                    }
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        // ignore
-                    }
-                }));
-        log.info("Broadcast completed. Total: {}, Failed: {}", total.get(), failed.get());
-        this.botService.notifyOwner(String.format("Broadcast completed. Total: %d, Failed: %d", total.get(), failed.get()));
+        Executors.newSingleThreadExecutor().submit(() -> {
+            userRequestManager.fetchAllUserRequests()
+                    .stream().filter(userRequest -> !userRequest.getPincodes().isEmpty())
+                    .forEach(userRequest -> {
+                        if (this.botService.notify(userRequest.getChatId(), body)) {
+                            total.incrementAndGet();
+                        } else {
+                            failed.incrementAndGet();
+                        }
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            // ignore
+                        }
+                    });
+            log.info("Broadcast completed. Total: {}, Failed: {}", total.get(), failed.get());
+            this.botService.notifyOwner(String.format("Broadcast completed. Total: %d, Failed: %d", total.get(), failed.get()));
+        });
         return ResponseEntity.ok().build();
     }
 }
