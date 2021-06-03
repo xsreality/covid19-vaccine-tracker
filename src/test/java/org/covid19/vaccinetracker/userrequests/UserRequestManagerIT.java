@@ -39,7 +39,7 @@ import static org.covid19.vaccinetracker.userrequests.model.Age.AGE_BOTH;
 import static org.covid19.vaccinetracker.userrequests.model.Dose.DOSE_1;
 import static org.covid19.vaccinetracker.userrequests.model.Dose.DOSE_2;
 import static org.covid19.vaccinetracker.userrequests.model.Dose.DOSE_BOTH;
-import static org.covid19.vaccinetracker.userrequests.model.Vaccine.ANY;
+import static org.covid19.vaccinetracker.userrequests.model.Vaccine.ALL;
 import static org.covid19.vaccinetracker.userrequests.model.Vaccine.COVAXIN;
 import static org.covid19.vaccinetracker.userrequests.model.Vaccine.COVISHIELD;
 import static org.covid19.vaccinetracker.userrequests.model.Vaccine.SPUTNIK_V;
@@ -90,7 +90,7 @@ public class UserRequestManagerIT {
         AtomicBoolean recordFound = new AtomicBoolean(false);
         records.forEach(record -> {
             if ("123456".equals(record.key())) {
-                assertThat(record, hasValue("{\"chatId\":\"123456\",\"pincodes\":[\"440022\",\"411038\"],\"age\":\"18-44\",\"dose\":\"Dose 1\",\"vaccine\":\"Any\",\"lastNotifiedAt\":null}"));
+                assertThat(record, hasValue("{\"chatId\":\"123456\",\"pincodes\":[\"440022\",\"411038\"],\"age\":\"18-44\",\"dose\":\"Dose 1\",\"vaccine\":\"All\",\"lastNotifiedAt\":null}"));
                 recordFound.set(true);
             }
         });
@@ -257,9 +257,9 @@ public class UserRequestManagerIT {
     @Test
     public void testGetUserVaccinePreferenceForVaccineNotSet() throws Exception {
         final String userId = "user_with_vaccine_pref_not_set";
-        kafkaTemplate.send(userRequestsTopic, userId, new UserRequest(userId, List.of("415002"), null, null, ANY.toString(), null)).get();
+        kafkaTemplate.send(userRequestsTopic, userId, new UserRequest(userId, List.of("415002"), null, null, ALL.toString(), null)).get();
         await().atMost(1, SECONDS).until(() -> nonNull(userRequestManager.fetchUserRequest(userId)));
-        assertThat(userRequestManager.getUserVaccinePreference(userId), is(equalTo(ANY)));
+        assertThat(userRequestManager.getUserVaccinePreference(userId), is(equalTo(ALL)));
     }
 
     private Set<String> extractUsers(String pincode) {

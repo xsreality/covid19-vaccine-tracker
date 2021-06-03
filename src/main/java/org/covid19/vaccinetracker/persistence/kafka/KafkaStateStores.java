@@ -75,7 +75,7 @@ public class KafkaStateStores {
 
     public List<String> pincodesForUser(String userId) {
         return ofNullable(userRequestsStore.get(userId))
-                .orElseGet(() -> new UserRequest(userId, List.of(), AGE_18_44.toString(), DOSE_1.toString(), Vaccine.ANY.toString(), null))
+                .orElseGet(() -> new UserRequest(userId, List.of(), AGE_18_44.toString(), DOSE_1.toString(), Vaccine.ALL.toString(), null))
                 .getPincodes();
     }
 

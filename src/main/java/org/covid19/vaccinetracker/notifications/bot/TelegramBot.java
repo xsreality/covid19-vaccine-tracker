@@ -6,6 +6,7 @@ import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.persistence.mariadb.repository.StateRepository;
 import org.covid19.vaccinetracker.userrequests.model.State;
 import org.covid19.vaccinetracker.userrequests.model.UserRequest;
+import org.covid19.vaccinetracker.userrequests.model.Vaccine;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.BeansException;
@@ -16,6 +17,7 @@ import org.telegram.abilitybots.api.bot.AbilityBot;
 import org.telegram.abilitybots.api.db.DBContext;
 import org.telegram.abilitybots.api.objects.Ability;
 import org.telegram.abilitybots.api.objects.Flag;
+import org.telegram.abilitybots.api.objects.Locality;
 import org.telegram.abilitybots.api.objects.MessageContext;
 import org.telegram.abilitybots.api.objects.Reply;
 import org.telegram.abilitybots.api.objects.ReplyFlow;
@@ -41,8 +43,10 @@ import static org.covid19.vaccinetracker.userrequests.model.Age.AGE_BOTH;
 import static org.covid19.vaccinetracker.userrequests.model.Dose.DOSE_1;
 import static org.covid19.vaccinetracker.userrequests.model.Dose.DOSE_2;
 import static org.covid19.vaccinetracker.userrequests.model.Dose.DOSE_BOTH;
+import static org.covid19.vaccinetracker.userrequests.model.Vaccine.COVAXIN;
+import static org.covid19.vaccinetracker.userrequests.model.Vaccine.COVISHIELD;
+import static org.covid19.vaccinetracker.userrequests.model.Vaccine.SPUTNIK_V;
 import static org.telegram.abilitybots.api.objects.Flag.MESSAGE;
-import static org.telegram.abilitybots.api.objects.Locality.ALL;
 import static org.telegram.abilitybots.api.objects.Privacy.PUBLIC;
 
 @SuppressWarnings("unused")
@@ -67,7 +71,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
 
     public Ability start() {
         return Ability.builder().name("start").info("Subscribe to Covid19 Vaccine Tracker")
-                .locality(ALL).privacy(PUBLIC).input(0).action(ctx -> {
+                .locality(Locality.ALL).privacy(PUBLIC).input(0).action(ctx -> {
                     String message = String.format("Hi %s! Welcome to COVID19 Vaccine Tracker! कोविड-19 वैक्सीन ट्रैकर में आपका स्वागत है!\n\n" +
                             "To automatically receive notification when Vaccine becomes available near you, send your pin code.\n" +
                             "जब आपके पास वैक्सीन उपलब्ध हो जाता है तो अपने आप ही सूचना प्राप्त करने के लिए अपना पिन कोड भेजें।\n\n" +
@@ -81,7 +85,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
 
     public Ability stop() {
         return Ability.builder().name("stop").info("Stop getting alerts")
-                .locality(ALL).privacy(PUBLIC).input(0).action(ctx -> {
+                .locality(Locality.ALL).privacy(PUBLIC).input(0).action(ctx -> {
                     String chatId = getChatId(ctx.update());
                     this.botBackend.cancelUserRequest(chatId);
                     String message = String.format("Okay %s, I will no longer send you any alerts. ठीक है, मैं अब आपको कोई अलर्ट नहीं भेजूंगी।\n\n" +
@@ -95,7 +99,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
 
     public Ability subscriptions() {
         return Ability.builder().name("subscriptions").info("Show my subscriptions")
-                .locality(ALL).privacy(PUBLIC).input(0).action(ctx -> {
+                .locality(Locality.ALL).privacy(PUBLIC).input(0).action(ctx -> {
                     String chatId = String.valueOf(ctx.chatId());
                     final UserRequest user = this.botBackend.fetchUserSubscriptions(chatId);
                     String message;
@@ -104,10 +108,12 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                     } else {
                         message = String.format("You are currently subscribed to pincodes: %s\n\n" +
                                         "Your age preference: %s\n\n" +
-                                        "Your dose preference: %s",
+                                        "Your dose preference: %s\n\n" +
+                                        "Your vaccine preference: %s",
                                 Utils.joinPincodes(user.getPincodes()),
                                 isNull(user.getAge()) ? "18-44" : user.getAge(),
-                                isNull(user.getDose()) ? "Dose 1" : user.getDose());
+                                isNull(user.getDose()) ? "Dose 1" : user.getDose(),
+                                isNull(user.getVaccine()) ? "ALL" : user.getVaccine());
                     }
                     silent.send(message, ctx.chatId());
                     notifyOwner(String.format("%s (%s, %s) viewed existing subscriptions.",
@@ -120,7 +126,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                 .builder()
                 .name(DEFAULT)
                 .flag(MESSAGE)
-                .privacy(PUBLIC).locality(ALL)
+                .privacy(PUBLIC).locality(Locality.ALL)
                 .input(0)
                 .action(ctx -> {
                     if (ctx.update().hasMessage() && ctx.update().getMessage().hasText()) {
@@ -146,6 +152,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                                 "Make sure notification is turned on for this bot so you don't miss any alerts!\n\n" +
                                 "Send /age to set your age preference.\n\n" +
                                 "Send /dose to set your dose preference.\n\n" +
+                                "Send /vaccine to set your vaccine preference.\n\n" +
                                 "Send /subscriptions to view your current subscription.\n\n" +
                                 localizedAckMessage, firstName), ctx.chatId());
 
@@ -222,6 +229,49 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                 .next(dose1Flow)
                 .next(dose2Flow)
                 .next(doseBothFlow)
+                .build();
+    }
+
+    public ReplyFlow vaccineSelectionFlow() {
+        Reply covishieldFlow = Reply.of((bot, upd) -> {
+            removeKeyboard(upd);
+            botBackend.updateVaccinePreference(getChatId(upd), COVISHIELD);
+            silent.execute(SendMessage.builder().chatId(getChatId(upd)).text("I have updated your vaccine preference to COVISHIELD").build());
+            notifyOwner(String.format("%s (%s) set vaccine preference to COVISHIELD",
+                    Utils.translateName(upd.getCallbackQuery().getMessage().getChat()), getChatId(upd)));
+        }, hasMessage("covishield"));
+
+        Reply covaxinFlow = Reply.of((bot, upd) -> {
+            removeKeyboard(upd);
+            botBackend.updateVaccinePreference(getChatId(upd), COVAXIN);
+            silent.execute(SendMessage.builder().chatId(getChatId(upd)).text("I have updated your vaccine preference to COVAXIN").build());
+            notifyOwner(String.format("%s (%s) set vaccine preference to COVAXIN",
+                    Utils.translateName(upd.getCallbackQuery().getMessage().getChat()), getChatId(upd)));
+        }, hasMessage("covaxin"));
+
+        Reply sputnikvFlow = Reply.of((bot, upd) -> {
+            removeKeyboard(upd);
+            botBackend.updateVaccinePreference(getChatId(upd), SPUTNIK_V);
+            silent.execute(SendMessage.builder().chatId(getChatId(upd)).text("I have updated your vaccine preference to SPUTNIK V").build());
+            notifyOwner(String.format("%s (%s) set vaccine preference to SPUTNIK V",
+                    Utils.translateName(upd.getCallbackQuery().getMessage().getChat()), getChatId(upd)));
+        }, hasMessage("sputnikv"));
+
+        Reply anyVaccineFlow = Reply.of((bot, upd) -> {
+            removeKeyboard(upd);
+            botBackend.updateVaccinePreference(getChatId(upd), Vaccine.ALL);
+            silent.execute(SendMessage.builder().chatId(getChatId(upd)).text("I have updated your vaccine preference to ALL vaccines").build());
+            notifyOwner(String.format("%s (%s) set vaccine preference to ALL",
+                    Utils.translateName(upd.getCallbackQuery().getMessage().getChat()), getChatId(upd)));
+        }, hasMessage("all"));
+
+        return ReplyFlow.builder(db, 120)
+                .action((bot, update) -> silent.execute(BotUtils.buildVaccineSelectionKeyboard(getChatId(update))))
+                .onlyIf(isCallbackOrMessage("/vaccine"))
+                .next(covishieldFlow)
+                .next(covaxinFlow)
+                .next(sputnikvFlow)
+                .next(anyVaccineFlow)
                 .build();
     }
 

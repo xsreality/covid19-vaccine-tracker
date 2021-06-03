@@ -82,7 +82,7 @@ public class VaccineCentersProcessor {
             return sessionAndUserValidForCovishield(session, preference)
                     || sessionAndUserValidForCovaxin(session, preference)
                     || sessionAndUserValidForSputnikV(session, preference)
-                    || Vaccine.ANY.equals(preference);
+                    || Vaccine.ALL.equals(preference);
         };
     }
 

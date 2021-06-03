@@ -93,7 +93,7 @@ public class UserRequestManager {
     public void acceptUserRequest(String userId, List<String> pincodes) {
         final UserRequest request = kafkaStateStores.userRequestById(userId)
                 .map(existing -> new UserRequest(existing.getChatId(), pincodes, existing.getAge(), existing.getDose(), existing.getVaccine(), null))
-                .orElse(new UserRequest(userId, pincodes, AGE_18_44.toString(), DOSE_1.toString(), Vaccine.ANY.toString(), null));
+                .orElse(new UserRequest(userId, pincodes, AGE_18_44.toString(), DOSE_1.toString(), Vaccine.ALL.toString(), null));
         kafkaTemplate.setProducerListener(producerListener());
         try {
             kafkaTemplate.send(userRequestsTopic, userId, request).get();
@@ -229,7 +229,7 @@ public class UserRequestManager {
         return kafkaStateStores.userRequestById(userId)
                 .map(UserRequest::getVaccine)
                 .map(Vaccine::find)
-                .orElse(Vaccine.ANY)
+                .orElse(Vaccine.ALL)
                 ; // default to dose 1
     }
 }

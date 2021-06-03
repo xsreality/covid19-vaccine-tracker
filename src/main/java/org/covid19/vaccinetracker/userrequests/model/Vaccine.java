@@ -12,7 +12,7 @@ public enum Vaccine {
     COVISHIELD("Covishield"),
     COVAXIN("Covaxin"),
     SPUTNIK_V("Sputnik V"),
-    ANY("Any");
+    ALL("All");
 
     private static final Map<String, Vaccine> BY_LABEL = new HashMap<>();
 
