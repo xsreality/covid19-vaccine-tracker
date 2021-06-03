@@ -37,8 +37,8 @@ public class UtilsTest {
     @Test
     public void testNotificationText() {
         String expected = "<b>Premlok Park Disp- 2(18-44) (Pune 411033)</b>\n<pre>" +
-                "\n8 doses (First dose: 3, Second dose: 5) of COVISHIELD for 18+ age group available on 04-05-2021 (18+ आयु वर्ग के लिए COVISHIELD की 3 खुराकें 04-05-2021 को उपलब्ध हैं)\n" +
-                "\n15 doses (First dose: 12, Second dose: 3) of COVAXIN for 18+ age group available on 05-05-2021 (18+ आयु वर्ग के लिए COVAXIN की 12 खुराकें 05-05-2021 को उपलब्ध हैं)\n</pre>\n" +
+                "\n8 doses (First dose: 3, Second dose: 5) of COVISHIELD for 18+ age group available on 04-05-2021 (18+ आयु वर्ग के लिए COVISHIELD की 8 खुराकें (खुराक 1: 3, खुराक 2: 5) 04-05-2021 को उपलब्ध हैं)\n" +
+                "\n15 doses (First dose: 12, Second dose: 3) of COVAXIN for 18+ age group available on 05-05-2021 (18+ आयु वर्ग के लिए COVAXIN की 15 खुराकें (खुराक 1: 12, खुराक 2: 3) 05-05-2021 को उपलब्ध हैं)\n</pre>\n" +
                 "For registration, please visit <a href=\"https://selfregistration.cowin.gov.in/\">CoWIN Website</a>\n";
         List<Center> centers = new ArrayList<>();
         List<Session> sessions = new ArrayList<>();

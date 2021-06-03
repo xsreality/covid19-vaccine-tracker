@@ -54,16 +54,16 @@ public class Utils {
     );
 
     private static final Map<String, String> LOCALIZED_NOTIFICATION_TEXT = Map.ofEntries(
-            entry("Hindi", "(%s+ आयु वर्ग के लिए %s की %s खुराकें %s को उपलब्ध हैं)"),
-            entry("Telugu", "(%s+ ఏళ్ళ వయస్సు గల %s మోతాదుల %s %s న లభిస్తుంది)"),
-            entry("Gujarati", "(%s+ વયના લોકો માટે %s ના %s ડોઝ %s પર ઉપલબ્ધ છે)"),
-            entry("Kannada", "(%s+ ವರ್ಷ ವಯಸ್ಸಿನವರಿಗೆ %s ಡೋಸ್ %s %s ರಂದು ಲಭ್ಯವಿದೆ)"),
-            entry("Malayalam", "(%s+ വയസ്സിനിടയിൽ, %s ന്റെ %s ഡോസുകൾ %s ന് ലഭ്യമാണ്)"),
-            entry("Marathi", "(%s+ वयोगटातील %s %s डोस %s रोजी उपलब्ध आहेत)"),
-            entry("Odia", "(%s+ ବୟସ ବର୍ଗ ପାଇଁ %s ର %s ଡୋଜ୍ %s ରେ ଉପଲବ୍ଧ |)"),
-            entry("Tamil", "(%s+ வயதிற்குட்பட்ட %s இன் %s டோஸ் %s அன்று கிடைக்கிறது)"),
-            entry("Punjabi", "(%s+ ਸਾਲ ਦੀ ਉਮਰ ਦੇ ਲਈ %s ਦੀਆਂ %s ਖੁਰਾਕਾਂ %s 'ਤੇ ਉਪਲਬਧ ਹਨ)"),
-            entry("Bengali", "(%s+ বয়সের গোষ্ঠীর জন্য %s এর %s টি ডোজ %s এ উপলব্ধ)")
+            entry("Hindi", "(%s+ आयु वर्ग के लिए %s की %s खुराकें (खुराक 1: %s, खुराक 2: %s) %s को उपलब्ध हैं)"),
+            entry("Telugu", "(%s+ ఏళ్ళ వయస్సు గల %s మోతాదుల %s (మోతాదుల 1: %s, మోతాదుల 2: %s) %s న లభిస్తుంది)"),
+            entry("Gujarati", "(%s+ વયના લોકો માટે %s ના %s ડોઝ %s (ડોઝ 1: %s, ડોઝ 2: %s) પર ઉપલબ્ધ છે)"),
+            entry("Kannada", "(%s+ ವರ್ಷ ವಯಸ್ಸಿನವರಿಗೆ %s ಡೋಸ್ %s (ಡೋಸ್ 1: %s, ಡೋಸ್ 2: %s) %s ರಂದು ಲಭ್ಯವಿದೆ)"),
+            entry("Malayalam", "(%s+ വയസ്സിനിടയിൽ, %s ന്റെ %s ഡോസുകൾ %s (ഡോസുകൾ 1: %s, ഡോസുകൾ 2: %s) ന് ലഭ്യമാണ്)"),
+            entry("Marathi", "(%s+ वयोगटातील %s %s डोस %s (डोस 1: %s, डोस 2: %s) रोजी उपलब्ध आहेत)"),
+            entry("Odia", "(%s+ ବୟସ ବର୍ଗ ପାଇଁ %s ର %s ଡୋଜ୍ %s (ଡୋଜ୍ 1: %s, ଡୋଜ୍ 2: %s) ରେ ଉପଲବ୍ଧ |)"),
+            entry("Tamil", "(%s+ வயதிற்குட்பட்ட %s இன் %s டோஸ் %s (டோஸ் 1: %s, டோஸ் 2: %s) அன்று கிடைக்கிறது)"),
+            entry("Punjabi", "(%s+ ਸਾਲ ਦੀ ਉਮਰ ਦੇ ਲਈ %s ਦੀਆਂ %s ਖੁਰਾਕਾਂ %s (ਖੁਰਾਕਾਂ 1: %s, ਖੁਰਾਕਾਂ 2: %s) 'ਤੇ ਉਪਲਬਧ ਹਨ)"),
+            entry("Bengali", "(%s+ বয়সের গোষ্ঠীর জন্য %s এর %s টি ডোজ (ডোজ 1: %s, ডোজ 2: %s) %s এ উপলব্ধ)")
     );
 
     private static final Map<String, String> LOCALIZED_ACK_TEXT = Map.ofEntries(
@@ -155,13 +155,6 @@ public class Utils {
                 .compareTo(Duration.ofHours(24)) >= 0;
     }
 
-    public static boolean past15mins(String lastNotifiedAt) {
-        ZonedDateTime notifiedAt = dateFromString(lastNotifiedAt);
-        ZonedDateTime currentTime = ZonedDateTime.now(ZoneId.of(INDIA_TIMEZONE));
-        return Duration.between(notifiedAt, currentTime)
-                .compareTo(Duration.ofMinutes(15L)) >= 0;
-    }
-
     public static String buildNotificationMessage(List<Center> eligibleCenters) {
         StringBuilder text = new StringBuilder();
         for (Center center : eligibleCenters) {
@@ -170,7 +163,7 @@ public class Utils {
                 text.append(String.format("\n%s doses (First dose: %s, Second dose: %s) of %s for %s+ age group available on %s ",
                         session.availableCapacity, session.availableCapacityDose1, session.availableCapacityDose2,
                         session.vaccine, session.minAgeLimit, session.date));
-                text.append(String.format(localizedNotificationText(center.getStateName()) + "\n", session.minAgeLimit, session.vaccine, session.availableCapacityDose1, session.date));
+                text.append(String.format(localizedNotificationText(center.getStateName()) + "\n", session.minAgeLimit, session.vaccine, session.availableCapacity, session.availableCapacityDose1, session.availableCapacityDose2, session.date));
             }
             text.append("</pre>\n");
         }
