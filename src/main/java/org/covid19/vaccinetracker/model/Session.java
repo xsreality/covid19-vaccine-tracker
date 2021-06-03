@@ -3,12 +3,18 @@ package org.covid19.vaccinetracker.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import org.covid19.vaccinetracker.userrequests.model.Vaccine;
+
 import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import static org.covid19.vaccinetracker.userrequests.model.Vaccine.COVAXIN;
+import static org.covid19.vaccinetracker.userrequests.model.Vaccine.COVISHIELD;
+import static org.covid19.vaccinetracker.userrequests.model.Vaccine.SPUTNIK_V;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Data
@@ -57,5 +63,17 @@ public class Session {
 
     public boolean hasDose2Capacity() {
         return availableCapacityDose2 > 1;
+    }
+
+    public boolean hasCovishield() {
+        return COVISHIELD.toString().equalsIgnoreCase(vaccine);
+    }
+
+    public boolean hasCovaxin() {
+        return COVAXIN.toString().equalsIgnoreCase(vaccine);
+    }
+
+    public boolean hasSputnikV() {
+        return SPUTNIK_V.toString().equalsIgnoreCase(vaccine);
     }
 }

@@ -6,6 +6,7 @@ import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.notifications.VaccineCentersProcessor;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
+import org.covid19.vaccinetracker.userrequests.model.Vaccine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -79,6 +80,7 @@ public class VaccineCentersProcessorTest {
     public void testEligibleVaccineCenters_WhenValidCentersFor18_44_NoUserPrefs() {
         when(userRequestManager.getUserAgePreference("user_who_wants_18_alerts")).thenReturn(AGE_18_44); // default
         when(userRequestManager.getUserDosePreference("user_who_wants_18_alerts")).thenReturn(DOSE_1); // default
+        when(userRequestManager.getUserVaccinePreference("user_who_wants_18_alerts")).thenReturn(Vaccine.ANY); // default
         VaccineCenters vaccineCenters = createCentersWithData();
         List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "user_who_wants_18_alerts");
         assertThat(actual, is(not(emptyList())));
@@ -97,9 +99,48 @@ public class VaccineCentersProcessorTest {
     }
 
     @Test
-    public void testEligibleVaccineCenters_WhenPreference_Age18_Dose1() {
+    public void testEligibleVaccineCenters_WhenPreference_Age18_Dose1_Covishield() {
         when(userRequestManager.getUserAgePreference("123")).thenReturn(AGE_18_44);
         when(userRequestManager.getUserDosePreference("123")).thenReturn(DOSE_1);
+        when(userRequestManager.getUserVaccinePreference("123")).thenReturn(Vaccine.COVISHIELD);
+
+        VaccineCenters vaccineCenters = createCentersWithData();
+        List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "123");
+        assertThat(actual, is(not(emptyList())));
+        assertThat(actual.size(), is(1));
+        assertThat(actual.get(0).getSessions().size(), is(1));
+        assertThat(actual.get(0).getSessions().get(0).getSessionId(), is(equalTo("session_for_18_dose1")));
+    }
+
+    @Test
+    public void testEligibleVaccineCenters_WhenPreference_Age18_Dose1_Covaxin() {
+        when(userRequestManager.getUserAgePreference("123")).thenReturn(AGE_18_44);
+        when(userRequestManager.getUserDosePreference("123")).thenReturn(DOSE_1);
+        when(userRequestManager.getUserVaccinePreference("123")).thenReturn(Vaccine.COVAXIN);
+
+        VaccineCenters vaccineCenters = createCentersWithData();
+        List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "123");
+        assertThat(actual, is(emptyList()));
+        assertThat(actual.size(), is(0));
+    }
+
+    @Test
+    public void testEligibleVaccineCenters_WhenPreference_Age18_Dose1_SputnikV() {
+        when(userRequestManager.getUserAgePreference("123")).thenReturn(AGE_18_44);
+        when(userRequestManager.getUserDosePreference("123")).thenReturn(DOSE_1);
+        when(userRequestManager.getUserVaccinePreference("123")).thenReturn(Vaccine.SPUTNIK_V);
+
+        VaccineCenters vaccineCenters = createCentersWithData();
+        List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "123");
+        assertThat(actual, is(emptyList()));
+        assertThat(actual.size(), is(0));
+    }
+
+    @Test
+    public void testEligibleVaccineCenters_WhenPreference_Age18_Dose1_AnyVaccine() {
+        when(userRequestManager.getUserAgePreference("123")).thenReturn(AGE_18_44);
+        when(userRequestManager.getUserDosePreference("123")).thenReturn(DOSE_1);
+        when(userRequestManager.getUserVaccinePreference("123")).thenReturn(Vaccine.ANY);
 
         VaccineCenters vaccineCenters = createCentersWithData();
         List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "123");
@@ -124,6 +165,7 @@ public class VaccineCentersProcessorTest {
     public void testEligibleVaccineCenters_WhenPreference_Age18_DoseBoth() {
         when(userRequestManager.getUserAgePreference("123")).thenReturn(AGE_18_44);
         when(userRequestManager.getUserDosePreference("123")).thenReturn(DOSE_BOTH);
+        when(userRequestManager.getUserVaccinePreference("123")).thenReturn(Vaccine.ANY);
 
         VaccineCenters vaccineCenters = createCentersWithData();
         List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "123");
@@ -147,6 +189,7 @@ public class VaccineCentersProcessorTest {
     public void testEligibleVaccineCenters_WhenPreference_Age45_Dose2() {
         when(userRequestManager.getUserAgePreference("123")).thenReturn(AGE_45);
         when(userRequestManager.getUserDosePreference("123")).thenReturn(DOSE_2);
+        when(userRequestManager.getUserVaccinePreference("123")).thenReturn(Vaccine.ANY);
 
         VaccineCenters vaccineCenters = createCentersWithData();
         List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "123");
@@ -160,6 +203,7 @@ public class VaccineCentersProcessorTest {
     public void testEligibleVaccineCenters_WhenPreference_Age45_DoseBoth() {
         when(userRequestManager.getUserAgePreference("123")).thenReturn(AGE_45);
         when(userRequestManager.getUserDosePreference("123")).thenReturn(DOSE_BOTH);
+        when(userRequestManager.getUserVaccinePreference("123")).thenReturn(Vaccine.ANY);
 
         VaccineCenters vaccineCenters = createCentersWithData();
         List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "123");
@@ -173,6 +217,7 @@ public class VaccineCentersProcessorTest {
     public void testEligibleVaccineCenters_WhenPreference_AgeBoth_Dose1() {
         when(userRequestManager.getUserAgePreference("123")).thenReturn(AGE_BOTH);
         when(userRequestManager.getUserDosePreference("123")).thenReturn(DOSE_1);
+        when(userRequestManager.getUserVaccinePreference("123")).thenReturn(Vaccine.ANY);
 
         VaccineCenters vaccineCenters = createCentersWithData();
         List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "123");
@@ -186,6 +231,7 @@ public class VaccineCentersProcessorTest {
     public void testEligibleVaccineCenters_WhenPreference_AgeBoth_Dose2() {
         when(userRequestManager.getUserAgePreference("123")).thenReturn(AGE_BOTH);
         when(userRequestManager.getUserDosePreference("123")).thenReturn(DOSE_2);
+        when(userRequestManager.getUserVaccinePreference("123")).thenReturn(Vaccine.ANY);
 
         VaccineCenters vaccineCenters = createCentersWithData();
         List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "123");
@@ -196,9 +242,10 @@ public class VaccineCentersProcessorTest {
     }
 
     @Test
-    public void testEligibleVaccineCenters_WhenPreference_AgeBoth_DoseBoth() {
+    public void testEligibleVaccineCenters_WhenPreference_AgeBoth_DoseBoth_AnyVaccine() {
         when(userRequestManager.getUserAgePreference("123")).thenReturn(AGE_BOTH);
         when(userRequestManager.getUserDosePreference("123")).thenReturn(DOSE_BOTH);
+        when(userRequestManager.getUserVaccinePreference("123")).thenReturn(Vaccine.ANY);
 
         VaccineCenters vaccineCenters = createCentersWithData();
         List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "123");

@@ -7,6 +7,7 @@ import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.covid19.vaccinetracker.userrequests.model.Age;
 import org.covid19.vaccinetracker.userrequests.model.Dose;
+import org.covid19.vaccinetracker.userrequests.model.Vaccine;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -71,28 +72,40 @@ public class VaccineCentersProcessor {
         return Stream.of(user)
                 .filter(checkAgePreference(session))
                 .filter(checkDosePreference(session))
+                .filter(checkVaccinePreference(session))
                 .map(u -> true)
                 .findFirst()
                 .orElse(false);
     }
 
     @NotNull
+    private Predicate<String> checkVaccinePreference(Session session) {
+        return u -> {
+            final Vaccine preference = userRequestManager.getUserVaccinePreference(u);
+            return sessionAndUserValidForCovishield(session, preference)
+                    || sessionAndUserValidForCovaxin(session, preference)
+                    || sessionAndUserValidForSputnikV(session, preference)
+                    || Vaccine.ANY.equals(preference);
+        };
+    }
+
+    @NotNull
     private Predicate<String> checkDosePreference(Session session) {
         return u -> {
-            final Dose userDosePreference = userRequestManager.getUserDosePreference(u);
-            return sessionAndUserValidForDose1(session, userDosePreference)
-                    || sessionAndUserValidForDose2(session, userDosePreference)
-                    || DOSE_BOTH.equals(userDosePreference);
+            final Dose preference = userRequestManager.getUserDosePreference(u);
+            return sessionAndUserValidForDose1(session, preference)
+                    || sessionAndUserValidForDose2(session, preference)
+                    || DOSE_BOTH.equals(preference);
         };
     }
 
     @NotNull
     private Predicate<String> checkAgePreference(Session session) {
         return u -> {
-            final Age userAgePreference = userRequestManager.getUserAgePreference(u);
-            return sessionAndUserValidFor18(session, userAgePreference)
-                    || sessionAndUserValidFor45(session, userAgePreference)
-                    || AGE_BOTH.equals(userAgePreference);
+            final Age preference = userRequestManager.getUserAgePreference(u);
+            return sessionAndUserValidFor18(session, preference)
+                    || sessionAndUserValidFor45(session, preference)
+                    || AGE_BOTH.equals(preference);
         };
     }
 
@@ -110,6 +123,18 @@ public class VaccineCentersProcessor {
 
     private boolean sessionAndUserValidForDose2(Session session, Dose userDosePreference) {
         return Dose.DOSE_2.equals(userDosePreference) && session.hasDose2Capacity();
+    }
+
+    private boolean sessionAndUserValidForCovishield(Session session, Vaccine userVaccinePreference) {
+        return Vaccine.COVISHIELD.equals(userVaccinePreference) && session.hasCovishield();
+    }
+
+    private boolean sessionAndUserValidForCovaxin(Session session, Vaccine userVaccinePreference) {
+        return Vaccine.COVAXIN.equals(userVaccinePreference) && session.hasCovaxin();
+    }
+
+    private boolean sessionAndUserValidForSputnikV(Session session, Vaccine userVaccinePreference) {
+        return Vaccine.SPUTNIK_V.equals(userVaccinePreference) && session.hasSputnikV();
     }
 
     private boolean specialUser(Session session, String user) {
