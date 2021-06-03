@@ -1,4 +1,4 @@
-package org.covid19.vaccinetracker.availability;
+package org.covid19.vaccinetracker.notifications;
 
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
@@ -87,15 +87,6 @@ public class VaccineCentersProcessorTest {
         assertThat(actual.size(), is(1));
         assertThat(actual.get(0).getSessions().size(), is(1));
         assertThat(actual.get(0).getSessions().get(0).getSessionId(), is(equalTo("session_for_18_dose1")));
-    }
-
-    @Test
-    public void testEligibleVaccineCenters_WhenValidCentersFor45AndAbove_SpecialUser() {
-        VaccineCenters vaccineCenters = createCentersWithData();
-        List<Center> actual = processor.eligibleVaccineCenters(vaccineCenters, "special_user");
-        assertThat(actual, is(not(emptyList())));
-        assertThat(actual.size(), is(1));
-        assertThat(actual.get(0).getSessions().size(), is(2));
     }
 
     @Test

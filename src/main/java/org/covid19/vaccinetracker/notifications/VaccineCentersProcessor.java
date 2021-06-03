@@ -24,8 +24,6 @@ import static org.covid19.vaccinetracker.userrequests.model.Dose.DOSE_BOTH;
 
 @Component
 public class VaccineCentersProcessor {
-    private final List<String> usersOver45;
-
     private final VaccinePersistence vaccinePersistence;
     private final UserRequestManager userRequestManager;
 
@@ -33,7 +31,6 @@ public class VaccineCentersProcessor {
                                    UserRequestManager userRequestManager,
                                    @Value("${users.over45}") List<String> usersOver45) {
         this.vaccinePersistence = vaccinePersistence;
-        this.usersOver45 = usersOver45;
         this.userRequestManager = userRequestManager;
     }
 
@@ -56,7 +53,7 @@ public class VaccineCentersProcessor {
         vaccineCenters.centers.forEach(center -> {
             List<Session> eligibleSessions = center.getSessions().stream()
                     .filter(Session::hasCapacity)
-                    .filter(session -> specialUser(session, user) || eligibleCenterForUser(session, user))
+                    .filter(session -> eligibleCenterForUser(session, user))
                     .collect(Collectors.toList());
 
             if (!eligibleSessions.isEmpty()) {
@@ -135,10 +132,6 @@ public class VaccineCentersProcessor {
 
     private boolean sessionAndUserValidForSputnikV(Session session, Vaccine userVaccinePreference) {
         return Vaccine.SPUTNIK_V.equals(userVaccinePreference) && session.hasSputnikV();
-    }
-
-    private boolean specialUser(Session session, String user) {
-        return usersOver45.contains(user) && session.ageLimit18AndAbove();
     }
 
     private Center buildCenter(Center center) {
