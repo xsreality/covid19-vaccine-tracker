@@ -19,7 +19,7 @@ import lombok.Data;
 public class AWSConfig {
     private String calendarByDistrictLambdaArn;
     private String calendarByPinLambdaArn;
-    private String sendTelegramMsgArn;
+    private String sendTelegramMsgLambdaArn;
 
     @Bean
     public AWSLambda awsLambda() {

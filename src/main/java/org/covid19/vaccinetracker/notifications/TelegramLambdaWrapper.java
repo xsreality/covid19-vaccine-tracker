@@ -89,7 +89,7 @@ public class TelegramLambdaWrapper {
 
     private InvokeRequest createSendTelegramMsgInvokeRequest(String event) {
         return new InvokeRequest()
-                .withFunctionName(awsConfig.getSendTelegramMsgArn())
+                .withFunctionName(awsConfig.getSendTelegramMsgLambdaArn())
                 .withPayload(event);
     }
 }
