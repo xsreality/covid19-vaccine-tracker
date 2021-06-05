@@ -114,6 +114,9 @@ public class TelegramBotTest {
 
         verify(silent, times(1)).send("Send valid pincode to receive notification when vaccine becomes available in your area.\n" +
                 "जब आपके क्षेत्र में वैक्सीन उपलब्ध हो जाए तो अधिसूचना प्राप्त करने के लिए पिन कोड भेजें।\n\n" +
+                "/age - To set your age preference. अपनी आयु वरीयता निर्धारित करें।\n\n" +
+                "/dose - To set your dose preference. अपनी खुराक वरीयता निर्धारित करें।\n\n" +
+                "/vaccine - To set your vaccine preference. अपनी वैक्सीन वरीयता निर्धारित करें।\n\n" +
                 "/subscriptions - To see your current subscriptions. अपने वर्तमान पिनकोड देखने के लिए.\n\n" +
                 "/stop - To stop receiving alerts. अलर्ट प्राप्त करना बंद करने के लिए.\n\n" +
                 "Note: I will not send alerts from midnight to 6AM in morning so that you can sleep peacefully :-)\n" +
@@ -121,14 +124,14 @@ public class TelegramBotTest {
     }
 
     @Test
-    public void testCatchAll_WithMoreThanThreePincodes() {
-        Update update = mockFullUpdate(bot, USER, "110092, 110093, 110094, 110095");
+    public void testCatchAll_WithMoreThanFivePincodes() {
+        Update update = mockFullUpdate(bot, USER, "110092, 110093, 110094, 110095, 110096, 110097");
         MessageContext context = MessageContext.newContext(update, USER, CHAT_ID, bot);
 
         bot.catchAll().action().accept(context);
 
-        verify(silent, times(1)).send("Maximum 3 pincodes can be notified.\n\n" +
-                "अधिकतम 3 पिन कोड अधिसूचित किए जा सकते हैं।", CHAT_ID);
+        verify(silent, times(1)).send("Maximum 5 pincodes can be notified.\n\n" +
+                "अधिकतम 5 पिन कोड अधिसूचित किए जा सकते हैं।", CHAT_ID);
     }
 
     @Test
@@ -144,7 +147,7 @@ public class TelegramBotTest {
         bot.catchAll().action().accept(context);
 
         verify(silent, times(1)).send("Okay Abhinav! I will notify you when vaccine is available in centers near your location.\n" +
-                "You can set multiple pincodes by sending them together separated by comma (,). Maximum 3 pincodes are allowed.\n" +
+                "You can set multiple pincodes by sending them together separated by comma (,). Maximum 5 pincodes are allowed.\n" +
                 "Make sure notification is turned on for this bot so you don't miss any alerts!\n\n" +
                 "Send /age to set your age preference.\n\n" +
                 "Send /dose to set your dose preference.\n\n" +
