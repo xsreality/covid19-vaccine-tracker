@@ -1,5 +1,7 @@
 package org.covid19.vaccinetracker.utils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.JWTParser;
@@ -204,6 +206,15 @@ public class Utils {
         } catch (ParseException e) {
             log.debug("Error parsing JWT token: {}", e.getMessage());
             return false;
+        }
+    }
+
+    public static <T> T parseLambdaResponseJson(ObjectMapper objectMapper, String responseJson, Class<T> clazz) {
+        try {
+            return objectMapper.readValue(responseJson, clazz);
+        } catch (JsonProcessingException e) {
+            log.error("Error parsing response from Lambda: {}", e.getMessage());
+            return null;
         }
     }
 }

@@ -56,64 +56,6 @@ public class CowinLambdaWrapper implements DisposableBean {
     }
 
     /**
-     * Invokes "SendTelegramMsg" Lambda asynchronously with given inputs
-     *
-     * @param chatId  - Id of the TG user
-     * @param message - TG message
-     */
-    public void sendTelegramNotification(String chatId, String message) {
-        Stream.ofNullable(createSendTelegramMsgLambdaEvent(chatId, message))
-                .map(this::createSendTelegramMsgInvokeRequest)
-                .forEach(invokeRequest -> awsLambdaAsync.invokeAsync(invokeRequest, sendTelegramMsgAsyncHandler()));
-    }
-
-    @NotNull
-    private AsyncHandler<InvokeRequest, InvokeResult> sendTelegramMsgAsyncHandler() {
-        return new AsyncHandler<>() {
-            @Override
-            public void onError(Exception e) {
-                log.error("Got error {}", e.getMessage());
-            }
-
-            @Override
-            public void onSuccess(InvokeRequest request, InvokeResult result) {
-                toSendTelegramMsgLambdaResponse(result)
-                        .filter(response -> !response.getStatus())
-                        .ifPresent(response -> log.warn("Error sending TG notification to {}, error {}", response.getChatId(), response.getErrorMsg()));
-            }
-        };
-    }
-
-    @NotNull
-    private Optional<SendTelegramMsgLambdaResponse> toSendTelegramMsgLambdaResponse(InvokeResult invokeResult) {
-        return Stream.ofNullable(invokeResult.getPayload())
-                .map(payload -> StandardCharsets.UTF_8.decode(payload).toString())
-                .map(s -> parseLambdaResponseJson(s, SendTelegramMsgLambdaResponse.class))
-                .findFirst();
-
-    }
-
-    private String createSendTelegramMsgLambdaEvent(String chatId, String message) {
-        try {
-            return objectMapper.writeValueAsString(
-                    SendTelegramMsgLambdaEvent.builder()
-                            .chatId(chatId)
-                            .message(message)
-                            .build()
-            );
-        } catch (JsonProcessingException e) {
-            log.error("Error serializing lambdaEvent for chatId {}", chatId);
-            return null;
-        }
-    }
-
-    private InvokeRequest createSendTelegramMsgInvokeRequest(String event) {
-        return new InvokeRequest()
-                .withFunctionName(awsConfig.getSendTelegramMsgArn())
-                .withPayload(event);
-    }
-
-    /**
      * Invokes "CalendarByDistrict" Lambda asynchronously with given inputs
      *
      * @param districtId - Id of the District
@@ -160,7 +102,7 @@ public class CowinLambdaWrapper implements DisposableBean {
     private Optional<VaccineCenters> toVaccineCenters(InvokeResult invokeResult) {
         return Stream.ofNullable(invokeResult.getPayload())
                 .map(payload -> StandardCharsets.UTF_8.decode(payload).toString())
-                .map(s -> parseLambdaResponseJson(s, CalendarByDistrictLambdaResponse.class))
+                .map(s -> Utils.parseLambdaResponseJson(objectMapper, s, CalendarByDistrictLambdaResponse.class))
                 .filter(Objects::nonNull)
                 .peek(this::logIfInvalidStatusCode)
                 .filter(this::statusCode200)
@@ -187,15 +129,6 @@ public class CowinLambdaWrapper implements DisposableBean {
     private void logIfInvalidStatusCode(CalendarByDistrictLambdaResponse calendarByDistrictLambdaResponse) {
         if (!"200".equals(calendarByDistrictLambdaResponse.getStatusCode())) {
             log.info("Got invalid status code {} for district {}", calendarByDistrictLambdaResponse.getStatusCode(), calendarByDistrictLambdaResponse.getDistrictId());
-        }
-    }
-
-    private <T> T parseLambdaResponseJson(String responseJson, Class<T> clazz) {
-        try {
-            return objectMapper.readValue(responseJson, clazz);
-        } catch (JsonProcessingException e) {
-            log.error("Error parsing response from Lambda: {}", e.getMessage());
-            return null;
         }
     }
 
@@ -239,27 +172,6 @@ public class CowinLambdaWrapper implements DisposableBean {
             districtsProcessorExecutor.shutdownNow();
         }
     }
-}
-
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-class SendTelegramMsgLambdaEvent {
-    @JsonProperty("chat_id")
-    private String chatId;
-    private String message;
-}
-
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-class SendTelegramMsgLambdaResponse {
-    @JsonProperty("chat_id")
-    private String chatId;
-    private Boolean status;
-    @JsonProperty("error_msg")
-    private String errorMsg;
 }
 
 @Data
