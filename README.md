@@ -5,6 +5,7 @@ This repository stores the source code of the Telegram Bot CoWIN Alerts availabl
 ## Features
 
 * Send up to 3 pincodes for updates.
+* Set your preferred age, dose and vaccine for alerts.
 * Bot checks against CoWIN API every 5 minutes.
 * Streaming pipeline to notify as soon as slots open.
 * Receive alerts in your local language based on input pincode.
