@@ -80,6 +80,7 @@ public class KafkaNotifications {
                     .forEach(eligibleCenters -> {
                         if (cache.isNewNotification(user, pincode, eligibleCenters)) {
                             log.debug("Slots data changed for pincode {} since {} was last notified", pincode, user);
+                            log.info("Sending notification to {} for pincode {}", user, pincode);
                             telegramLambdaWrapper.sendTelegramNotification(user, Utils.buildNotificationMessage(eligibleCenters));
                             stats.incrementNotificationsSent();
                             cache.updateUser(user, pincode, eligibleCenters);
