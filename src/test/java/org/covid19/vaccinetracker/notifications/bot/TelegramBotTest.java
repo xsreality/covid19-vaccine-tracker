@@ -153,6 +153,7 @@ public class TelegramBotTest {
                 "Send /dose to set your dose preference.\n\n" +
                 "Send /vaccine to set your vaccine preference.\n\n" +
                 "Send /subscriptions to view your current subscription.\n\n" +
+                "Send /about to see more information about this bot.\n\n" +
                 "ठीक है! जब आपके स्थान के पास के केंद्रों में टीका उपलब्ध होगा तो मैं आपको सूचित करूँगा।\n" +
                 "आप कई पिन कोड कॉमा (,) द्वारा अलग-अलग सेट कर सकते हैं। अधिकतम 3 पिन कोड की अनुमति है।\n" +
                 "सुनिश्चित करें कि अधिसूचना इस बॉट के लिए चालू है ताकि आप किसी भी अलर्ट को न भूलें!\n\n" +
