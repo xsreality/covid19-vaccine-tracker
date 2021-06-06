@@ -31,7 +31,6 @@ import static java.util.Objects.nonNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -73,6 +72,10 @@ public class KafkaNotificationsIT {
     private NotificationCache cache;
 
     @MockBean
+    private TelegramLambdaWrapper telegramLambdaWrapper;
+
+    @SuppressWarnings("unused")
+    @MockBean
     private BotService botService;
 
     @Autowired
@@ -102,13 +105,12 @@ public class KafkaNotificationsIT {
         when(vaccinePersistence.fetchVaccineCentersByPincode("110022")).thenReturn(data);
         when(vaccineCentersProcessor.eligibleVaccineCenters(any(), anyString())).thenReturn(data.getCenters());
         when(cache.isNewNotification(anyString(), anyString(), any())).thenReturn(true);
-        when(botService.notifyAvailability(anyString(), anyList())).thenReturn(true);
 
         updatedPincodesKafkaTemplate.send(updatedPincodesTopic, "110022", "110022");
 
         await().atMost(2L, SECONDS).until(() -> stats.notificationsSent() >= 1);
 
-        verify(botService, times(1)).notifyAvailability(anyString(), anyList());
+        verify(telegramLambdaWrapper, times(1)).sendTelegramNotification(anyString(), anyString());
         verify(cache, times(1)).updateUser(anyString(), anyString(), any());
         verify(vaccinePersistence, times(1)).markProcessed(data);
     }
@@ -121,11 +123,10 @@ public class KafkaNotificationsIT {
         final VaccineCenters data = createCentersWithoutData();
         when(vaccinePersistence.fetchVaccineCentersByPincode("110023")).thenReturn(data);
         when(cache.isNewNotification(anyString(), anyString(), any())).thenReturn(true);
-        when(botService.notifyAvailability(anyString(), anyList())).thenReturn(true);
 
         updatedPincodesKafkaTemplate.send(updatedPincodesTopic, "110023", "110023");
 
-        verify(botService, times(0)).notifyAvailability(anyString(), anyList());
+        verify(telegramLambdaWrapper, times(0)).sendTelegramNotification(anyString(), anyString());
         verify(cache, times(0)).updateUser(anyString(), anyString(), any());
         verify(vaccinePersistence, times(0)).markProcessed(data);
     }

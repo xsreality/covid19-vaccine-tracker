@@ -11,12 +11,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.covid19.vaccinetracker.notifications.VaccineCentersProcessor;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.notifications.KafkaNotifications;
+import org.covid19.vaccinetracker.notifications.VaccineCentersProcessor;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Component;
 
@@ -56,14 +55,19 @@ public class CowinLambdaWrapper implements DisposableBean {
         this.districtsProcessorExecutor = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("vaccinelambda-%d").build());
     }
 
+    /**
+     * Invokes "CalendarByDistrict" Lambda asynchronously with given inputs
+     *
+     * @param districtId - Id of the District
+     */
     public void processDistrict(int districtId) {
         Stream.ofNullable(createCalendarByDistrictLambdaEvent(districtId))
                 .map(this::createCalendarByDistrictInvokeRequest)
-                .forEach(invokeRequest -> awsLambdaAsync.invokeAsync(invokeRequest, asyncHandler()));
+                .forEach(invokeRequest -> awsLambdaAsync.invokeAsync(invokeRequest, calendarByDistrictAsyncHandler()));
     }
 
     @NotNull
-    private AsyncHandler<InvokeRequest, InvokeResult> asyncHandler() {
+    private AsyncHandler<InvokeRequest, InvokeResult> calendarByDistrictAsyncHandler() {
         return new AsyncHandler<>() {
             @Override
             public void onError(Exception e) {
@@ -98,7 +102,7 @@ public class CowinLambdaWrapper implements DisposableBean {
     private Optional<VaccineCenters> toVaccineCenters(InvokeResult invokeResult) {
         return Stream.ofNullable(invokeResult.getPayload())
                 .map(payload -> StandardCharsets.UTF_8.decode(payload).toString())
-                .map(this::parseLambdaResponseJson)
+                .map(s -> Utils.parseLambdaResponseJson(objectMapper, s, CalendarByDistrictLambdaResponse.class))
                 .filter(Objects::nonNull)
                 .peek(this::logIfInvalidStatusCode)
                 .filter(this::statusCode200)
@@ -125,16 +129,6 @@ public class CowinLambdaWrapper implements DisposableBean {
     private void logIfInvalidStatusCode(CalendarByDistrictLambdaResponse calendarByDistrictLambdaResponse) {
         if (!"200".equals(calendarByDistrictLambdaResponse.getStatusCode())) {
             log.info("Got invalid status code {} for district {}", calendarByDistrictLambdaResponse.getStatusCode(), calendarByDistrictLambdaResponse.getDistrictId());
-        }
-    }
-
-    @Nullable
-    private CalendarByDistrictLambdaResponse parseLambdaResponseJson(String responseJson) {
-        try {
-            return objectMapper.readValue(responseJson, CalendarByDistrictLambdaResponse.class);
-        } catch (JsonProcessingException e) {
-            log.error("Error parsing response from Lambda: {}", e.getMessage());
-            return null;
         }
     }
 

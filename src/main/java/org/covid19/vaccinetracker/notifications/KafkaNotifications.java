@@ -10,6 +10,7 @@ import org.covid19.vaccinetracker.model.UsersByPincode;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.notifications.bot.BotService;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
+import org.covid19.vaccinetracker.utils.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -36,6 +37,7 @@ public class KafkaNotifications {
     private final KTable<String, UsersByPincode> usersByPincodeTable;
     private final VaccinePersistence vaccinePersistence;
     private final VaccineCentersProcessor vaccineCentersProcessor;
+    private final TelegramLambdaWrapper telegramLambdaWrapper;
     private final BotService botService;
     private final NotificationStats stats;
     private final NotificationCache cache;
@@ -43,12 +45,13 @@ public class KafkaNotifications {
 
     public KafkaNotifications(StreamsBuilder streamsBuilder, KTable<String, UsersByPincode> usersByPincodeTable,
                               VaccinePersistence vaccinePersistence, VaccineCentersProcessor vaccineCentersProcessor,
-                              BotService botService, NotificationStats stats,
+                              TelegramLambdaWrapper telegramLambdaWrapper, BotService botService, NotificationStats stats,
                               NotificationCache cache, KafkaTemplate<String, String> updatedPincodesKafkaTemplate) {
         this.streamsBuilder = streamsBuilder;
         this.usersByPincodeTable = usersByPincodeTable;
         this.vaccinePersistence = vaccinePersistence;
         this.vaccineCentersProcessor = vaccineCentersProcessor;
+        this.telegramLambdaWrapper = telegramLambdaWrapper;
         this.botService = botService;
         this.stats = stats;
         this.cache = cache;
@@ -77,11 +80,9 @@ public class KafkaNotifications {
                     .forEach(eligibleCenters -> {
                         if (cache.isNewNotification(user, pincode, eligibleCenters)) {
                             log.debug("Slots data changed for pincode {} since {} was last notified", pincode, user);
-                            if (botService.notifyAvailability(user, eligibleCenters)) {
-                                stats.incrementNotificationsSent();
-                            } else {
-                                stats.incrementNotificationsErrors();
-                            }
+                            log.info("Sending notification to {} for pincode {}", user, pincode);
+                            telegramLambdaWrapper.sendTelegramNotification(user, Utils.buildNotificationMessage(eligibleCenters));
+                            stats.incrementNotificationsSent();
                             cache.updateUser(user, pincode, eligibleCenters);
                         } else {
                             log.debug("No difference in slots data for pincode {} since {} was last notified", pincode, user);
