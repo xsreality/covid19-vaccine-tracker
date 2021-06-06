@@ -12,7 +12,8 @@ This repository stores the source code of the Telegram Bot CoWIN Alerts availabl
 
 ## Architecture
 
-![image](https://user-images.githubusercontent.com/4991449/120109120-63cbeb00-c168-11eb-9f36-013540d20f00.png)
+![image](https://user-images.githubusercontent.com/4991449/120941710-6c05c680-c724-11eb-8884-d2156ad2664d.png)
+
 
 ### Design Goals
 * Send notifications as soon as new Vaccination slots are available.
