@@ -14,7 +14,6 @@ import org.covid19.vaccinetracker.utils.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -41,12 +40,11 @@ public class KafkaNotifications {
     private final BotService botService;
     private final NotificationStats stats;
     private final NotificationCache cache;
-    private final KafkaTemplate<String, String> updatedPincodesKafkaTemplate;
 
     public KafkaNotifications(StreamsBuilder streamsBuilder, KTable<String, UsersByPincode> usersByPincodeTable,
                               VaccinePersistence vaccinePersistence, VaccineCentersProcessor vaccineCentersProcessor,
                               TelegramLambdaWrapper telegramLambdaWrapper, BotService botService, NotificationStats stats,
-                              NotificationCache cache, KafkaTemplate<String, String> updatedPincodesKafkaTemplate) {
+                              NotificationCache cache) {
         this.streamsBuilder = streamsBuilder;
         this.usersByPincodeTable = usersByPincodeTable;
         this.vaccinePersistence = vaccinePersistence;
@@ -55,7 +53,6 @@ public class KafkaNotifications {
         this.botService = botService;
         this.stats = stats;
         this.cache = cache;
-        this.updatedPincodesKafkaTemplate = updatedPincodesKafkaTemplate;
     }
 
     @Bean
@@ -106,16 +103,6 @@ public class KafkaNotifications {
                 stats.userRequests(), stats.processedPincodes(),
                 stats.notificationsSent(), stats.notificationsErrors()));
         stats.reset();
-    }
-
-    public void sendUpdatedPincodesToKafka(VaccineCenters vaccineCenters) {
-        vaccineCenters.getCenters()
-                .stream()
-                .filter(Center::areVaccineCentersAvailableFor18plus)
-                .map(Center::getPincode)
-                .map(String::valueOf)
-                .distinct()
-                .forEach(pincode -> updatedPincodesKafkaTemplate.send(updatedPincodesTopic, pincode, pincode));
     }
 
     @NotNull

@@ -11,12 +11,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.VaccineCenters;
-import org.covid19.vaccinetracker.notifications.KafkaNotifications;
-import org.covid19.vaccinetracker.notifications.VaccineCentersProcessor;
+import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -36,22 +38,25 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 public class CowinLambdaWrapper implements DisposableBean {
+    @Value("${topic.updated.pincodes}")
+    private String updatedPincodesTopic;
+
     private final AWSConfig awsConfig;
     private final AWSLambda awsLambda;
     private final AWSLambdaAsync awsLambdaAsync;
     private final ObjectMapper objectMapper;
-    private final VaccineCentersProcessor vaccineCentersProcessor;
-    private final KafkaNotifications kafkaNotifications;
+    private final VaccinePersistence vaccinePersistence;
+    private final KafkaTemplate<String, String> updatedPincodesKafkaTemplate;
     private final ExecutorService districtsProcessorExecutor;
 
     public CowinLambdaWrapper(AWSConfig awsConfig, AWSLambda awsLambda, AWSLambdaAsync awsLambdaAsync,
-                              ObjectMapper objectMapper, VaccineCentersProcessor vaccineCentersProcessor, KafkaNotifications kafkaNotifications) {
+                              ObjectMapper objectMapper, VaccinePersistence vaccinePersistence, KafkaTemplate<String, String> updatedPincodesKafkaTemplate) {
         this.awsConfig = awsConfig;
         this.awsLambda = awsLambda;
         this.awsLambdaAsync = awsLambdaAsync;
         this.objectMapper = objectMapper;
-        this.vaccineCentersProcessor = vaccineCentersProcessor;
-        this.kafkaNotifications = kafkaNotifications;
+        this.vaccinePersistence = vaccinePersistence;
+        this.updatedPincodesKafkaTemplate = updatedPincodesKafkaTemplate;
         this.districtsProcessorExecutor = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("vaccinelambda-%d").build());
     }
 
@@ -61,9 +66,9 @@ public class CowinLambdaWrapper implements DisposableBean {
      * @param districtId - Id of the District
      */
     public void processDistrict(int districtId) {
-        Stream.ofNullable(createCalendarByDistrictLambdaEvent(districtId))
+        createCalendarByDistrictLambdaEvent(districtId)
                 .map(this::createCalendarByDistrictInvokeRequest)
-                .forEach(invokeRequest -> awsLambdaAsync.invokeAsync(invokeRequest, calendarByDistrictAsyncHandler()));
+                .ifPresent(invokeRequest -> awsLambdaAsync.invokeAsync(invokeRequest, calendarByDistrictAsyncHandler()));
     }
 
     @NotNull
@@ -82,8 +87,8 @@ public class CowinLambdaWrapper implements DisposableBean {
                                 .stream()
                                 .filter(Objects::nonNull)
                                 .forEach(vaccineCenters -> {
-                                    vaccineCentersProcessor.persistVaccineCenters(vaccineCenters); // DB
-                                    kafkaNotifications.sendUpdatedPincodesToKafka(vaccineCenters); // Kafka
+                                    vaccinePersistence.persistVaccineCenters(vaccineCenters); // DB
+                                    sendUpdatedPincodesToKafka(vaccineCenters); // Kafka
                                     log.debug("Processing completed.");
                                 })
                 );
@@ -91,11 +96,23 @@ public class CowinLambdaWrapper implements DisposableBean {
         };
     }
 
+    public void sendUpdatedPincodesToKafka(VaccineCenters vaccineCenters) {
+        vaccineCenters.getCenters()
+                .stream()
+                .filter(Center::areVaccineCentersAvailableFor18plus)
+                .map(Center::getPincode)
+                .map(String::valueOf)
+                .distinct()
+                .forEach(pincode -> updatedPincodesKafkaTemplate.send(updatedPincodesTopic, pincode, pincode));
+    }
+
     public Stream<Optional<VaccineCenters>> fetchSessionsByPincode(String pincode) {
-        return Stream.ofNullable(createCalendarByPinLambdaEvent(pincode))
+        return createCalendarByPinLambdaEvent(pincode)
                 .map(this::createCalendarByPinInvokeRequest)
                 .map(awsLambda::invoke)
-                .map(this::toVaccineCenters);
+                .map(this::toVaccineCenters)
+                .stream()
+                ;
     }
 
     @NotNull
@@ -132,32 +149,30 @@ public class CowinLambdaWrapper implements DisposableBean {
         }
     }
 
-    private String createCalendarByDistrictLambdaEvent(int districtId) {
+    private Optional<String> createCalendarByDistrictLambdaEvent(int districtId) {
         try {
-            return objectMapper.writeValueAsString(
+            return Optional.of(objectMapper.writeValueAsString(
                     CalendarByDistrictLambdaEvent.builder()
                             .districtId(String.valueOf(districtId))
                             .date(Utils.todayIST())
                             .bearerToken("")
-                            .build()
-            );
+                            .build()));
         } catch (JsonProcessingException e) {
             log.error("Error serializing lambdaEvent for district {}", districtId);
-            return null;
+            return Optional.empty();
         }
     }
 
-    private String createCalendarByPinLambdaEvent(String pincode) {
+    private Optional<String> createCalendarByPinLambdaEvent(String pincode) {
         try {
-            return objectMapper.writeValueAsString(
+            return Optional.of(objectMapper.writeValueAsString(
                     CalendarByPinLambdaEvent.builder()
                             .pincode(pincode)
                             .date(Utils.todayIST())
-                            .build()
-            );
+                            .build()));
         } catch (JsonProcessingException e) {
             log.error("Error serializing lambdaEvent for pincode {}", pincode);
-            return null;
+            return Optional.empty();
         }
     }
 

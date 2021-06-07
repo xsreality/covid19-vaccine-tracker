@@ -3,13 +3,11 @@ package org.covid19.vaccinetracker.notifications;
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.model.VaccineCenters;
-import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.covid19.vaccinetracker.userrequests.model.Age;
 import org.covid19.vaccinetracker.userrequests.model.Dose;
 import org.covid19.vaccinetracker.userrequests.model.Vaccine;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -24,18 +22,10 @@ import static org.covid19.vaccinetracker.userrequests.model.Dose.DOSE_BOTH;
 
 @Component
 public class VaccineCentersProcessor {
-    private final VaccinePersistence vaccinePersistence;
     private final UserRequestManager userRequestManager;
 
-    public VaccineCentersProcessor(VaccinePersistence vaccinePersistence,
-                                   UserRequestManager userRequestManager,
-                                   @Value("${users.over45}") List<String> usersOver45) {
-        this.vaccinePersistence = vaccinePersistence;
+    public VaccineCentersProcessor(UserRequestManager userRequestManager) {
         this.userRequestManager = userRequestManager;
-    }
-
-    public void persistVaccineCenters(VaccineCenters vaccineCenters) {
-        vaccinePersistence.persistVaccineCenters(vaccineCenters);
     }
 
     public boolean hasCapacity(Session session) {

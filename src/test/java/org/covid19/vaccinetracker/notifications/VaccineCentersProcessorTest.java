@@ -3,7 +3,6 @@ package org.covid19.vaccinetracker.notifications;
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.model.VaccineCenters;
-import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.covid19.vaccinetracker.userrequests.model.Vaccine;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,14 +33,11 @@ public class VaccineCentersProcessorTest {
     private VaccineCentersProcessor processor;
 
     @Mock
-    private VaccinePersistence vaccinePersistence;
-
-    @Mock
     private UserRequestManager userRequestManager;
 
     @BeforeEach
     public void setup() {
-        processor = new VaccineCentersProcessor(vaccinePersistence, userRequestManager, List.of("special_user"));
+        processor = new VaccineCentersProcessor(userRequestManager);
     }
 
     @Test

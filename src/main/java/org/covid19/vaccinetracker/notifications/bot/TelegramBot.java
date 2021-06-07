@@ -97,6 +97,20 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                 }).build();
     }
 
+    public Ability about() {
+        return Ability.builder().name("about").info("About CoWIN Alerts bot")
+                .locality(Locality.ALL).privacy(PUBLIC).input(0).action(ctx -> {
+                    String chatId = getChatId(ctx.update());
+                    String message = "Hi! My name is Abhinav Sonkar. I am a software engineer.\n\n" +
+                            "I developed this bot to help people book CoWIN slots and get vaccinated.\n\n" +
+                            "With over 7000 registered users, 500 districts and 1000's of pincodes, it is becoming expensive to " +
+                            "keep running the bot. If you like my work and want to support it, <a href=\"https://www.buymeacoffee.com/xsreality\">buy me a coffee</a>.";
+                    silent.execute(SendMessage.builder().chatId(chatId).text(message).parseMode(ParseMode.HTML).build());
+                    notifyOwner(String.format("%s (%s, %s) checked About page.",
+                            Utils.translateName(ctx.update().getMessage().getChat()), chatId, getUserName(ctx)));
+                }).build();
+    }
+
     public Ability subscriptions() {
         return Ability.builder().name("subscriptions").info("Show my subscriptions")
                 .locality(Locality.ALL).privacy(PUBLIC).input(0).action(ctx -> {
@@ -154,6 +168,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                                 "Send /dose to set your dose preference.\n\n" +
                                 "Send /vaccine to set your vaccine preference.\n\n" +
                                 "Send /subscriptions to view your current subscription.\n\n" +
+                                "Send /about to see more information about this bot.\n\n" +
                                 localizedAckMessage, firstName), ctx.chatId());
 
                         // send an update to Bot channel
