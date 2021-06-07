@@ -11,9 +11,6 @@ import org.covid19.vaccinetracker.model.UsersByPincode;
 import org.covid19.vaccinetracker.userrequests.MetadataStore;
 import org.covid19.vaccinetracker.userrequests.model.Pincode;
 import org.covid19.vaccinetracker.userrequests.model.UserRequest;
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -26,13 +23,14 @@ import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class UsersByPincodeTransformer implements Transformer<String, UserRequest, KeyValue<String, UsersByPincode>>, ApplicationContextAware {
+public class UsersByPincodeTransformer implements Transformer<String, UserRequest, KeyValue<String, UsersByPincode>> {
     private ProcessorContext ctx;
     private KeyValueStore<String, UsersByPincode> aggregateStore;
     private final String AGGREGATE_STORE_NAME;
     private MetadataStore metadataStore;
 
-    public UsersByPincodeTransformer(String aggregateStoreName) {
+    public UsersByPincodeTransformer(String aggregateStoreName, MetadataStore metadataStore) {
+        this.metadataStore = metadataStore;
         this.AGGREGATE_STORE_NAME = aggregateStoreName;
     }
 
@@ -140,15 +138,5 @@ public class UsersByPincodeTransformer implements Transformer<String, UserReques
     @Override
     public void close() {
 
-    }
-
-    @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.metadataStore = (MetadataStore) applicationContext.getBean("metadataStore");
-    }
-
-    @VisibleForTesting
-    public void setMetadataStore(MetadataStore metadataStore) {
-        this.metadataStore = metadataStore;
     }
 }

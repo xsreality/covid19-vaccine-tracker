@@ -52,8 +52,7 @@ public class UsersByPincodeTransformerTest {
 
     @BeforeEach
     public void setup() {
-        UsersByPincodeTransformer transformer = new UsersByPincodeTransformer(AGGREGRATE_STORE_NAME);
-        transformer.setMetadataStore(metadataStore);
+        UsersByPincodeTransformer transformer = new UsersByPincodeTransformer(AGGREGRATE_STORE_NAME, metadataStore);
         StreamsBuilder builder = new StreamsBuilder();
         builder.addStateStore(
                 Stores.keyValueStoreBuilder(
