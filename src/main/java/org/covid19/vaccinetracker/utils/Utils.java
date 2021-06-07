@@ -21,6 +21,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -111,6 +112,10 @@ public class Utils {
 
     public static List<String> splitPincodes(@NotNull String pincodes) {
         return Arrays.asList(pincodes.trim().split("\\s*,\\s*"));
+    }
+
+    public static List<Integer> splitDistricts(@NotNull String districts) {
+        return Arrays.stream(districts.trim().split("\\s*,\\s*")).mapToInt(Integer::parseInt).boxed().collect(Collectors.toList());
     }
 
     public static String joinPincodes(List<String> pincodes) {

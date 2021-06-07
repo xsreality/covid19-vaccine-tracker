@@ -122,6 +122,16 @@ public class Api {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/add/user_district")
+    public ResponseEntity<?> addUserDistrict(@RequestParam final String chatId, @RequestParam final String districts) {
+        if (districts.trim().isEmpty()) {
+            this.userRequestManager.updateDistrictPreference(chatId, List.of());
+        } else {
+            this.userRequestManager.updateDistrictPreference(chatId, Utils.splitDistricts(districts));
+        }
+        return ResponseEntity.ok().build();
+    }
+
     @DeleteMapping("/delete/user_request")
     public ResponseEntity<?> removeUserRequest(@RequestParam final String chatId) {
         this.userRequestManager.acceptUserRequest(chatId, emptyList());

@@ -116,6 +116,17 @@ public class UserRequestManager {
         return this.kafkaStateStores.usersByPincode(pincode);
     }
 
+    public void updateDistrictPreference(String userId, List<Integer> districts) {
+        final UserRequest userRequest = this.kafkaStateStores.userRequestById(userId)
+                .map(ur -> new UserRequest(ur.getChatId(), ur.getPincodes(), districts, ur.getAge(), ur.getDose(), ur.getVaccine(), ur.getLastNotifiedAt()))
+                .orElse(new UserRequest(userId, List.of(), districts, AGE_18_44.toString(), DOSE_1.toString(), Vaccine.ALL.toString(), null));
+        try {
+            kafkaTemplate.send(userRequestsTopic, userRequest.getChatId(), userRequest).get();
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("Error producing user request to Kafka: {}", e.getMessage());
+        }
+    }
+
     public void updateAgePreference(String userId, Age age) {
         this.kafkaStateStores.userRequestById(userId)
                 .map(ur -> new UserRequest(ur.getChatId(), ur.getPincodes(), ur.getDistricts(), age.toString(), ur.getDose(), ur.getVaccine(), ur.getLastNotifiedAt()))
