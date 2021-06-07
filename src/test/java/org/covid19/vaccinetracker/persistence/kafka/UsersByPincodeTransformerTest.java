@@ -75,7 +75,7 @@ public class UsersByPincodeTransformerTest {
 
     @Test
     public void shouldFlushStoreForFirstInput() {
-        inputTopic.pipeInput("9999", new UserRequest("9999", List.of("110092"), null, null, null, null));
+        inputTopic.pipeInput("9999", new UserRequest("9999", List.of("110092"), null, null, null, null, null));
         final TestRecord<String, UsersByPincode> record = outputTopic.readRecord();
         assertThat(record.key(), is(equalTo("110092")));
         assertThat(record.value(), is(equalTo(new UsersByPincode("110092", Set.of("9999")))));
@@ -86,7 +86,7 @@ public class UsersByPincodeTransformerTest {
     public void shouldUpdateStoreForSecondUserWithSamePincode() {
         // User 1234 has pincode 411038 set in setup()
         // Now user 4567 sets same pincode 411038
-        inputTopic.pipeInput("4567", new UserRequest("4567", List.of("411038"), null, null,null, null));
+        inputTopic.pipeInput("4567", new UserRequest("4567", List.of("411038"), null, null, null,null, null));
 
         // store should have both users for pincode 411038
         assertThat(store.get("411038"), is(equalTo(new UsersByPincode("411038", Set.of("1234", "4567")))));
@@ -97,7 +97,7 @@ public class UsersByPincodeTransformerTest {
     public void shouldUpdateStoreWhenUserUpdatesPincode() {
         // User 1234 has pincode 411038 set in setup()
         // Now user 1234 updates pincode to 422104
-        inputTopic.pipeInput("1234", new UserRequest("1234", List.of("422104"), null, null,null, null));
+        inputTopic.pipeInput("1234", new UserRequest("1234", List.of("422104"), null, null, null,null, null));
 
         // store should have user 1234 for pincode 422104
         assertThat(store.get("422104"), is(equalTo(new UsersByPincode("422104", Set.of("1234")))));
@@ -109,7 +109,7 @@ public class UsersByPincodeTransformerTest {
     public void shouldUpdateStoreWhenUserRemovesAllPincodes() {
         // User 1234 has pincode 411038 set in setup()
         // Now user 1234 stops subscription (empty pincodes)
-        inputTopic.pipeInput("1234", new UserRequest("1234", List.of(), null, null,null, null));
+        inputTopic.pipeInput("1234", new UserRequest("1234", List.of(), null, null, null,null, null));
 
         // store should have no users for pincode 411038
         assertThat(store.get("411038"), is(equalTo(new UsersByPincode("411038", Set.of()))));
@@ -119,7 +119,7 @@ public class UsersByPincodeTransformerTest {
     @Test
     public void shouldUpdateStoreWhenUserSendsMultiplePincodes() {
         // User 4932 sets 2 pincodes 682026, 682027
-        inputTopic.pipeInput("4932", new UserRequest("4932", List.of("682026", "682027"), null, null,null, null));
+        inputTopic.pipeInput("4932", new UserRequest("4932", List.of("682026", "682027"), null, null, null,null, null));
 
         // store should have user 4932 for both pincodes 682026, 682027
         assertThat(store.get("682027"), is(equalTo(new UsersByPincode("682027", Set.of("4932")))));

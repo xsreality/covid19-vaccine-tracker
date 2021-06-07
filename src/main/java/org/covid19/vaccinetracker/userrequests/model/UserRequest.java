@@ -8,6 +8,7 @@ import lombok.Value;
 public class UserRequest {
     String chatId;
     List<String> pincodes;
+    List<Integer> districts;
     String age;
     String dose;
     String vaccine;

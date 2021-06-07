@@ -92,8 +92,8 @@ public class UserRequestManager {
 
     public void acceptUserRequest(String userId, List<String> pincodes) {
         final UserRequest request = kafkaStateStores.userRequestById(userId)
-                .map(existing -> new UserRequest(existing.getChatId(), pincodes, existing.getAge(), existing.getDose(), existing.getVaccine(), null))
-                .orElse(new UserRequest(userId, pincodes, AGE_18_44.toString(), DOSE_1.toString(), Vaccine.ALL.toString(), null));
+                .map(existing -> new UserRequest(existing.getChatId(), pincodes, existing.getDistricts(), existing.getAge(), existing.getDose(), existing.getVaccine(), null))
+                .orElse(new UserRequest(userId, pincodes, List.of(), AGE_18_44.toString(), DOSE_1.toString(), Vaccine.ALL.toString(), null));
         kafkaTemplate.setProducerListener(producerListener());
         try {
             kafkaTemplate.send(userRequestsTopic, userId, request).get();
@@ -103,7 +103,7 @@ public class UserRequestManager {
     }
 
     public void updateUserRequestLastNotifiedAt(UserRequest userRequest, String lastNotifiedAt) {
-        UserRequest updatedUserRequest = new UserRequest(userRequest.getChatId(), userRequest.getPincodes(), userRequest.getAge(), userRequest.getDose(), userRequest.getVaccine(), lastNotifiedAt);
+        UserRequest updatedUserRequest = new UserRequest(userRequest.getChatId(), userRequest.getPincodes(), userRequest.getDistricts(), userRequest.getAge(), userRequest.getDose(), userRequest.getVaccine(), lastNotifiedAt);
         kafkaTemplate.setProducerListener(producerListener());
         try {
             kafkaTemplate.send(userRequestsTopic, userRequest.getChatId(), updatedUserRequest).get();
@@ -118,7 +118,7 @@ public class UserRequestManager {
 
     public void updateAgePreference(String userId, Age age) {
         this.kafkaStateStores.userRequestById(userId)
-                .map(ur -> new UserRequest(ur.getChatId(), ur.getPincodes(), age.toString(), ur.getDose(), ur.getVaccine(), ur.getLastNotifiedAt()))
+                .map(ur -> new UserRequest(ur.getChatId(), ur.getPincodes(), ur.getDistricts(), age.toString(), ur.getDose(), ur.getVaccine(), ur.getLastNotifiedAt()))
                 .ifPresent(updated -> {
                     try {
                         kafkaTemplate.send(userRequestsTopic, updated.getChatId(), updated).get();
@@ -130,7 +130,7 @@ public class UserRequestManager {
 
     public void updateDosePreference(String userId, Dose dose) {
         this.kafkaStateStores.userRequestById(userId)
-                .map(ur -> new UserRequest(ur.getChatId(), ur.getPincodes(), ur.getAge(), dose.toString(), ur.getVaccine(), ur.getLastNotifiedAt()))
+                .map(ur -> new UserRequest(ur.getChatId(), ur.getPincodes(), ur.getDistricts(), ur.getAge(), dose.toString(), ur.getVaccine(), ur.getLastNotifiedAt()))
                 .ifPresent(updated -> {
                     try {
                         kafkaTemplate.send(userRequestsTopic, updated.getChatId(), updated).get();
@@ -142,7 +142,7 @@ public class UserRequestManager {
 
     public void updateVaccinePreference(String userId, Vaccine vaccine) {
         this.kafkaStateStores.userRequestById(userId)
-                .map(ur -> new UserRequest(ur.getChatId(), ur.getPincodes(), ur.getAge(), ur.getDose(), vaccine.toString(), ur.getLastNotifiedAt()))
+                .map(ur -> new UserRequest(ur.getChatId(), ur.getPincodes(), ur.getDistricts(), ur.getAge(), ur.getDose(), vaccine.toString(), ur.getLastNotifiedAt()))
                 .ifPresent(updated -> {
                     try {
                         kafkaTemplate.send(userRequestsTopic, updated.getChatId(), updated).get();
@@ -163,7 +163,7 @@ public class UserRequestManager {
             List<String> updatedPincodes = entry.value.getPincodes();
             updatedPincodes.add("999999");
 
-            kafkaTemplate.send(userRequestsTopic, entry.key, new UserRequest(entry.value.getChatId(), updatedPincodes, entry.value.getAge(), entry.value.getDose(), entry.value.getVaccine(), entry.value.getLastNotifiedAt()));
+            kafkaTemplate.send(userRequestsTopic, entry.key, new UserRequest(entry.value.getChatId(), updatedPincodes, entry.value.getDistricts(), entry.value.getAge(), entry.value.getDose(), entry.value.getVaccine(), entry.value.getLastNotifiedAt()));
             try {
                 Thread.sleep(10);
             } catch (InterruptedException e) {
