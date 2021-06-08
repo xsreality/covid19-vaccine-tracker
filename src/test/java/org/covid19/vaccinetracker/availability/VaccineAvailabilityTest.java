@@ -32,7 +32,10 @@ public class VaccineAvailabilityTest {
     @Mock
     private CowinLambdaWrapper cowinLambdaWrapper;
 
+    @Mock
+    private AvailabilityConfig config;
     // TODO: Add IT
+
     @Test
     public void testRefreshVaccineAvailabilityFromCowinViaLambda_happyScenario() {
         District aDistrict = new District(1, "Shahdara", new State(1, "Delhi"));
@@ -40,7 +43,7 @@ public class VaccineAvailabilityTest {
 
         AvailabilityStats availabilityStats = new AvailabilityStats();
         VaccineAvailability vaccineAvailability = new VaccineAvailability(vaccinePersistence,
-                userRequestManager, availabilityStats, botService, cowinLambdaWrapper);
+                userRequestManager, availabilityStats, botService, cowinLambdaWrapper, config);
         vaccineAvailability.refreshVaccineAvailabilityFromCowinViaLambdaAsync();
 
         verify(cowinLambdaWrapper, times(1)).processDistrict(1);
@@ -56,7 +59,7 @@ public class VaccineAvailabilityTest {
 
         AvailabilityStats availabilityStats = new AvailabilityStats();
         VaccineAvailability vaccineAvailability = new VaccineAvailability(vaccinePersistence,
-                userRequestManager, availabilityStats, botService, cowinLambdaWrapper);
+                userRequestManager, availabilityStats, botService, cowinLambdaWrapper, config);
         vaccineAvailability.refreshVaccineAvailabilityFromCowinViaLambdaAsync();
 
         verify(cowinLambdaWrapper, times(1)).processDistrict(1);

@@ -1,5 +1,6 @@
 package org.covid19.vaccinetracker.availability.cowin;
 
+import org.covid19.vaccinetracker.availability.PriorityDistrictsAvailability;
 import org.covid19.vaccinetracker.availability.VaccineAvailability;
 import org.covid19.vaccinetracker.model.UsersByPincode;
 import org.covid19.vaccinetracker.model.VaccineCenters;
@@ -43,9 +44,10 @@ public class Api {
     private final DistrictNotifications districtNotifications;
     private final CowinApiAuth cowinApiAuth;
     private final BotService botService;
+    private final PriorityDistrictsAvailability priorityDistrictsAvailability;
 
     public Api(CowinApiClient cowinApiClient, VaccineAvailability vaccineAvailability, VaccineCentersNotification notifications,
-               VaccinePersistence vaccinePersistence, UserRequestManager userRequestManager, PincodeReconciliation pincodeReconciliation, DistrictNotifications districtNotifications, CowinApiAuth cowinApiAuth, BotService botService) {
+               VaccinePersistence vaccinePersistence, UserRequestManager userRequestManager, PincodeReconciliation pincodeReconciliation, DistrictNotifications districtNotifications, CowinApiAuth cowinApiAuth, BotService botService, PriorityDistrictsAvailability priorityDistrictsAvailability) {
         this.cowinApiClient = cowinApiClient;
         this.vaccineAvailability = vaccineAvailability;
         this.notifications = notifications;
@@ -55,6 +57,7 @@ public class Api {
         this.districtNotifications = districtNotifications;
         this.cowinApiAuth = cowinApiAuth;
         this.botService = botService;
+        this.priorityDistrictsAvailability = priorityDistrictsAvailability;
     }
 
     @GetMapping("/fetch/cowin")
@@ -147,6 +150,12 @@ public class Api {
     @PostMapping("/trigger/updateViaLambda")
     public ResponseEntity<?> triggerCowinUpdatesViaLambda() {
         Executors.newSingleThreadExecutor().submit(this.vaccineAvailability::refreshVaccineAvailabilityFromCowinViaLambdaAsync);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/trigger/priority_districts")
+    public ResponseEntity<?> triggerPriorityDistrictsAvailability() {
+        Executors.newSingleThreadExecutor().submit(priorityDistrictsAvailability::refreshPriorityDistrictsAvailabilityFromCowinViaLambdaAsync);
         return ResponseEntity.ok().build();
     }
 
