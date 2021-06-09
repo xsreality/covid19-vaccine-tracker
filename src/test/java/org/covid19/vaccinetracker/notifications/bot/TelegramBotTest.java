@@ -9,7 +9,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoSession;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.telegram.abilitybots.api.db.DBContext;
@@ -42,7 +41,6 @@ public class TelegramBotTest {
 
     private TelegramBot bot;
     private DBContext db;
-    private MockitoSession mockito;
 
     @Mock
     private BotBackend botBackend;
@@ -80,7 +78,7 @@ public class TelegramBotTest {
         when(update.getMessage()).thenReturn(message);
         when(update.getMessage().getChat()).thenReturn(chat);
 
-        when(botBackend.fetchUserSubscriptions(USER_ID)).thenReturn(new UserRequest("user_id", List.of(), AGE_18_44.toString(), DOSE_1.toString(), Vaccine.ALL.toString(), null));
+        when(botBackend.fetchUserSubscriptions(USER_ID)).thenReturn(new UserRequest("user_id", List.of(), List.of(), AGE_18_44.toString(), DOSE_1.toString(), Vaccine.ALL.toString(), null));
         bot.subscriptions().action().accept(context);
 
         verify(silent, times(1)).send("You have no pincodes subscribed. Just send pincodes separated by comma (,) to subscribe.", CHAT_ID);
@@ -96,7 +94,7 @@ public class TelegramBotTest {
         when(update.getMessage()).thenReturn(message);
         when(update.getMessage().getChat()).thenReturn(chat);
 
-        when(botBackend.fetchUserSubscriptions(USER_ID)).thenReturn(new UserRequest("user_id", List.of("110022", "122001"), AGE_45.toString(), DOSE_1.toString(), Vaccine.ALL.toString(), null));
+        when(botBackend.fetchUserSubscriptions(USER_ID)).thenReturn(new UserRequest("user_id", List.of("110022", "122001"), List.of(), AGE_45.toString(), DOSE_1.toString(), Vaccine.ALL.toString(), null));
         bot.subscriptions().action().accept(context);
 
         verify(silent, times(1)).send("You are currently subscribed to pincodes: 110022,122001\n\n" +

@@ -1,16 +1,24 @@
 package org.covid19.vaccinetracker.persistence.kafka;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
-import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.covid19.vaccinetracker.model.UsersByPincode;
+import org.covid19.vaccinetracker.userrequests.MetadataStore;
+import org.covid19.vaccinetracker.userrequests.model.Pincode;
+import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,8 +27,10 @@ public class UsersByPincodeTransformer implements Transformer<String, UserReques
     private ProcessorContext ctx;
     private KeyValueStore<String, UsersByPincode> aggregateStore;
     private final String AGGREGATE_STORE_NAME;
+    private MetadataStore metadataStore;
 
-    public UsersByPincodeTransformer(String aggregateStoreName) {
+    public UsersByPincodeTransformer(String aggregateStoreName, MetadataStore metadataStore) {
+        this.metadataStore = metadataStore;
         this.AGGREGATE_STORE_NAME = aggregateStoreName;
     }
 
@@ -42,13 +52,19 @@ public class UsersByPincodeTransformer implements Transformer<String, UserReques
             return null; // nothing else to forward
         }
 
-        /* Must handle below scenario
-         * e.g. given 2 events
-         * user A -> 177001
-         * user A -> 177401
-         * state store should update value of key 177001 and remove user A
+        /*
+         * Pincodes come from two sources:
+         * - Set directly by the user
+         * - From the district set by the user
+         * We combine the two sources of pincodes before applying the transforming function
          */
-        userRequest.getPincodes().forEach(pincode -> {
+        List<String> combinedPincodes =
+                Stream.concat(
+                        userRequest.getPincodes().stream(),
+                        streamPincodesFromDistrict(userRequest.getDistricts())
+                ).collect(Collectors.toList());
+
+        combinedPincodes.stream().distinct().forEach(pincode -> {
             log.debug("current data in state store: {}", aggregateStore.get(pincode));
 
             if (pincode.isBlank()) {
@@ -64,9 +80,22 @@ public class UsersByPincodeTransformer implements Transformer<String, UserReques
             ctx.forward(pincode, aggregatedUsersByPincode);
         });
 
-        cleanupUserInStateStore(userId, userRequest.getPincodes());
+        cleanupUserInStateStore(userId, combinedPincodes);
 
         return null;
+    }
+
+    private Stream<String> streamPincodesFromDistrict(List<Integer> districts) {
+        return Optional.ofNullable(districts)
+                .stream()
+                .flatMap(Collection::stream)
+                .flatMap(this::fetchPincodesFromMetadataStore)
+                ;
+    }
+
+    private Stream<String> fetchPincodesFromMetadataStore(Integer districtId) {
+        return metadataStore.fetchPincodesByDistrictId(districtId)
+                .stream().map(Pincode::getPincode);
     }
 
     /*

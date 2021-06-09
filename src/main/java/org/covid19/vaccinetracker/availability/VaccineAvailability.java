@@ -21,16 +21,18 @@ public class VaccineAvailability {
     private final AvailabilityStats availabilityStats;
     private final BotService botService;
     private final CowinLambdaWrapper cowinLambdaWrapper;
+    private final AvailabilityConfig config;
 
     public VaccineAvailability(VaccinePersistence vaccinePersistence,
                                UserRequestManager userRequestManager,
                                AvailabilityStats availabilityStats,
-                               BotService botService, CowinLambdaWrapper cowinLambdaWrapper) {
+                               BotService botService, CowinLambdaWrapper cowinLambdaWrapper, AvailabilityConfig config) {
         this.vaccinePersistence = vaccinePersistence;
         this.userRequestManager = userRequestManager;
         this.availabilityStats = availabilityStats;
         this.botService = botService;
         this.cowinLambdaWrapper = cowinLambdaWrapper;
+        this.config = config;
     }
 
     @Scheduled(cron = "${jobs.cron.vaccine.availability:-}", zone = "IST")
@@ -46,6 +48,7 @@ public class VaccineAvailability {
         this.userRequestManager.fetchAllUserDistricts()
                 .parallelStream()
                 .filter(Objects::nonNull)
+                .filter(district -> !config.getPriorityDistricts().contains(String.valueOf(district.getId())))
                 .peek(district -> availabilityStats.incrementProcessedDistricts())
                 .peek(district -> log.debug("processing district id {}", district.getId()))
                 .forEach(district -> cowinLambdaWrapper.processDistrict(district.getId()));

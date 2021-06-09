@@ -13,13 +13,13 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 import org.apache.kafka.streams.state.WindowStore;
+import org.covid19.vaccinetracker.model.UsersByPincode;
+import org.covid19.vaccinetracker.model.UsersByPincodeSerde;
+import org.covid19.vaccinetracker.userrequests.MetadataStore;
+import org.covid19.vaccinetracker.userrequests.model.District;
 import org.covid19.vaccinetracker.userrequests.model.DistrictSerde;
 import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.covid19.vaccinetracker.userrequests.model.UserRequestSerde;
-import org.covid19.vaccinetracker.model.UsersByPincode;
-import org.covid19.vaccinetracker.model.UsersByPincodeSerde;
-import org.covid19.vaccinetracker.userrequests.model.District;
-import org.covid19.vaccinetracker.userrequests.MetadataStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
@@ -129,7 +129,7 @@ public class KafkaStreamsConfig {
                 .toStream()
                 .peek((key, value) -> log.debug("streaming record {}", value))
                 .filter((userId, userRequest) -> nonNull(userRequest.getPincodes()))
-                .transform(() -> new UsersByPincodeTransformer(USERS_BY_PINCODE_AGGREGATE_STORE),
+                .transform(() -> new UsersByPincodeTransformer(USERS_BY_PINCODE_AGGREGATE_STORE, metadataStore),
                         USERS_BY_PINCODE_AGGREGATE_STORE)
                 .to(usersByPincodeTopic, Produced.with(Serdes.String(), new UsersByPincodeSerde()));
 

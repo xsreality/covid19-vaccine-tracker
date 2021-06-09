@@ -33,4 +33,8 @@ public class MetadataStore {
     public District fetchDistrictByNameAndState(String districtName, String stateName) {
         return this.districtRepository.findDistrictByDistrictNameAndState(districtName, stateName);
     }
+
+    public List<Pincode> fetchPincodesByDistrictId(Integer districtId) {
+        return this.pincodeRepository.findPincodeByDistrictId(districtId);
+    }
 }

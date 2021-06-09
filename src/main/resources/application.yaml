@@ -17,6 +17,7 @@ telegram:
 
 jobs:
   cron:
+    priority.districts.availability: "30 0/1 6-23 * * *"
     vaccine.availability: "0 0/5 6-23 * * *"
     district.notifications: "-"
     pincode.reconciliation: "0 1 6-23 * * *"
@@ -29,7 +30,8 @@ logging:
   level:
     org.apache.kafka.streams: INFO
 
-users.over45: ""
+availability:
+  priorityDistricts: ""
 
 spring:
   kafka:

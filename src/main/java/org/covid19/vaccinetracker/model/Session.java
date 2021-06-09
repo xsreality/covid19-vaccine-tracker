@@ -53,16 +53,16 @@ public class Session {
     }
 
     public boolean hasCapacity() {
-        return (availableCapacityDose1 > 1 || availableCapacityDose2 > 1)
+        return (availableCapacityDose1 >= 10 || availableCapacityDose2 >= 10)
                 && (availableCapacity == (availableCapacityDose1 + availableCapacityDose2));
     }
 
     public boolean hasDose1Capacity() {
-        return availableCapacityDose1 > 1;
+        return availableCapacityDose1 >= 10;
     }
 
     public boolean hasDose2Capacity() {
-        return availableCapacityDose2 > 1;
+        return availableCapacityDose2 >= 10;
     }
 
     public boolean hasCovishield() {
