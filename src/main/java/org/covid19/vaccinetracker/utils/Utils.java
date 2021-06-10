@@ -167,7 +167,7 @@ public class Utils {
         for (Center center : eligibleCenters) {
             text.append(String.format("<b>%s (%s %s)</b>\n<pre>", center.name, center.districtName, center.pincode));
             for (Session session : center.sessions) {
-                text.append(String.format("\n%s doses (First dose: %s, Second dose: %s) of %s for %s+ age group available on %s ",
+                text.append(String.format("\n%s doses (Dose 1: %s, Dose 2: %s) of %s for %s+ age group available on %s\n",
                         session.availableCapacity, session.availableCapacityDose1, session.availableCapacityDose2,
                         session.vaccine, session.minAgeLimit, session.date));
                 text.append(String.format(localizedNotificationText(center.getStateName()) + "\n", session.minAgeLimit, session.vaccine, session.availableCapacity, session.availableCapacityDose1, session.availableCapacityDose2, session.date));

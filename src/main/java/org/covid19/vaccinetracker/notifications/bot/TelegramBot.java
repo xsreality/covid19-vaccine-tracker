@@ -101,7 +101,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
         return Ability.builder().name("about").info("About CoWIN Alerts bot")
                 .locality(Locality.ALL).privacy(PUBLIC).input(0).action(ctx -> {
                     String chatId = getChatId(ctx.update());
-                    String message = "Hi! My name is Abhinav Sonkar. I am a software engineer.\n\n" +
+                    String message = "Hi! My name is Abhinav Sonkar (@xsreality). I am a software engineer.\n\n" +
                             "I developed this bot to help people book CoWIN slots and get vaccinated.\n\n" +
                             "With over 7000 registered users, 500 districts and 1000's of pincodes, it is becoming expensive to " +
                             "keep running the bot. If you like my work and want to support it, <a href=\"https://www.buymeacoffee.com/xsreality\">buy me a coffee</a>.";
