@@ -15,10 +15,14 @@ import org.telegram.telegrambots.meta.api.objects.Chat;
 import java.text.ParseException;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -155,6 +159,30 @@ public class Utils {
         return dateTime.format(dtf);
     }
 
+    public static String humanReadable(String ddMMyyyy) {
+        DateTimeFormatter inputFormat = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+        Map<Long, String> ordinalNumbers = new HashMap<>(42);
+        ordinalNumbers.put(1L, "1st");
+        ordinalNumbers.put(2L, "2nd");
+        ordinalNumbers.put(3L, "3rd");
+        ordinalNumbers.put(21L, "21st");
+        ordinalNumbers.put(22L, "22nd");
+        ordinalNumbers.put(23L, "23rd");
+        ordinalNumbers.put(31L, "31st");
+        for (long d = 1; d <= 31; d++) {
+            ordinalNumbers.putIfAbsent(d, "" + d + "th");
+        }
+
+        DateTimeFormatter dayOfMonthFormatter = new DateTimeFormatterBuilder()
+                .appendText(ChronoField.DAY_OF_MONTH, ordinalNumbers)
+                .appendPattern(" MMM")
+                .toFormatter();
+
+        LocalDate input = LocalDate.parse(ddMMyyyy, inputFormat);
+        return input.format(dayOfMonthFormatter);
+    }
+
     public static boolean dayOld(String lastNotifiedAt) {
         ZonedDateTime notifiedAt = dateFromString(lastNotifiedAt);
         ZonedDateTime currentTime = ZonedDateTime.now(ZoneId.of(INDIA_TIMEZONE));
@@ -169,8 +197,8 @@ public class Utils {
             for (Session session : center.sessions) {
                 text.append(String.format("\n%s doses (Dose 1: %s, Dose 2: %s) of %s for %s+ age group available on %s\n",
                         session.availableCapacity, session.availableCapacityDose1, session.availableCapacityDose2,
-                        session.vaccine, session.minAgeLimit, session.date));
-                text.append(String.format(localizedNotificationText(center.getStateName()) + "\n", session.minAgeLimit, session.vaccine, session.availableCapacity, session.availableCapacityDose1, session.availableCapacityDose2, session.date));
+                        session.vaccine, session.minAgeLimit, humanReadable(session.date)));
+                text.append(String.format(localizedNotificationText(center.getStateName()) + "\n", session.minAgeLimit, session.vaccine, session.availableCapacity, session.availableCapacityDose1, session.availableCapacityDose2, humanReadable(session.date)));
             }
             text.append("</pre>\n");
         }
