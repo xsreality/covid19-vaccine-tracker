@@ -15,10 +15,14 @@ import org.telegram.telegrambots.meta.api.objects.Chat;
 import java.text.ParseException;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -59,13 +63,13 @@ public class Utils {
     private static final Map<String, String> LOCALIZED_NOTIFICATION_TEXT = Map.ofEntries(
             entry("Hindi", "(%s+ आयु वर्ग के लिए %s की %s खुराकें (खुराक 1: %s, खुराक 2: %s) %s को उपलब्ध हैं)"),
             entry("Telugu", "(%s+ ఏళ్ళ వయస్సు గల %s మోతాదుల %s (మోతాదుల 1: %s, మోతాదుల 2: %s) %s న లభిస్తుంది)"),
-            entry("Gujarati", "(%s+ વયના લોકો માટે %s ના %s ડોઝ %s (ડોઝ 1: %s, ડોઝ 2: %s) પર ઉપલબ્ધ છે)"),
+            entry("Gujarati", "(%s+ વયના લોકો માટે %s ના %s ડોઝ (ડોઝ 1: %s, ડોઝ 2: %s) %s પર ઉપલબ્ધ છે)"),
             entry("Kannada", "(%s+ ವರ್ಷ ವಯಸ್ಸಿನವರಿಗೆ %s ಡೋಸ್ %s (ಡೋಸ್ 1: %s, ಡೋಸ್ 2: %s) %s ರಂದು ಲಭ್ಯವಿದೆ)"),
-            entry("Malayalam", "(%s+ വയസ്സിനിടയിൽ, %s ന്റെ %s ഡോസുകൾ %s (ഡോസുകൾ 1: %s, ഡോസുകൾ 2: %s) ന് ലഭ്യമാണ്)"),
-            entry("Marathi", "(%s+ वयोगटातील %s %s डोस %s (डोस 1: %s, डोस 2: %s) रोजी उपलब्ध आहेत)"),
-            entry("Odia", "(%s+ ବୟସ ବର୍ଗ ପାଇଁ %s ର %s ଡୋଜ୍ %s (ଡୋଜ୍ 1: %s, ଡୋଜ୍ 2: %s) ରେ ଉପଲବ୍ଧ |)"),
-            entry("Tamil", "(%s+ வயதிற்குட்பட்ட %s இன் %s டோஸ் %s (டோஸ் 1: %s, டோஸ் 2: %s) அன்று கிடைக்கிறது)"),
-            entry("Punjabi", "(%s+ ਸਾਲ ਦੀ ਉਮਰ ਦੇ ਲਈ %s ਦੀਆਂ %s ਖੁਰਾਕਾਂ %s (ਖੁਰਾਕਾਂ 1: %s, ਖੁਰਾਕਾਂ 2: %s) 'ਤੇ ਉਪਲਬਧ ਹਨ)"),
+            entry("Malayalam", "(%s+ വയസ്സിനിടയിൽ, %s ന്റെ %s ഡോസുകൾ (ഡോസുകൾ 1: %s, ഡോസുകൾ 2: %s) %s ന് ലഭ്യമാണ്)"),
+            entry("Marathi", "(%s+ वयोगटातील %s %s डोस (डोस 1: %s, डोस 2: %s) %s रोजी उपलब्ध आहेत)"),
+            entry("Odia", "(%s+ ବୟସ ବର୍ଗ ପାଇଁ %s ର %s ଡୋଜ୍ (ଡୋଜ୍ 1: %s, ଡୋଜ୍ 2: %s) %s ରେ ଉପଲବ୍ଧ |)"),
+            entry("Tamil", "(%s+ வயதிற்குட்பட்ட %s இன் %s டோஸ் (டோஸ் 1: %s, டோஸ் 2: %s) %s அன்று கிடைக்கிறது)"),
+            entry("Punjabi", "(%s+ ਸਾਲ ਦੀ ਉਮਰ ਦੇ ਲਈ %s ਦੀਆਂ %s ਖੁਰਾਕਾਂ (ਖੁਰਾਕਾਂ 1: %s, ਖੁਰਾਕਾਂ 2: %s) %s 'ਤੇ ਉਪਲਬਧ ਹਨ)"),
             entry("Bengali", "(%s+ বয়সের গোষ্ঠীর জন্য %s এর %s টি ডোজ (ডোজ 1: %s, ডোজ 2: %s) %s এ উপলব্ধ)")
     );
 
@@ -155,6 +159,30 @@ public class Utils {
         return dateTime.format(dtf);
     }
 
+    public static String humanReadable(String ddMMyyyy) {
+        DateTimeFormatter inputFormat = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+        Map<Long, String> ordinalNumbers = new HashMap<>(42);
+        ordinalNumbers.put(1L, "1st");
+        ordinalNumbers.put(2L, "2nd");
+        ordinalNumbers.put(3L, "3rd");
+        ordinalNumbers.put(21L, "21st");
+        ordinalNumbers.put(22L, "22nd");
+        ordinalNumbers.put(23L, "23rd");
+        ordinalNumbers.put(31L, "31st");
+        for (long d = 1; d <= 31; d++) {
+            ordinalNumbers.putIfAbsent(d, "" + d + "th");
+        }
+
+        DateTimeFormatter dayOfMonthFormatter = new DateTimeFormatterBuilder()
+                .appendText(ChronoField.DAY_OF_MONTH, ordinalNumbers)
+                .appendPattern(" MMM")
+                .toFormatter();
+
+        LocalDate input = LocalDate.parse(ddMMyyyy, inputFormat);
+        return input.format(dayOfMonthFormatter);
+    }
+
     public static boolean dayOld(String lastNotifiedAt) {
         ZonedDateTime notifiedAt = dateFromString(lastNotifiedAt);
         ZonedDateTime currentTime = ZonedDateTime.now(ZoneId.of(INDIA_TIMEZONE));
@@ -167,10 +195,10 @@ public class Utils {
         for (Center center : eligibleCenters) {
             text.append(String.format("<b>%s (%s %s)</b>\n<pre>", center.name, center.districtName, center.pincode));
             for (Session session : center.sessions) {
-                text.append(String.format("\n%s doses (First dose: %s, Second dose: %s) of %s for %s+ age group available on %s ",
+                text.append(String.format("\n%s doses (Dose 1: %s, Dose 2: %s) of %s for %s+ age group available on %s\n",
                         session.availableCapacity, session.availableCapacityDose1, session.availableCapacityDose2,
-                        session.vaccine, session.minAgeLimit, session.date));
-                text.append(String.format(localizedNotificationText(center.getStateName()) + "\n", session.minAgeLimit, session.vaccine, session.availableCapacity, session.availableCapacityDose1, session.availableCapacityDose2, session.date));
+                        session.vaccine, session.minAgeLimit, humanReadable(session.date)));
+                text.append(String.format(localizedNotificationText(center.getStateName()) + "\n", session.minAgeLimit, session.vaccine, session.availableCapacity, session.availableCapacityDose1, session.availableCapacityDose2, humanReadable(session.date)));
             }
             text.append("</pre>\n");
         }

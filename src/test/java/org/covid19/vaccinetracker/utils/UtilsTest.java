@@ -9,6 +9,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -37,8 +40,10 @@ public class UtilsTest {
     @Test
     public void testNotificationText() {
         String expected = "<b>Premlok Park Disp- 2(18-44) (Pune 411033)</b>\n<pre>" +
-                "\n8 doses (First dose: 3, Second dose: 5) of COVISHIELD for 18+ age group available on 04-05-2021 (18+ आयु वर्ग के लिए COVISHIELD की 8 खुराकें (खुराक 1: 3, खुराक 2: 5) 04-05-2021 को उपलब्ध हैं)\n" +
-                "\n15 doses (First dose: 12, Second dose: 3) of COVAXIN for 18+ age group available on 05-05-2021 (18+ आयु वर्ग के लिए COVAXIN की 15 खुराकें (खुराक 1: 12, खुराक 2: 3) 05-05-2021 को उपलब्ध हैं)\n</pre>\n" +
+                "\n8 doses (Dose 1: 3, Dose 2: 5) of COVISHIELD for 18+ age group available on 4th May\n" +
+                "(18+ आयु वर्ग के लिए COVISHIELD की 8 खुराकें (खुराक 1: 3, खुराक 2: 5) 4th May को उपलब्ध हैं)\n" +
+                "\n15 doses (Dose 1: 12, Dose 2: 3) of COVAXIN for 18+ age group available on 5th May\n" +
+                "(18+ आयु वर्ग के लिए COVAXIN की 15 खुराकें (खुराक 1: 12, खुराक 2: 3) 5th May को उपलब्ध हैं)\n</pre>\n" +
                 "For registration, please visit <a href=\"https://selfregistration.cowin.gov.in/\">CoWIN Website</a>\n";
         List<Center> centers = new ArrayList<>();
         List<Session> sessions = new ArrayList<>();
@@ -59,6 +64,16 @@ public class UtilsTest {
         String emptyToken = "";
         assertFalse(Utils.isValidJwtToken(emptyToken));
         assertFalse(Utils.isValidJwtToken(null));
+    }
+
+    @Test
+    public void testHumanReadableDate() {
+        assertThat(Utils.humanReadable("12-01-2020"), is(equalTo("12th Jan")));
+        assertThat(Utils.humanReadable("22-04-2021"), is(equalTo("22nd Apr")));
+        assertThat(Utils.humanReadable("01-05-2021"), is(equalTo("1st May")));
+        assertThat(Utils.humanReadable("10-06-2021"), is(equalTo("10th Jun")));
+        assertThat(Utils.humanReadable("23-07-2021"), is(equalTo("23rd Jul")));
+        assertThat(Utils.humanReadable("18-08-2021"), is(equalTo("18th Aug")));
     }
 }
 
