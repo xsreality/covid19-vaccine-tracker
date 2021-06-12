@@ -6,10 +6,12 @@ import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.JWTParser;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.userrequests.model.State;
+import org.springframework.web.util.HtmlUtils;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 
 import java.text.ParseException;
@@ -127,15 +129,16 @@ public class Utils {
     }
 
     public static String translateName(Chat chat) {
+        String name = "";
         if (nonNull(chat.getFirstName())) {
             if (nonNull(chat.getLastName())) {
-                return chat.getFirstName() + " " + chat.getLastName();
+                name = chat.getFirstName() + " " + chat.getLastName();
             }
-            return chat.getFirstName();
+            name = chat.getFirstName();
         } else if (nonNull(chat.getUserName())) {
-            return chat.getUserName();
+            name = chat.getUserName();
         }
-        return "";
+        return HtmlUtils.htmlEscape(name);
     }
 
     public static ZonedDateTime dateFromString(String lastNotifiedAt) {
