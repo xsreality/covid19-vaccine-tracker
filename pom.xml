@@ -158,10 +158,17 @@
                                 <os>linux</os>
                             </platform>
                         </platforms>
+                        <auth>
+                            <username>${env.REGISTRY_USERNAME}</username>
+                            <password>${env.REGISTRY_PASSWORD}</password>
+                        </auth>
                     </from>
                     <to>
-                        <image>xsreality/${project.artifactId}:${project.version}
-                        </image>
+                        <image>xsreality/${project.artifactId}:${project.version}</image>
+                        <auth>
+                            <username>${env.REGISTRY_USERNAME}</username>
+                            <password>${env.REGISTRY_PASSWORD}</password>
+                        </auth>
                     </to>
                     <container>
                         <creationTime>USE_CURRENT_TIMESTAMP</creationTime>

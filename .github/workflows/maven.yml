@@ -22,4 +22,7 @@ jobs:
         java-version: '11'
         distribution: 'adopt'
     - name: Build with Maven
+      env:
+        REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        REGISTRY_PASSWORD: ${{ secrets.DOCKER_TOKEN }}
       run: mvn -s .mvn/settings.xml -B package --file pom.xml
