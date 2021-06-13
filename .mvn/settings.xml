@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+    <!-- profiles
+     | This is a list of profiles which can be activated in a variety of ways,
+     | and which can modify the build process. Profiles provided in the
+     | settings.xml are intended to provide local machine-specific paths and
+     | repository locations which allow the build to work in the local
+     | environment.
+     |
+     | For example, if you have an integration testing plugin - like cactus -
+     | that needs to know where your Tomcat instance is installed, you can
+     | provide a variable here such that the variable is dereferenced during the
+     | build process to configure the cactus plugin.
+     |
+     | As noted above, profiles can be activated in a variety of ways. One
+     | way - the activeProfiles section of this document (settings.xml) - will be
+     | discussed later. Another way essentially relies on the detection of a
+     | system property, either matching a particular value for the property, or
+     | merely testing its existence. Profiles can also be activated by JDK
+     | version prefix, where a value of '1.4' might activate a profile when the
+     | build is executed on a JDK version of '1.4.2_07'. Finally, the list of
+     | active profiles can be specified directly from the command line.
+     |
+     | NOTE: For profiles defined in the settings.xml, you are restricted to
+     |       specifying only artifact repositories, plugin repositories, and
+     |       free-form properties to be used as configuration variables for
+     |       plugins in the POM.
+     |
+     |-->
+
+    <mirrors>
+        <!-- mirror
+         | Specifies a repository mirror site to use instead of a given repository.
+         | The repository that this mirror serves has an ID that matches the
+         | mirrorOf element of this mirror. IDs are used for inheritance and direct
+         | lookup purposes, and must be unique across the set of mirrors.
+        -->
+        <mirror>
+          <id>confluent</id>
+          <mirrorOf>confluent</mirrorOf>
+          <name>Confluent</name>
+          <url>http://packages.confluent.io/maven/</url>
+        </mirror>
+    </mirrors>
+
+    <profiles>
+        <!-- profile
+         | Specifies a set of introductions to the build process, to be activated
+         | using one or more of the mechanisms described above. For inheritance
+         | purposes, and to activate profiles via <activatedProfiles/> or the
+         | command line, profiles have to have an ID that is unique.
+         |
+         | An encouraged best practice for profile identification is to use a
+         | consistent naming convention for profiles, such as 'env-dev',
+         | 'env-test', 'env-production', 'user-jdcasey', 'user-brett', etc. This
+         | will make it more intuitive to understand what the set of introduced
+         | profiles is attempting to accomplish, particularly when you only have a
+         | list of profile id's for debug.
+         |
+         | This profile example uses the JDK version to trigger activation, and
+         | provides a JDK-specific repo.
+        -->
+        <profile>
+            <id>github</id>
+
+            <repositories>
+                <repository>
+                    <id>confluent</id>
+                    <name>Confluent</name>
+                    <url>http://packages.confluent.io/maven/</url>
+                </repository>
+            </repositories>
+        </profile>
+
+        <!--
+         | Here is another profile, activated by the system property 'target-env'
+         | with a value of 'dev', which provides a specific path to the Tomcat
+         | instance. To use this, your plugin configuration might hypothetically
+         | look like:
+         |
+         | ...
+         | <plugin>
+         |   <groupId>org.myco.myplugins</groupId>
+         |   <artifactId>myplugin</artifactId>
+         |
+         |   <configuration>
+         |     <tomcatLocation>${tomcatPath}</tomcatLocation>
+         |   </configuration>
+         | </plugin>
+         | ...
+         |
+         | NOTE: If you just wanted to inject this configuration whenever someone
+         |       set 'target-env' to anything, you could just leave off the
+         |       <value/> inside the activation-property.
+         |
+        <profile>
+          <id>env-dev</id>
+          <activation>
+            <property>
+              <name>target-env</name>
+              <value>dev</value>
+            </property>
+          </activation>
+          <properties>
+            <tomcatPath>/path/to/tomcat/instance</tomcatPath>
+          </properties>
+        </profile>
+        -->
+    </profiles>
+
+    <!-- activeProfiles
+     | List of profiles that are active for all builds.
+    -->
+    <activeProfiles>
+        <activeProfile>github</activeProfile>
+    </activeProfiles>
+</settings>
