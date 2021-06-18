@@ -4,11 +4,13 @@ import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
 import org.junit.jupiter.api.Test;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.covid19.vaccinetracker.utils.Utils.INDIA_TIMEZONE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -33,8 +35,16 @@ public class UtilsTest {
     public void testDayOldDate() {
         DateTimeFormatter dtf = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
         assertTrue(Utils.dayOld("2021-05-03T15:07:35.476954+05:30"));
-        assertTrue(Utils.dayOld(dtf.format(ZonedDateTime.now().minusHours(24))));
-        assertFalse(Utils.dayOld(dtf.format(ZonedDateTime.now().minusHours(2))));
+        assertTrue(Utils.dayOld(dtf.format(ZonedDateTime.now(ZoneId.of(INDIA_TIMEZONE)).minusHours(24))));
+        assertFalse(Utils.dayOld(dtf.format(ZonedDateTime.now(ZoneId.of(INDIA_TIMEZONE)).minusHours(2))));
+    }
+
+    @Test
+    public void testPast15Mins() {
+        DateTimeFormatter dtf = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+        assertTrue(Utils.past15mins("2021-05-03T15:07:35.476954+05:30"));
+        assertTrue(Utils.past15mins(dtf.format(ZonedDateTime.now(ZoneId.of(INDIA_TIMEZONE)).minusMinutes(30))));
+        assertFalse(Utils.past15mins(dtf.format(ZonedDateTime.now(ZoneId.of(INDIA_TIMEZONE)).minusMinutes(10))));
     }
 
     @Test

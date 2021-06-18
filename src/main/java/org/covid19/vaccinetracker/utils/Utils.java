@@ -40,8 +40,8 @@ import static java.util.Objects.nonNull;
 @Slf4j
 public class Utils {
     private static final String PINCODE_REGEX_PATTERN = "^[1-9][0-9]{5}$";
-    private static final String INDIA_TIMEZONE = "Asia/Kolkata";
-    private static final DateTimeFormatter dtf = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+    public static final String INDIA_TIMEZONE = "Asia/Kolkata";
+    public static final DateTimeFormatter dtf = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
     private static final Map<String, String> STATE_LANGUAGES = Map.ofEntries(
             entry("Andaman and Nicobar Islands", "Bengali"),
@@ -191,6 +191,13 @@ public class Utils {
         ZonedDateTime currentTime = ZonedDateTime.now(ZoneId.of(INDIA_TIMEZONE));
         return Duration.between(notifiedAt, currentTime)
                 .compareTo(Duration.ofHours(24)) >= 0;
+    }
+
+    public static boolean past15mins(String lastNotifiedAt) {
+        ZonedDateTime notifiedAt = dateFromString(lastNotifiedAt);
+        ZonedDateTime currentTime = ZonedDateTime.now(ZoneId.of(INDIA_TIMEZONE));
+        return Duration.between(notifiedAt, currentTime)
+                .compareTo(Duration.ofMinutes(15L)) >= 0;
     }
 
     public static String buildNotificationMessage(List<Center> eligibleCenters) {

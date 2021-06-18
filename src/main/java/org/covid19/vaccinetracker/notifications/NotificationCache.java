@@ -8,14 +8,19 @@ import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.UserNotification;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.UserNotificationId;
 import org.covid19.vaccinetracker.persistence.mariadb.repository.UserNotificationRepository;
+import org.covid19.vaccinetracker.utils.Utils;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
+
+import static org.covid19.vaccinetracker.utils.Utils.INDIA_TIMEZONE;
 
 @Slf4j
 @Component
@@ -44,7 +49,9 @@ public class NotificationCache {
             return true;
         }
 
-        return !DigestUtils.sha256Hex(bytes).equals(fromCache.get().getNotificationHash());
+        // obtain "last notified at" in IST zone
+        String lastNotifiedAt = ZonedDateTime.of(fromCache.get().getNotifiedAt(), ZoneId.of("UTC")).withZoneSameInstant(ZoneId.of(INDIA_TIMEZONE)).format(Utils.dtf);
+        return !DigestUtils.sha256Hex(bytes).equals(fromCache.get().getNotificationHash()) && Utils.past15mins(lastNotifiedAt);
     }
 
     public void updateUser(String user, String pincode, List<Center> centers) {
