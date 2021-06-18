@@ -48,6 +48,10 @@ public class Session {
         return minAgeLimit == 18;
     }
 
+    public boolean ageLimitBetween18And45() {
+        return minAgeLimit >= 18 && minAgeLimit < 45;
+    }
+
     public boolean ageLimitExactly45() {
         return minAgeLimit == 45;
     }

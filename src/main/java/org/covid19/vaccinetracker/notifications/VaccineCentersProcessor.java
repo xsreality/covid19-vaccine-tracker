@@ -101,7 +101,7 @@ public class VaccineCentersProcessor {
     }
 
     private boolean sessionAndUserValidFor18(Session session, Age userAgePreference) {
-        return Age.AGE_18_44.equals(userAgePreference) && session.ageLimitExactly18();
+        return Age.AGE_18_44.equals(userAgePreference) && session.ageLimitBetween18And45();
     }
 
     private boolean sessionAndUserValidForDose1(Session session, Dose userDosePreference) {
