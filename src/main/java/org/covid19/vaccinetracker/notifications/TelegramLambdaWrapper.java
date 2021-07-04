@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.covid19.vaccinetracker.availability.aws.AWSConfig;
+import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
@@ -23,17 +24,21 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import static java.util.Collections.emptyList;
+
 @Slf4j
 @Component
 public class TelegramLambdaWrapper {
     private final AWSConfig awsConfig;
     private final AWSLambdaAsync awsLambdaAsync;
     private final ObjectMapper objectMapper;
+    private final UserRequestManager userRequestManager;
 
-    public TelegramLambdaWrapper(AWSConfig awsConfig, AWSLambdaAsync awsLambdaAsync, ObjectMapper objectMapper) {
+    public TelegramLambdaWrapper(AWSConfig awsConfig, AWSLambdaAsync awsLambdaAsync, ObjectMapper objectMapper, UserRequestManager userRequestManager) {
         this.awsConfig = awsConfig;
         this.awsLambdaAsync = awsLambdaAsync;
         this.objectMapper = objectMapper;
+        this.userRequestManager = userRequestManager;
     }
 
     /**
@@ -60,7 +65,14 @@ public class TelegramLambdaWrapper {
             public void onSuccess(InvokeRequest request, InvokeResult result) {
                 toSendTelegramMsgLambdaResponse(result)
                         .filter(response -> !response.getStatus())
-                        .ifPresent(response -> log.warn("Error sending TG notification to {}, error {}", response.getChatId(), response.getErrorMsg()));
+                        .ifPresent(response -> {
+                            log.warn("Error sending TG notification to {}, error {}", response.getChatId(), response.getErrorMsg());
+                            if (response.getErrorMsg().contains("bot was blocked by the user")) {
+                                // stop user preference to prevent further alerts being sent
+                                userRequestManager.acceptUserRequest(response.getChatId(), emptyList());
+                                log.warn("User {} pincode preferences cleared", response.getChatId());
+                            }
+                        });
             }
         };
     }

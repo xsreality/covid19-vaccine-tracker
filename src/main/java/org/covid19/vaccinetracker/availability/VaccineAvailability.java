@@ -4,6 +4,7 @@ import org.covid19.vaccinetracker.availability.aws.CowinLambdaWrapper;
 import org.covid19.vaccinetracker.notifications.bot.BotService;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
+import org.covid19.vaccinetracker.userrequests.model.District;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -48,7 +49,7 @@ public class VaccineAvailability {
         this.userRequestManager.fetchAllUserDistricts()
                 .parallelStream()
                 .filter(Objects::nonNull)
-                .filter(district -> !config.getPriorityDistricts().contains(String.valueOf(district.getId())))
+                .filter(this::nonPriorityDistrict)
                 .peek(district -> availabilityStats.incrementProcessedDistricts())
                 .peek(district -> log.debug("processing district id {}", district.getId()))
                 .forEach(district -> cowinLambdaWrapper.processDistrict(district.getId()));
@@ -57,6 +58,10 @@ public class VaccineAvailability {
         final String message = String.format("[AVAILABILITY] Districts: %d, Time taken: %s", availabilityStats.processedDistricts(), availabilityStats.timeTaken());
         log.info(message);
         botService.notifyOwner(message);
+    }
+
+    private boolean nonPriorityDistrict(District district) {
+        return !config.getPriorityDistricts().contains(String.valueOf(district.getId()));
     }
 
     @Scheduled(cron = "${jobs.cron.db.cleanup:-}", zone = "IST")

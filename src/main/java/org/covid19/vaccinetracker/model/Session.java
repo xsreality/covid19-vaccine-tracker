@@ -48,21 +48,25 @@ public class Session {
         return minAgeLimit == 18;
     }
 
+    public boolean ageLimitBetween18And45() {
+        return minAgeLimit >= 18 && minAgeLimit < 45;
+    }
+
     public boolean ageLimitExactly45() {
         return minAgeLimit == 45;
     }
 
     public boolean hasCapacity() {
-        return (availableCapacityDose1 >= 10 || availableCapacityDose2 >= 10)
+        return (availableCapacityDose1 >= 50 || availableCapacityDose2 >= 50)
                 && (availableCapacity == (availableCapacityDose1 + availableCapacityDose2));
     }
 
     public boolean hasDose1Capacity() {
-        return availableCapacityDose1 >= 10;
+        return availableCapacityDose1 >= 50;
     }
 
     public boolean hasDose2Capacity() {
-        return availableCapacityDose2 >= 10;
+        return availableCapacityDose2 >= 50;
     }
 
     public boolean hasCovishield() {
