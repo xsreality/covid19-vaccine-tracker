@@ -1,6 +1,9 @@
 package org.covid19.vaccinetracker.persistence;
 
 import org.covid19.vaccinetracker.model.VaccineCenters;
+import org.covid19.vaccinetracker.persistence.mariadb.entity.SessionEntity;
+
+import java.util.Optional;
 
 public interface VaccinePersistence {
     void persistVaccineCenters(VaccineCenters vaccineCenters);
@@ -10,4 +13,6 @@ public interface VaccinePersistence {
     void markProcessed(VaccineCenters vaccineCenters);
 
     void cleanupOldCenters(String date);
+
+    Optional<SessionEntity> findLatestSession(Long centerId, String date, Integer age, String vaccine);
 }

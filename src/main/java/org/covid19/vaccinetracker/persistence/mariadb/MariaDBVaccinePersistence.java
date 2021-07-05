@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
@@ -123,5 +124,12 @@ public class MariaDBVaccinePersistence implements VaccinePersistence {
     @Override
     public void cleanupOldCenters(String date) {
         this.centerRepository.deleteBySessionsDate(date);
+    }
+
+    @Override
+    public Optional<SessionEntity> findLatestSession(Long centerId, String date, Integer age, String vaccine) {
+        return sessionRepository.findLatestSession(centerId, date, age, vaccine)
+                .stream()
+                .findFirst();
     }
 }
