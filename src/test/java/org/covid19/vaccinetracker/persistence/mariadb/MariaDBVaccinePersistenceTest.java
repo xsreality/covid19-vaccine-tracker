@@ -85,13 +85,13 @@ public class MariaDBVaccinePersistenceTest {
     @Test
     public void testFindLatestSession() {
         vaccinePersistence.persistVaccineCenters(buildVaccineCenters());
-        final Optional<SessionEntity> session = vaccinePersistence.findLatestSession(1205L, "22-05-2021", 18, "COVAXIN");
+        final Optional<SessionEntity> session = vaccinePersistence.findExistingSession(1205L, "22-05-2021", 18, "COVAXIN");
         assertTrue(session.isPresent());
         assertEquals("22-05-2021", session.get().getDate());
         assertEquals(18, session.get().getMinAgeLimit());
         assertEquals("COVAXIN", session.get().getVaccine());
 
-        final Optional<SessionEntity> shouldNotExist = vaccinePersistence.findLatestSession(1205L, "23-05-2021", 18, "COVAXIN");
+        final Optional<SessionEntity> shouldNotExist = vaccinePersistence.findExistingSession(1205L, "23-05-2021", 18, "COVAXIN");
         assertFalse(shouldNotExist.isPresent());
     }
 

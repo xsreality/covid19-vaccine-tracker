@@ -14,5 +14,5 @@ public interface VaccinePersistence {
 
     void cleanupOldCenters(String date);
 
-    Optional<SessionEntity> findLatestSession(Long centerId, String date, Integer age, String vaccine);
+    Optional<SessionEntity> findExistingSession(Long centerId, String date, Integer age, String vaccine);
 }

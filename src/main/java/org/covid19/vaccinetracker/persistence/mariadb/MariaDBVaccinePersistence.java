@@ -104,7 +104,7 @@ public class MariaDBVaccinePersistence implements VaccinePersistence {
                     .availableCapacityDose1(nonNull(session.availableCapacityDose1) ? session.availableCapacityDose1 : 0)
                     .availableCapacityDose2(nonNull(session.availableCapacityDose2) ? session.availableCapacityDose2 : 0)
                     .minAgeLimit(session.minAgeLimit)
-                    .processedAt(processedAt)
+                    .processedAt(session.shouldNotify ? processedAt : LocalDateTime.now())
                     .build()));
             sessionRepository.saveAll(sessionEntities);
             centerEntities.add(CenterEntity.builder()
@@ -127,7 +127,7 @@ public class MariaDBVaccinePersistence implements VaccinePersistence {
     }
 
     @Override
-    public Optional<SessionEntity> findLatestSession(Long centerId, String date, Integer age, String vaccine) {
+    public Optional<SessionEntity> findExistingSession(Long centerId, String date, Integer age, String vaccine) {
         return sessionRepository.findLatestSession(centerId, date, age, vaccine)
                 .stream()
                 .findFirst();

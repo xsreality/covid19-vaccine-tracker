@@ -1,9 +1,8 @@
 package org.covid19.vaccinetracker.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import org.covid19.vaccinetracker.userrequests.model.Vaccine;
 
 import java.util.List;
 
@@ -39,6 +38,8 @@ public class Session {
     public String vaccine;
     @JsonProperty("slots")
     public List<String> slots = null;
+    @JsonIgnore
+    public boolean shouldNotify = true;
 
     public boolean ageLimit18AndAbove() {
         return minAgeLimit >= 18;
