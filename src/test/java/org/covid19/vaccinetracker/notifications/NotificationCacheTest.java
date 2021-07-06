@@ -9,6 +9,7 @@ import org.covid19.vaccinetracker.persistence.mariadb.entity.UserNotification;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.UserNotificationId;
 import org.covid19.vaccinetracker.persistence.mariadb.repository.UserNotificationRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -88,6 +89,7 @@ public class NotificationCacheTest {
         assertTrue(cache.isNewNotification("userA", "110022", List.of()));
     }
 
+    @Disabled
     @Test
     public void testNotificationLastNotifiedAtWithin15Mins() throws Exception {
         List<Center> old = List.of(Center.builder().centerId(123).name("abc")
