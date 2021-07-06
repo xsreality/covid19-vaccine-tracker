@@ -97,11 +97,11 @@ public class VaccineCentersProcessor {
     }
 
     private boolean sessionAndUserValidFor45(Session session, Age userAgePreference) {
-        return Age.AGE_45.equals(userAgePreference) && session.ageLimitExactly45();
+        return Age.AGE_45.equals(userAgePreference) && (session.validForAllAges() || session.validFor45Above());
     }
 
     private boolean sessionAndUserValidFor18(Session session, Age userAgePreference) {
-        return Age.AGE_18_44.equals(userAgePreference) && session.ageLimitBetween18And45();
+        return Age.AGE_18_44.equals(userAgePreference) && (session.validForAllAges() || session.validBetween18And44());
     }
 
     private boolean sessionAndUserValidForDose1(Session session, Dose userDosePreference) {

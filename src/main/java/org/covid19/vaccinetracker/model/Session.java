@@ -5,12 +5,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
+import java.util.Optional;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import static java.util.Optional.ofNullable;
 import static org.covid19.vaccinetracker.userrequests.model.Vaccine.COVAXIN;
 import static org.covid19.vaccinetracker.userrequests.model.Vaccine.COVISHIELD;
 import static org.covid19.vaccinetracker.userrequests.model.Vaccine.SPUTNIK_V;
@@ -34,6 +36,8 @@ public class Session {
     public Integer availableCapacityDose2;
     @JsonProperty("min_age_limit")
     public Integer minAgeLimit;
+    @JsonProperty("allow_all_age")
+    public Boolean allowAllAge;
     @JsonProperty("vaccine")
     public String vaccine;
     @JsonProperty("slots")
@@ -41,20 +45,20 @@ public class Session {
     @JsonIgnore
     public boolean shouldNotify = true;
 
+    public boolean validForAllAges() {
+        return ofNullable(allowAllAge).orElse(false);
+    }
+
+    public boolean validBetween18And44() {
+        return minAgeLimit >= 18 && minAgeLimit <= 44;
+    }
+
+    public boolean validFor45Above() {
+        return minAgeLimit >= 45;
+    }
+
     public boolean ageLimit18AndAbove() {
         return minAgeLimit >= 18;
-    }
-
-    public boolean ageLimitExactly18() {
-        return minAgeLimit == 18;
-    }
-
-    public boolean ageLimitBetween18And45() {
-        return minAgeLimit >= 18 && minAgeLimit < 45;
-    }
-
-    public boolean ageLimitExactly45() {
-        return minAgeLimit == 45;
     }
 
     public boolean hasCapacity() {
