@@ -76,6 +76,28 @@ public class CowinLambdaWrapperTest {
         assertThat(actual.getCenters().get(0).getSessions().get(0).isShouldNotify(), is(false));
     }
 
+    /*
+     * Cancellation is when available capacity increases by 1 or 2 slots only.
+     */
+    @Test
+    public void testFreshAvailabilityWithCancellations() {
+        CowinLambdaWrapper lambdaWrapper = new CowinLambdaWrapper(awsConfig, awsLambda, awsLambdaAsync,
+                objectMapper, vaccinePersistence, kafkaTemplate);
+        Mockito.when(vaccinePersistence.findExistingSession(1205L, "22-05-2021", 18, "COVAXIN"))
+                .thenReturn(Optional.of(SessionEntity.builder()
+                        .id("32bbb37e-7cb4-4942-bd92-ac56d86490f9")
+                        .vaccine("COVAXIN")
+                        .availableCapacity(13)
+                        .availableCapacityDose1(13)
+                        .availableCapacityDose2(0)
+                        .minAgeLimit(18)
+                        .build()));
+        final VaccineCenters actual = lambdaWrapper.freshAvailability(buildVaccineCenters());
+        assertThat(actual.getCenters().size(), is(1));
+        assertThat(actual.getCenters().get(0).getSessions().size(), is(1));
+        assertThat(actual.getCenters().get(0).getSessions().get(0).isShouldNotify(), is(false));
+    }
+
     @NotNull
     private VaccineCenters buildVaccineCenters() {
         final VaccineCenters vaccineCenters = new VaccineCenters();

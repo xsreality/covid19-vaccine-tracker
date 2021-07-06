@@ -32,6 +32,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -127,14 +128,22 @@ public class CowinLambdaWrapper implements DisposableBean {
             final Optional<SessionEntity> existingSession = vaccinePersistence.findExistingSession(
                     Long.valueOf(center.getCenterId()), session.getDate(), session.getMinAgeLimit(), session.getVaccine());
             log.debug("Found existing session: {}", existingSession.orElse(null));
-            boolean shouldNotify =
-                    existingSession
-                            .map(existing -> session.getAvailableCapacityDose1() > existing.getAvailableCapacityDose1()
-                                    || session.getAvailableCapacityDose2() > existing.getAvailableCapacityDose2())
-                            .orElse(true);
+            boolean shouldNotify = existingSession.map(areFreshSlotsAvailable(session)).orElse(true);
             log.debug("shouldNotify evaluated to {}", shouldNotify);
             session.setShouldNotify(shouldNotify);
         };
+    }
+
+    @NotNull
+    private Function<SessionEntity, Boolean> areFreshSlotsAvailable(Session session) {
+        /*
+         * Fresh slots are available if
+         * 1. Available capacity is higher than existing known capacity (from DB)
+         * 2. Available capacity must be higher than existing capacity by at least 3 slots
+         * (Increase of 1 or 2 slots is considered cancellation and not fresh slots.
+         */
+        return existing -> (session.getAvailableCapacityDose1() > existing.getAvailableCapacityDose1() && session.getAvailableCapacityDose1() - existing.getAvailableCapacityDose1() > 2)
+                || (session.getAvailableCapacityDose2() > existing.getAvailableCapacityDose2() && session.getAvailableCapacityDose2() - existing.getAvailableCapacityDose2() > 2);
     }
 
     public void sendUpdatedPincodesToKafka(VaccineCenters vaccineCenters) {
