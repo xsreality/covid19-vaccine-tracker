@@ -1,5 +1,6 @@
 package org.covid19.vaccinetracker.availability.aws;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import com.amazonaws.handlers.AsyncHandler;
@@ -12,8 +13,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.covid19.vaccinetracker.model.Center;
+import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
+import org.covid19.vaccinetracker.persistence.mariadb.entity.SessionEntity;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.DisposableBean;
@@ -22,11 +25,15 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import lombok.AllArgsConstructor;
@@ -86,6 +93,7 @@ public class CowinLambdaWrapper implements DisposableBean {
                         toVaccineCenters(result)
                                 .stream()
                                 .filter(Objects::nonNull)
+                                .map(vaccineCenters -> freshAvailability(vaccineCenters))
                                 .forEach(vaccineCenters -> {
                                     vaccinePersistence.persistVaccineCenters(vaccineCenters); // DB
                                     sendUpdatedPincodesToKafka(vaccineCenters); // Kafka
@@ -94,6 +102,48 @@ public class CowinLambdaWrapper implements DisposableBean {
                 );
             }
         };
+    }
+
+    @VisibleForTesting
+    VaccineCenters freshAvailability(VaccineCenters vaccineCenters) {
+        List<Center> centersWithFreshSlots =
+                vaccineCenters.getCenters()
+                        .stream()
+                        .peek(center -> {
+                            log.debug("Checking fresh availability of {}", center);
+                            List<Session> latestSessions = center.getSessions()
+                                    .stream()
+                                    .peek(maybeUpdateIfSessionHasFreshSlots(center))
+                                    .collect(Collectors.toList());
+                            center.setSessions(latestSessions);
+                        })
+                        .collect(Collectors.toList());
+        return new VaccineCenters(centersWithFreshSlots);
+    }
+
+    @NotNull
+    private Consumer<Session> maybeUpdateIfSessionHasFreshSlots(Center center) {
+        return session -> {
+            log.debug("Analyzing new session from CoWIN {}", session);
+            final Optional<SessionEntity> existingSession = vaccinePersistence.findExistingSession(
+                    Long.valueOf(center.getCenterId()), session.getDate(), session.getMinAgeLimit(), session.getVaccine());
+            log.debug("Found existing session: {}", existingSession.orElse(null));
+            boolean shouldNotify = existingSession.map(areFreshSlotsAvailable(session)).orElse(true);
+            log.debug("shouldNotify evaluated to {}", shouldNotify);
+            session.setShouldNotify(shouldNotify);
+        };
+    }
+
+    @NotNull
+    private Function<SessionEntity, Boolean> areFreshSlotsAvailable(Session session) {
+        /*
+         * Fresh slots are available if
+         * 1. Available capacity is higher than existing known capacity (from DB)
+         * 2. Available capacity must be higher than existing capacity by at least 3 slots
+         * (Increase of 1 or 2 slots is considered cancellation and not fresh slots.
+         */
+        return existing -> (session.getAvailableCapacityDose1() > existing.getAvailableCapacityDose1() && session.getAvailableCapacityDose1() - existing.getAvailableCapacityDose1() > 2)
+                || (session.getAvailableCapacityDose2() > existing.getAvailableCapacityDose2() && session.getAvailableCapacityDose2() - existing.getAvailableCapacityDose2() > 2);
     }
 
     public void sendUpdatedPincodesToKafka(VaccineCenters vaccineCenters) {

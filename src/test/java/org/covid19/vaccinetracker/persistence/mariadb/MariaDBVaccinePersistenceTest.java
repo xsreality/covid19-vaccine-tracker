@@ -18,6 +18,7 @@ import java.util.Optional;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -79,6 +80,19 @@ public class MariaDBVaccinePersistenceTest {
         vaccinePersistence.persistVaccineCenters(vaccineCenters);
         assertTrue(sessionRepository.findById("32bbb37e-7cb4-4942-bd92-ac56d86490f9").isPresent());
         assertTrue(centerRepository.findById(1205L).isPresent());
+    }
+
+    @Test
+    public void testFindLatestSession() {
+        vaccinePersistence.persistVaccineCenters(buildVaccineCenters());
+        final Optional<SessionEntity> session = vaccinePersistence.findExistingSession(1205L, "22-05-2021", 18, "COVAXIN");
+        assertTrue(session.isPresent());
+        assertEquals("22-05-2021", session.get().getDate());
+        assertEquals(18, session.get().getMinAgeLimit());
+        assertEquals("COVAXIN", session.get().getVaccine());
+
+        final Optional<SessionEntity> shouldNotExist = vaccinePersistence.findExistingSession(1205L, "23-05-2021", 18, "COVAXIN");
+        assertFalse(shouldNotExist.isPresent());
     }
 
     @NotNull

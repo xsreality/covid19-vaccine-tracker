@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
@@ -103,7 +104,7 @@ public class MariaDBVaccinePersistence implements VaccinePersistence {
                     .availableCapacityDose1(nonNull(session.availableCapacityDose1) ? session.availableCapacityDose1 : 0)
                     .availableCapacityDose2(nonNull(session.availableCapacityDose2) ? session.availableCapacityDose2 : 0)
                     .minAgeLimit(session.minAgeLimit)
-                    .processedAt(processedAt)
+                    .processedAt(session.shouldNotify ? processedAt : LocalDateTime.now())
                     .build()));
             sessionRepository.saveAll(sessionEntities);
             centerEntities.add(CenterEntity.builder()
@@ -123,5 +124,12 @@ public class MariaDBVaccinePersistence implements VaccinePersistence {
     @Override
     public void cleanupOldCenters(String date) {
         this.centerRepository.deleteBySessionsDate(date);
+    }
+
+    @Override
+    public Optional<SessionEntity> findExistingSession(Long centerId, String date, Integer age, String vaccine) {
+        return sessionRepository.findLatestSession(centerId, date, age, vaccine)
+                .stream()
+                .findFirst();
     }
 }

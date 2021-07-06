@@ -50,8 +50,8 @@ public class NotificationCache {
         }
 
         // obtain "last notified at" in IST zone
-        String lastNotifiedAt = ZonedDateTime.of(fromCache.get().getNotifiedAt(), ZoneId.of("UTC")).withZoneSameInstant(ZoneId.of(INDIA_TIMEZONE)).format(Utils.dtf);
-        return !DigestUtils.sha256Hex(bytes).equals(fromCache.get().getNotificationHash()) && Utils.past15mins(lastNotifiedAt);
+//        String lastNotifiedAt = ZonedDateTime.of(fromCache.get().getNotifiedAt(), ZoneId.of("UTC")).withZoneSameInstant(ZoneId.of(INDIA_TIMEZONE)).format(Utils.dtf);
+        return !DigestUtils.sha256Hex(bytes).equals(fromCache.get().getNotificationHash());
     }
 
     public void updateUser(String user, String pincode, List<Center> centers) {
