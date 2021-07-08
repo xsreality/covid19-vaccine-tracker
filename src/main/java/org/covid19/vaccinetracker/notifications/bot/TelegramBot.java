@@ -90,8 +90,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                     this.botBackend.cancelUserRequest(chatId);
                     String message = String.format("Okay %s, I will no longer send you any alerts. ठीक है, मैं अब आपको कोई अलर्ट नहीं भेजूंगी।\n\n" +
                             "I hope you were able to book vaccine slot with my help. Please send feedback to @xsreality\n" +
-                            "मुझे आशा है कि आप मेरी मदद से वैक्सीन स्लॉट बुक करने में सक्षम थे। कृपया प्रतिक्रिया भेजें @xsreality\n\n" +
-                            "If the bot helped you, <a href=\"https://www.buymeacoffee.com/xsreality\">buy me a coffee</a> :)", getFirstName(ctx.update()));
+                            "मुझे आशा है कि आप मेरी मदद से वैक्सीन स्लॉट बुक करने में सक्षम थे। कृपया प्रतिक्रिया भेजें @xsreality", getFirstName(ctx.update()));
                     silent.execute(SendMessage.builder().chatId(chatId).text(message).parseMode(ParseMode.HTML).build());
                     notifyOwner(String.format("%s (%s, %s) stopped subscription.",
                             Utils.translateName(ctx.update().getMessage().getChat()), chatId, getUserName(ctx)));
@@ -104,7 +103,6 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                     String chatId = getChatId(ctx.update());
                     String message = "Hi! My name is Abhinav Sonkar (@xsreality). I am a software engineer.\n\n" +
                             "I developed this bot to help people book CoWIN slots and get vaccinated.\n\n" +
-                            "Are you also a software engineer? Check out the <a href=\"https://github.com/xsreality/covid19-vaccine-tracker\">architecture and source code</a> of the bot!\n\n" +
                             "With over 7000 registered users, 500 districts and 1000's of pincodes, it is becoming expensive to " +
                             "keep running the bot. If you like my work and want to support it, <a href=\"https://www.buymeacoffee.com/xsreality\">buy me a coffee</a>.";
                     silent.execute(SendMessage.builder().chatId(chatId).text(message).parseMode(ParseMode.HTML).build());
