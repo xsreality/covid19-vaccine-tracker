@@ -10,6 +10,7 @@ import org.covid19.vaccinetracker.notifications.bot.BotService;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.covid19.vaccinetracker.userrequests.model.District;
+import org.covid19.vaccinetracker.userrequests.model.Dose;
 import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.covid19.vaccinetracker.userrequests.reconciliation.PincodeReconciliation;
 import org.covid19.vaccinetracker.utils.Utils;
@@ -30,6 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 
 import static java.util.Collections.emptyList;
+import static org.covid19.vaccinetracker.userrequests.model.Dose.DOSE_BOTH;
 
 @Slf4j
 @RestController
@@ -118,9 +120,9 @@ public class Api {
     @GetMapping("/add/user_request")
     public ResponseEntity<?> addUserRequest(@RequestParam final String chatId, @RequestParam final String pincodes) {
         if (pincodes.trim().isEmpty()) {
-            this.userRequestManager.acceptUserRequest(chatId, List.of());
+            this.userRequestManager.acceptUserRequest(chatId, List.of(), DOSE_BOTH.toString());
         } else {
-            this.userRequestManager.acceptUserRequest(chatId, Utils.splitPincodes(pincodes));
+            this.userRequestManager.acceptUserRequest(chatId, Utils.splitPincodes(pincodes), DOSE_BOTH.toString());
         }
         return ResponseEntity.ok().build();
     }
