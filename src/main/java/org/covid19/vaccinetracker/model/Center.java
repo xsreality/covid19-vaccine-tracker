@@ -10,6 +10,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import static java.util.Optional.ofNullable;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Data
 @Builder
@@ -41,10 +43,25 @@ public class Center {
     public String feeType;
     @JsonProperty("sessions")
     public List<Session> sessions = null;
+    @JsonProperty("vaccine_fees")
+    public List<VaccineFee> vaccineFees;
 
     public boolean areVaccineCentersAvailableFor18plus() {
         return this.getSessions()
                 .stream()
                 .anyMatch(session -> session.ageLimit18AndAbove() && session.hasCapacity());
+    }
+
+    public boolean paid() {
+        return ofNullable(this.feeType).map(s -> s.equalsIgnoreCase("Paid")).orElse(false);
+    }
+
+    public String costFor(String vaccine) {
+        return this.vaccineFees
+                .stream()
+                .filter(vaccineFee -> vaccineFee.isVaccine(vaccine))
+                .map(vaccineFee1 -> "₹" + vaccineFee1.getFee())
+                .findFirst()
+                .orElse("Unknown");
     }
 }

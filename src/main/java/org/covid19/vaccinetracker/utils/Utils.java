@@ -6,7 +6,6 @@ import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.JWTParser;
 
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
@@ -205,9 +204,9 @@ public class Utils {
         for (Center center : eligibleCenters) {
             text.append(String.format("<b>%s (%s %s) - %s</b>\n<pre>", center.name, center.districtName, center.pincode, center.feeType));
             for (Session session : center.sessions) {
-                text.append(String.format("\n%s doses (Dose 1: %s, Dose 2: %s) of %s for %s+ age group available on %s\n",
+                text.append(String.format("\n%s doses (Dose 1: %s, Dose 2: %s) of %s for %s+ age group available on %s for %s\n",
                         session.availableCapacity, session.availableCapacityDose1, session.availableCapacityDose2,
-                        session.vaccine, session.minAgeLimit, humanReadable(session.date)));
+                        session.vaccine, session.minAgeLimit, humanReadable(session.date), cost(center, session.vaccine)));
                 text.append(String.format(localizedNotificationText(center.getStateName()) + "\n", session.minAgeLimit, session.vaccine, session.availableCapacity, session.availableCapacityDose1, session.availableCapacityDose2, humanReadable(session.date)));
             }
             text.append("</pre>\n");
@@ -219,6 +218,13 @@ public class Utils {
             text.append("For registration, please visit <a href=\"https://selfregistration.cowin.gov.in/\">CoWIN Website</a>\n");
             return text.toString();
         }
+    }
+
+    public static String cost(Center center, String vaccine) {
+        if (center.paid()) {
+            return center.costFor(vaccine);
+        }
+        return "Free";
     }
 
     public static String localizedNotificationText(String stateName) {

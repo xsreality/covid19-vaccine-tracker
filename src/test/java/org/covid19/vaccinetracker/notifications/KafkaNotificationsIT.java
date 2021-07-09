@@ -4,6 +4,7 @@ import org.covid19.vaccinetracker.availability.UpdatedPincodesProducerConfig;
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.model.VaccineCenters;
+import org.covid19.vaccinetracker.model.VaccineFee;
 import org.covid19.vaccinetracker.notifications.bot.BotService;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.persistence.kafka.KafkaStateStores;
@@ -149,6 +150,12 @@ public class KafkaNotificationsIT {
                                         .minAgeLimit(18)
                                         .date("15-05-2021")
                                         .build()))
+                        .vaccineFees(List.of(
+                                VaccineFee.builder()
+                                        .vaccine("COVISHIELD")
+                                        .fee("780")
+                                        .build()
+                        ))
                         .build()));
     }
 

@@ -2,6 +2,7 @@ package org.covid19.vaccinetracker.utils;
 
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
+import org.covid19.vaccinetracker.model.VaccineFee;
 import org.junit.jupiter.api.Test;
 
 import java.time.ZoneId;
@@ -50,16 +51,17 @@ public class UtilsTest {
     @Test
     public void testNotificationText() {
         String expected = "<b>Premlok Park Disp- 2(18-44) (Pune 411033) - Paid</b>\n<pre>" +
-                "\n8 doses (Dose 1: 3, Dose 2: 5) of COVISHIELD for 18+ age group available on 4th May\n" +
+                "\n8 doses (Dose 1: 3, Dose 2: 5) of COVISHIELD for 18+ age group available on 4th May for ₹780\n" +
                 "(18+ आयु वर्ग के लिए COVISHIELD की 8 खुराकें (खुराक 1: 3, खुराक 2: 5) 4th May को उपलब्ध हैं)\n" +
-                "\n15 doses (Dose 1: 12, Dose 2: 3) of COVAXIN for 18+ age group available on 5th May\n" +
+                "\n15 doses (Dose 1: 12, Dose 2: 3) of COVAXIN for 18+ age group available on 5th May for ₹1410\n" +
                 "(18+ आयु वर्ग के लिए COVAXIN की 15 खुराकें (खुराक 1: 12, खुराक 2: 3) 5th May को उपलब्ध हैं)\n</pre>\n" +
                 "For registration, please visit <a href=\"https://selfregistration.cowin.gov.in/\">CoWIN Website</a>\n";
         List<Center> centers = new ArrayList<>();
         List<Session> sessions = new ArrayList<>();
         sessions.add(Session.builder().availableCapacity(8).availableCapacityDose1(3).availableCapacityDose2(5).minAgeLimit(18).date("04-05-2021").vaccine("COVISHIELD").build());
         sessions.add(Session.builder().availableCapacity(15).availableCapacityDose1(12).availableCapacityDose2(3).minAgeLimit(18).date("05-05-2021").vaccine("COVAXIN").build());
-        centers.add(Center.builder().name("Premlok Park Disp- 2(18-44)").districtName("Pune").pincode(411033).feeType("Paid").sessions(sessions).build());
+        centers.add(Center.builder().name("Premlok Park Disp- 2(18-44)").districtName("Pune").pincode(411033).feeType("Paid").sessions(sessions)
+                .vaccineFees(List.of(VaccineFee.builder().vaccine("COVISHIELD").fee("780").build(), VaccineFee.builder().vaccine("COVAXIN").fee("1410").build())).build());
         assertEquals(expected, Utils.buildNotificationMessage(centers), "Notification text does not match");
     }
 
