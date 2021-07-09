@@ -45,6 +45,8 @@ public class SessionEntity {
 
     private String vaccine;
 
+    private String cost;
+
     @Column(name = "processed_at")
     private LocalDateTime processedAt;
 }

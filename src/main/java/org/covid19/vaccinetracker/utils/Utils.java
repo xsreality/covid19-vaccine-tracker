@@ -26,7 +26,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -208,7 +207,7 @@ public class Utils {
             for (Session session : center.sessions) {
                 text.append(String.format("\n%s doses (Dose 1: %s, Dose 2: %s) of %s for %s+ age group available on %s for %s\n",
                         session.availableCapacity, session.availableCapacityDose1, session.availableCapacityDose2,
-                        session.vaccine, session.minAgeLimit, humanReadable(session.date), cost(center, session.vaccine)));
+                        session.vaccine, session.minAgeLimit, humanReadable(session.date), ofNullable(session.getCost()).map(s -> "₹" + s).orElse("Unknown")));
                 text.append(String.format(localizedNotificationText(center.getStateName()) + "\n", session.minAgeLimit, session.vaccine, session.availableCapacity, session.availableCapacityDose1, session.availableCapacityDose2, humanReadable(session.date)));
             }
             text.append("</pre>\n");
@@ -220,16 +219,6 @@ public class Utils {
             text.append("For registration, please visit <a href=\"https://selfregistration.cowin.gov.in/\">CoWIN Website</a>\n");
             return text.toString();
         }
-    }
-
-    public static String cost(Center center, String vaccine) {
-        if (isNull(center.feeType)) {
-            return "Unknown";
-        }
-        if (center.paid()) {
-            return center.costFor(vaccine);
-        }
-        return "Free";
     }
 
     public static String localizedNotificationText(String stateName) {
