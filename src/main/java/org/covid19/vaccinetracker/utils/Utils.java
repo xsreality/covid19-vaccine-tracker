@@ -203,7 +203,7 @@ public class Utils {
     public static String buildNotificationMessage(List<Center> eligibleCenters) {
         StringBuilder text = new StringBuilder();
         for (Center center : eligibleCenters) {
-            text.append(String.format("<b>%s (%s %s)</b>\n<pre>", center.name, center.districtName, center.pincode));
+            text.append(String.format("<b>%s (%s %s) - %s</b>\n<pre>", center.name, center.districtName, center.pincode, center.feeType));
             for (Session session : center.sessions) {
                 text.append(String.format("\n%s doses (Dose 1: %s, Dose 2: %s) of %s for %s+ age group available on %s\n",
                         session.availableCapacity, session.availableCapacityDose1, session.availableCapacityDose2,
