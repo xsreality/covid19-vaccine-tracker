@@ -3,7 +3,9 @@ package org.covid19.vaccinetracker.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -57,8 +59,8 @@ public class Center {
     }
 
     public String costFor(String vaccine) {
-        return this.vaccineFees
-                .stream()
+        return ofNullable(this.vaccineFees)
+                .stream().flatMap(Collection::stream)
                 .filter(vaccineFee -> vaccineFee.isVaccine(vaccine))
                 .map(vaccineFee1 -> "₹" + vaccineFee1.getFee())
                 .findFirst()

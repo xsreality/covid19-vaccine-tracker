@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -35,6 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 import static java.util.Map.entry;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static java.util.Optional.ofNullable;
 
 @Slf4j
 public class Utils {
@@ -202,7 +204,7 @@ public class Utils {
     public static String buildNotificationMessage(List<Center> eligibleCenters) {
         StringBuilder text = new StringBuilder();
         for (Center center : eligibleCenters) {
-            text.append(String.format("<b>%s (%s %s) - %s</b>\n<pre>", center.name, center.districtName, center.pincode, center.feeType));
+            text.append(String.format("<b>%s (%s %s) - %s</b>\n<pre>", center.name, center.districtName, center.pincode, ofNullable(center.feeType).orElse("Unknown")));
             for (Session session : center.sessions) {
                 text.append(String.format("\n%s doses (Dose 1: %s, Dose 2: %s) of %s for %s+ age group available on %s for %s\n",
                         session.availableCapacity, session.availableCapacityDose1, session.availableCapacityDose2,
@@ -221,6 +223,9 @@ public class Utils {
     }
 
     public static String cost(Center center, String vaccine) {
+        if (isNull(center.feeType)) {
+            return "Unknown";
+        }
         if (center.paid()) {
             return center.costFor(vaccine);
         }
