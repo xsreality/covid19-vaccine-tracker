@@ -8,19 +8,14 @@ import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.UserNotification;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.UserNotificationId;
 import org.covid19.vaccinetracker.persistence.mariadb.repository.UserNotificationRepository;
-import org.covid19.vaccinetracker.utils.Utils;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
-
-import static org.covid19.vaccinetracker.utils.Utils.INDIA_TIMEZONE;
 
 @Slf4j
 @Component
@@ -31,6 +26,10 @@ public class NotificationCache {
     public NotificationCache(UserNotificationRepository repository, ObjectMapper objectMapper) {
         this.repository = repository;
         this.objectMapper = objectMapper;
+    }
+
+    public Optional<UserNotification> userNotificationFor(UserNotificationId id) {
+        return repository.findById(id);
     }
 
     public boolean isNewNotification(String user, String pincode, List<Center> centers) {
