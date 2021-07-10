@@ -67,7 +67,8 @@ public class TelegramLambdaWrapper {
                         .filter(response -> !response.getStatus())
                         .ifPresent(response -> {
                             log.warn("Error sending TG notification to {}, error {}", response.getChatId(), response.getErrorMsg());
-                            if (response.getErrorMsg().contains("bot was blocked by the user")) {
+                            if (response.getErrorMsg().contains("bot was blocked by the user")
+                                    || response.getErrorMsg().contains("user is deactivated")) {
                                 // stop user preference to prevent further alerts being sent
                                 userRequestManager.acceptUserRequest(response.getChatId(), emptyList());
                                 log.warn("User {} pincode preferences cleared", response.getChatId());

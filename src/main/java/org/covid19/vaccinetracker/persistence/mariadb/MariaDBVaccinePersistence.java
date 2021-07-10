@@ -51,6 +51,7 @@ public class MariaDBVaccinePersistence implements VaccinePersistence {
                     .availableCapacity(sessionEntity.getAvailableCapacity())
                     .availableCapacityDose1(sessionEntity.getAvailableCapacityDose1())
                     .availableCapacityDose2(sessionEntity.getAvailableCapacityDose2())
+                    .cost(sessionEntity.getCost())
                     .minAgeLimit(sessionEntity.getMinAgeLimit())
                     .build()));
             centers.add(Center.builder()
@@ -103,6 +104,7 @@ public class MariaDBVaccinePersistence implements VaccinePersistence {
                     .availableCapacity(nonNull(session.availableCapacity) ? session.availableCapacity : 0)
                     .availableCapacityDose1(nonNull(session.availableCapacityDose1) ? session.availableCapacityDose1 : 0)
                     .availableCapacityDose2(nonNull(session.availableCapacityDose2) ? session.availableCapacityDose2 : 0)
+                    .cost(nonNull(center.feeType) ? (center.paid() ? center.costFor(session.vaccine) : "Free") : null)
                     .minAgeLimit(session.minAgeLimit)
                     .processedAt(session.shouldNotify ? processedAt : LocalDateTime.now())
                     .build()));

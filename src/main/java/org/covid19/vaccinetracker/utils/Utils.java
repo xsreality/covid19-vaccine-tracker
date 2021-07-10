@@ -6,7 +6,6 @@ import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.JWTParser;
 
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.covid19.vaccinetracker.model.Center;
 import org.covid19.vaccinetracker.model.Session;
@@ -36,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 import static java.util.Map.entry;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static java.util.Optional.ofNullable;
 
 @Slf4j
 public class Utils {
@@ -203,11 +203,11 @@ public class Utils {
     public static String buildNotificationMessage(List<Center> eligibleCenters) {
         StringBuilder text = new StringBuilder();
         for (Center center : eligibleCenters) {
-            text.append(String.format("<b>%s (%s %s)</b>\n<pre>", center.name, center.districtName, center.pincode));
+            text.append(String.format("<b>%s (%s %s) - %s</b>\n<pre>", center.name, center.districtName, center.pincode, ofNullable(center.feeType).orElse("Unknown")));
             for (Session session : center.sessions) {
-                text.append(String.format("\n%s doses (Dose 1: %s, Dose 2: %s) of %s for %s+ age group available on %s\n",
+                text.append(String.format("\n%s doses (Dose 1: %s, Dose 2: %s) of %s for %s+ age group available on %s for %s\n",
                         session.availableCapacity, session.availableCapacityDose1, session.availableCapacityDose2,
-                        session.vaccine, session.minAgeLimit, humanReadable(session.date)));
+                        session.vaccine, session.minAgeLimit, humanReadable(session.date), ofNullable(session.getCost()).map(s -> "₹" + s).orElse("Unknown")));
                 text.append(String.format(localizedNotificationText(center.getStateName()) + "\n", session.minAgeLimit, session.vaccine, session.availableCapacity, session.availableCapacityDose1, session.availableCapacityDose2, humanReadable(session.date)));
             }
             text.append("</pre>\n");

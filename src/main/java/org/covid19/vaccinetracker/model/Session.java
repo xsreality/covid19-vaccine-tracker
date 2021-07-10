@@ -40,6 +40,8 @@ public class Session {
     public Boolean allowAllAge;
     @JsonProperty("vaccine")
     public String vaccine;
+    @JsonIgnore
+    private String cost;
     @JsonProperty("slots")
     public List<String> slots = null;
     @JsonIgnore

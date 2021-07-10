@@ -102,6 +102,18 @@ public class UserRequestManager {
         }
     }
 
+    public void acceptUserRequest(String userId, List<String> pincodes, String dose) {
+        final UserRequest request = kafkaStateStores.userRequestById(userId)
+                .map(existing -> new UserRequest(existing.getChatId(), pincodes, existing.getDistricts(), existing.getAge(), dose, existing.getVaccine(), null))
+                .orElse(new UserRequest(userId, pincodes, List.of(), AGE_18_44.toString(), dose, Vaccine.ALL.toString(), null));
+        kafkaTemplate.setProducerListener(producerListener());
+        try {
+            kafkaTemplate.send(userRequestsTopic, userId, request).get();
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("Error producing user request to Kafka: {}", e.getMessage());
+        }
+    }
+
     public void updateUserRequestLastNotifiedAt(UserRequest userRequest, String lastNotifiedAt) {
         UserRequest updatedUserRequest = new UserRequest(userRequest.getChatId(), userRequest.getPincodes(), userRequest.getDistricts(), userRequest.getAge(), userRequest.getDose(), userRequest.getVaccine(), lastNotifiedAt);
         kafkaTemplate.setProducerListener(producerListener());
