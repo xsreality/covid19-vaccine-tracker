@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -62,7 +61,7 @@ public class Center {
         return ofNullable(this.vaccineFees)
                 .stream().flatMap(Collection::stream)
                 .filter(vaccineFee -> vaccineFee.isVaccine(vaccine))
-                .map(vaccineFee1 -> "₹" + vaccineFee1.getFee())
+                .map(VaccineFee::getFee)
                 .findFirst()
                 .orElse("Unknown");
     }
