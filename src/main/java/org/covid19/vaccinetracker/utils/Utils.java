@@ -17,6 +17,7 @@ import java.text.ParseException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -259,5 +260,9 @@ public class Utils {
             log.error("Error parsing response from Lambda: {}", e.getMessage());
             return null;
         }
+    }
+
+    public static ZonedDateTime convertToIST(LocalDateTime time) {
+        return time.atZone(ZoneId.of(INDIA_TIMEZONE));
     }
 }

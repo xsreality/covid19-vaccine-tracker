@@ -1,6 +1,7 @@
 package org.covid19.vaccinetracker.notifications.absentalerts;
 
 import org.covid19.vaccinetracker.notifications.NotificationCache;
+import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.persistence.mariadb.entity.UserNotificationId;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.covid19.vaccinetracker.userrequests.model.UserRequest;
@@ -8,6 +9,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -24,15 +26,25 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 public class AbsentAlertNotifications {
-
     private final UserRequestManager userRequestManager;
     private final NotificationCache cache;
     private final AbsentAlertAnalyzer analyzer;
+    private final VaccinePersistence vaccinePersistence;
 
-    public AbsentAlertNotifications(UserRequestManager userRequestManager, NotificationCache cache, AbsentAlertAnalyzer analyzer) {
+    public AbsentAlertNotifications(UserRequestManager userRequestManager, NotificationCache cache,
+                                    AbsentAlertAnalyzer analyzer, VaccinePersistence vaccinePersistence) {
         this.userRequestManager = userRequestManager;
         this.cache = cache;
         this.analyzer = analyzer;
+        this.vaccinePersistence = vaccinePersistence;
+    }
+
+    public Optional<AbsentAlertCause> onDemandAbsentAlertsNotification(String userId) {
+        return Stream.of(userRequestManager.fetchUserRequest(userId))
+                .filter(userRequest -> !userRequest.getPincodes().isEmpty())
+                .flatMap(getLatestNotifications())
+                .map(identifyCause())
+                .findFirst();
     }
 
     @Scheduled(cron = "${jobs.cron.absentalerts.notifications:-}", zone = "IST")
@@ -40,7 +52,7 @@ public class AbsentAlertNotifications {
         userRequestManager.fetchAllUserRequests()
                 .stream()
                 .filter(activeUsers())
-                .flatMap(getLastNotifications())
+                .flatMap(getLatestNotifications())
                 .map(identifyCause())
                 .collect(Collectors.groupingBy(AbsentAlertCause::getUserId))
                 .forEach(sendNotification());
@@ -50,7 +62,7 @@ public class AbsentAlertNotifications {
         return userRequest -> !userRequest.getPincodes().isEmpty();
     }
 
-    private Function<UserRequest, Stream<AbsentAlertSource>> getLastNotifications() {
+    private Function<UserRequest, Stream<AbsentAlertSource>> getLatestNotifications() {
         return userRequest -> userRequest.getPincodes()
                 .stream()
                 .map(pincode -> AbsentAlertSource.builder()
@@ -65,7 +77,7 @@ public class AbsentAlertNotifications {
     }
 
     private Function<AbsentAlertSource, AbsentAlertCause> identifyCause() {
-        return analyzer::analyze;
+        return source -> analyzer.analyze(source, vaccinePersistence.findAllSessionsByPincode(source.getPincode()));
     }
 
     private BiConsumer<String, List<AbsentAlertCause>> sendNotification() {
