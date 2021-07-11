@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static java.util.Collections.emptyList;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -24,7 +23,6 @@ public class AbsentAlertAnalyzer {
         AbsentAlertCause absentAlertCause = AbsentAlertCause.builder()
                 .userId(source.getUserId())
                 .pincode(source.getPincode())
-                .causes(emptyList())
                 .build();
 
         List<CenterSession> relevantSessions = sessions
