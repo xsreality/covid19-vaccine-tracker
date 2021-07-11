@@ -17,7 +17,7 @@ public class AbsentAlertsAnalyzerTest {
         AbsentAlertAnalyzer analyzer = new AbsentAlertAnalyzer();
         final AbsentAlertCause cause = analyzer.analyze(source, sessions);
         log.info("Cause is {}", cause.getCauses());
-        log.info("Alternative is {}", cause.getAlternatives());
+        log.info("Alternative is {}", cause.getRecents());
     }
 
     private List<CenterSession> createSessions() {

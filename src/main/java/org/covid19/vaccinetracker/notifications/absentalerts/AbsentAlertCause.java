@@ -1,6 +1,5 @@
 package org.covid19.vaccinetracker.notifications.absentalerts;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,7 +15,7 @@ public class AbsentAlertCause {
     private String pincode;
     private String lastNotified;
     private List<String> causes;
-    private List<String> alternatives;
+    private List<String> recents;
 
     public void addCause(String cause) {
         if (isNull(causes)) {
@@ -25,10 +24,10 @@ public class AbsentAlertCause {
         causes.add(cause);
     }
 
-    public void addAlternative(String alternative) {
-        if (isNull(alternatives)) {
-            alternatives = new ArrayList<>();
+    public void addRecent(String recent) {
+        if (isNull(recents)) {
+            recents = new ArrayList<>();
         }
-        alternatives.add(alternative);
+        recents.add(recent);
     }
 }

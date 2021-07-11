@@ -16,9 +16,11 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparing;
+import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.maxBy;
+import static java.util.stream.Collectors.reducing;
 
 /**
  * Analyze why a user has not received any alerts.
@@ -33,7 +35,6 @@ public class AbsentAlertAnalyzer {
                 .build();
 
         List<CenterSession> relevantSessions = sessions.stream().filter(relevantSessionPredicate(source)).collect(Collectors.toList());
-        List<CenterSession> alternativeSessions = sessions.stream().filter(relevantSessionPredicate(source).negate()).collect(Collectors.toList());
 
         // set last notified in cause
         ofNullable(source.getLatestNotification())
@@ -63,21 +64,25 @@ public class AbsentAlertAnalyzer {
             absentAlertCause.addCause(String.format("No centers found for pincode %s.", source.getPincode()));
         }
 
-        // check if sessions have opened outside user preferences for same pincode
-        // and include them in causes
-        if (!alternativeSessions.isEmpty()) {
-            alternativeSessions
-                    .stream()
-                    .collect(groupingBy(CenterSession::getCenterName, maxBy(comparing(o -> toLocalDate(o.getSessionDate())))))
-                    .values()
-                    .stream()
-                    .flatMap(Optional::stream)
-                    .filter(session -> matchingAgePreference(source.getAge(), session.getMinAge()))
-                    .forEach(session -> absentAlertCause.addAlternative(
-                            String.format("%s (%s %s) last had open slots for %s on %s",
-                                    session.getCenterName(), session.getDistrictName(),
-                                    session.getPincode(), session.getSessionVaccine(), session.getSessionDate())));
-        }
+        // identify recent 5 sessions
+        sessions
+                .stream()
+                .collect(groupingBy(CenterSession::getCenterName, reducing((old, current) -> {
+                    if (!old.getSessionDate().equalsIgnoreCase(current.getSessionDate())) {
+                        current.setMultipleDates((nonNull(old.getMultipleDates()) ? old.getMultipleDates() : old.getSessionDate()) + ", " + current.getSessionDate());
+                    }
+                    return current;
+                })))
+                .values()
+                .stream()
+                .flatMap(Optional::stream)
+                .sorted((o1, o2) -> toLocalDate(o2.getSessionDate()).compareTo(toLocalDate(o1.getSessionDate())))
+                .limit(5)
+                .forEach(session -> absentAlertCause.addRecent(
+                        String.format("%s (%s %s) had availability of %s for %d+ on %s",
+                                session.getCenterName(), session.getDistrictName(),
+                                session.getPincode(), session.getSessionVaccine(), session.getMinAge(),
+                                nonNull(session.getMultipleDates()) ? session.getMultipleDates() : session.getSessionDate())));
         return absentAlertCause;
     }
 
