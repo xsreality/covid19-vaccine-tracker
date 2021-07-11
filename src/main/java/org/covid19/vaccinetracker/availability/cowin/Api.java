@@ -215,8 +215,6 @@ public class Api {
 
     @GetMapping("/absent_alerts")
     public ResponseEntity<?> alertAbsentCause(@RequestParam final String userId) {
-        return absentAlertNotifications.onDemandAbsentAlertsNotification(userId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(absentAlertNotifications.onDemandAbsentAlertsNotification(userId));
     }
 }

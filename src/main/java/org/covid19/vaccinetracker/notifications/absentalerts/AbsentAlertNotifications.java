@@ -9,7 +9,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -39,12 +39,13 @@ public class AbsentAlertNotifications {
         this.vaccinePersistence = vaccinePersistence;
     }
 
-    public Optional<AbsentAlertCause> onDemandAbsentAlertsNotification(String userId) {
+    public Map<String, List<AbsentAlertCause>> onDemandAbsentAlertsNotification(String userId) {
         return Stream.of(userRequestManager.fetchUserRequest(userId))
                 .filter(userRequest -> !userRequest.getPincodes().isEmpty())
                 .flatMap(getLatestNotifications())
                 .map(identifyCause())
-                .findFirst();
+                .collect(Collectors.groupingBy(AbsentAlertCause::getUserId))
+                ;
     }
 
     @Scheduled(cron = "${jobs.cron.absentalerts.notifications:-}", zone = "IST")
