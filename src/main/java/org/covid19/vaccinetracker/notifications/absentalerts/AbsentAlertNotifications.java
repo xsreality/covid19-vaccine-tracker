@@ -82,6 +82,9 @@ public class AbsentAlertNotifications {
     }
 
     private BiConsumer<String, List<AbsentAlertCause>> sendNotification() {
-        return null;
+        return (pincode, causes) -> {
+            log.info("pincode is {}", pincode);
+            log.info("cause is {}", causes);
+        };
     }
 }

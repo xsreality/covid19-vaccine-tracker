@@ -16,6 +16,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparing;
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.groupingBy;
@@ -93,7 +94,7 @@ public class AbsentAlertAnalyzer {
     }
 
     private boolean matchingVaccinePreference(String userPrefVaccine, String sessionVaccine) {
-        if (Vaccine.ALL.toString().equals(userPrefVaccine)) {
+        if (isNull(userPrefVaccine) || Vaccine.ALL.toString().equals(userPrefVaccine)) {
             return true;
         }
         return sessionVaccine.equalsIgnoreCase(userPrefVaccine);
@@ -109,6 +110,8 @@ public class AbsentAlertAnalyzer {
             return sessionMinAge < 45;
         } else if (Age.AGE_45.toString().equals(userPrefAge)) {
             return sessionMinAge >= 45;
+        } else if (isNull(userPrefAge)) {
+            return sessionMinAge < 45;
         } else {
             // age pref is both so just return true
             return true;

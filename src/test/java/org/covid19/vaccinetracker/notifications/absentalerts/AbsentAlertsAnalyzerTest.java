@@ -1,11 +1,16 @@
 package org.covid19.vaccinetracker.notifications.absentalerts;
 
 import org.covid19.vaccinetracker.model.CenterSession;
+import org.covid19.vaccinetracker.persistence.mariadb.entity.UserNotification;
+import org.covid19.vaccinetracker.persistence.mariadb.entity.UserNotificationId;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @Slf4j
 public class AbsentAlertsAnalyzerTest {
@@ -18,6 +23,21 @@ public class AbsentAlertsAnalyzerTest {
         final AbsentAlertCause cause = analyzer.analyze(source, sessions);
         log.info("Cause is {}", cause.getCauses());
         log.info("Alternative is {}", cause.getRecents());
+    }
+
+    @Test
+    public void verifyAnalyzeBehaviourWithUnsetPreferences() {
+        List<CenterSession> sessions = createSessions();
+        AbsentAlertSource source = AbsentAlertSource.builder()
+                .userId("1234").pincode("700014").age(null).vaccine(null).dose(null)
+                .latestNotification(UserNotification.builder()
+                        .userNotificationId(UserNotificationId.builder().userId("1234").pincode("700014").build())
+                        .notifiedAt(LocalDateTime.now().minusDays(2L))
+                        .build())
+                .build();
+        AbsentAlertAnalyzer analyzer = new AbsentAlertAnalyzer();
+        final AbsentAlertCause cause = analyzer.analyze(source, sessions);
+        assertFalse(cause.getCauses().contains("No centers found for pincode 700014"));
     }
 
     private List<CenterSession> createSessions() {
