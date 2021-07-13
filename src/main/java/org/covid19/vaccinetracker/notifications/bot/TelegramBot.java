@@ -117,7 +117,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                     String chatId = String.valueOf(ctx.chatId());
                     final UserRequest user = this.botBackend.fetchUserSubscriptions(chatId);
                     String message;
-                    if (user.getPincodes().isEmpty()) {
+                    if (isNull(user) || isNull(user.getPincodes()) || user.getPincodes().isEmpty()) {
                         message = "You have no pincodes subscribed. Just send pincodes separated by comma (,) to subscribe.";
                     } else {
                         message = String.format("You are currently subscribed to pincodes: %s\n\n" +
