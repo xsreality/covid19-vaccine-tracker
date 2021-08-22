@@ -40,7 +40,7 @@ public class CowinApiClient {
                                 .path(PATH_CALENDAR_BY_PIN_AUTH)
                                 .queryParam("pincode", "{pincode}")
                                 .queryParam("date", "{date}")
-                                .build(pincode, Utils.todayIST()))
+                                .build(pincode, Utils.tomorrowIST()))
                         .headers(h -> h.setBearerAuth(cowinApiAuth.getBearerToken()))
                         .headers(h -> h.setAccept(singletonList(APPLICATION_JSON)))
                         .retrieve()

@@ -163,6 +163,12 @@ public class Utils {
         return dateTime.format(dtf);
     }
 
+    public static String tomorrowIST() {
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        ZonedDateTime dateTime = ZonedDateTime.now(ZoneId.of(INDIA_TIMEZONE)).plusDays(1L);
+        return dateTime.format(dtf);
+    }
+
     public static String humanReadable(String ddMMyyyy) {
         DateTimeFormatter inputFormat = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 

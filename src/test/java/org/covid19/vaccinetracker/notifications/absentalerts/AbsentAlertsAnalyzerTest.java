@@ -11,6 +11,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 public class AbsentAlertsAnalyzerTest {
@@ -23,6 +24,10 @@ public class AbsentAlertsAnalyzerTest {
         final AbsentAlertCause cause = analyzer.analyze(source, sessions);
         log.info("Cause is {}", cause.getCauses());
         log.info("Alternative is {}", cause.getRecents());
+        assertTrue(cause.getRecents().contains("BELLE VUE CLINIC (Kolkata 700014) had availability of COVISHIELD for 45+ on 17-07-2021, 16-07-2021, 15-07-2021, 14-07-2021"));
+        assertTrue(cause.getRecents().contains("CNMCH PPU COVAXIN (Kolkata 700014) had availability of COVAXIN for 18+ on 12-06-2021"));
+        assertTrue(cause.getRecents().contains("NRS PPU MCH COVAXIN (Kolkata 700014) had availability of COVAXIN for 45+ on 12-06-2021"));
+        assertTrue(cause.getRecents().contains("UPHC-60 (Kolkata 700014) had availability of COVAXIN for 45+ on 05-06-2021"));
     }
 
     @Test
