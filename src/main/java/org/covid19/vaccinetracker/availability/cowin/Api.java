@@ -6,11 +6,11 @@ import org.covid19.vaccinetracker.model.UsersByPincode;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.notifications.DistrictNotifications;
 import org.covid19.vaccinetracker.notifications.VaccineCentersNotification;
+import org.covid19.vaccinetracker.notifications.absentalerts.AbsentAlertNotifications;
 import org.covid19.vaccinetracker.notifications.bot.BotService;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
 import org.covid19.vaccinetracker.userrequests.UserRequestManager;
 import org.covid19.vaccinetracker.userrequests.model.District;
-import org.covid19.vaccinetracker.userrequests.model.Dose;
 import org.covid19.vaccinetracker.userrequests.model.UserRequest;
 import org.covid19.vaccinetracker.userrequests.reconciliation.PincodeReconciliation;
 import org.covid19.vaccinetracker.utils.Utils;
@@ -47,9 +47,10 @@ public class Api {
     private final CowinApiAuth cowinApiAuth;
     private final BotService botService;
     private final PriorityDistrictsAvailability priorityDistrictsAvailability;
+    private final AbsentAlertNotifications absentAlertNotifications;
 
     public Api(CowinApiClient cowinApiClient, VaccineAvailability vaccineAvailability, VaccineCentersNotification notifications,
-               VaccinePersistence vaccinePersistence, UserRequestManager userRequestManager, PincodeReconciliation pincodeReconciliation, DistrictNotifications districtNotifications, CowinApiAuth cowinApiAuth, BotService botService, PriorityDistrictsAvailability priorityDistrictsAvailability) {
+               VaccinePersistence vaccinePersistence, UserRequestManager userRequestManager, PincodeReconciliation pincodeReconciliation, DistrictNotifications districtNotifications, CowinApiAuth cowinApiAuth, BotService botService, PriorityDistrictsAvailability priorityDistrictsAvailability, AbsentAlertNotifications absentAlertNotifications) {
         this.cowinApiClient = cowinApiClient;
         this.vaccineAvailability = vaccineAvailability;
         this.notifications = notifications;
@@ -60,6 +61,7 @@ public class Api {
         this.cowinApiAuth = cowinApiAuth;
         this.botService = botService;
         this.priorityDistrictsAvailability = priorityDistrictsAvailability;
+        this.absentAlertNotifications = absentAlertNotifications;
     }
 
     @GetMapping("/fetch/cowin")
@@ -209,5 +211,10 @@ public class Api {
             this.botService.notifyOwner(String.format("Broadcast completed. Total: %d, Failed: %d", total.get(), failed.get()));
         });
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/absent_alerts")
+    public ResponseEntity<?> alertAbsentCause(@RequestParam final String userId) {
+        return ResponseEntity.ok(absentAlertNotifications.onDemandAbsentAlertsNotification(userId));
     }
 }

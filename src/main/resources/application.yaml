@@ -20,6 +20,7 @@ jobs:
     priority.districts.availability: "0 * 6-23 * * *"
     vaccine.availability: "0 0/15 6-23 * * *"
     district.notifications: "-"
+    absentalerts.notifications: "-"
     pincode.reconciliation: "0 1 6,9,12,15,18,21 * * *"
     cowin.api.auth: "-"
     db.cleanup: "-"

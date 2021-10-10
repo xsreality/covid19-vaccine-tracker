@@ -1,6 +1,7 @@
 package org.covid19.vaccinetracker.persistence.mariadb;
 
 import org.covid19.vaccinetracker.model.Center;
+import org.covid19.vaccinetracker.model.CenterSession;
 import org.covid19.vaccinetracker.model.Session;
 import org.covid19.vaccinetracker.model.VaccineCenters;
 import org.covid19.vaccinetracker.persistence.VaccinePersistence;
@@ -133,5 +134,10 @@ public class MariaDBVaccinePersistence implements VaccinePersistence {
         return sessionRepository.findLatestSession(centerId, date, age, vaccine)
                 .stream()
                 .findFirst();
+    }
+
+    @Override
+    public List<CenterSession> findAllSessionsByPincode(String pincode) {
+        return sessionRepository.findSessionsWithPincode(pincode);
     }
 }
