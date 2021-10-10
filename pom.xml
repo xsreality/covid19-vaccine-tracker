@@ -12,7 +12,7 @@
 
     <groupId>com.abhinav.covid19</groupId>
     <artifactId>covid19-vaccine-tracker</artifactId>
-    <version>0.2.39-SNAPSHOT</version>
+    <version>0.2.40-SNAPSHOT</version>
     <name>covid19-vaccine-tracker</name>
     <description>CoWIN Vaccine Alerts</description>
     <properties>
@@ -86,6 +86,11 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-lambda</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.honeycomb.beeline</groupId>
+            <artifactId>beeline-spring-boot-starter</artifactId>
+            <version>1.6.1</version>
         </dependency>
 
         <dependency>
