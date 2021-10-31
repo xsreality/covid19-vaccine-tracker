@@ -6,19 +6,19 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.5.6</version>
+        <version>2.6.0-M3</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
     <groupId>com.abhinav.covid19</groupId>
     <artifactId>covid19-vaccine-tracker</artifactId>
-    <version>0.2.41-SNAPSHOT</version>
+    <version>0.2.42-SNAPSHOT</version>
     <name>covid19-vaccine-tracker</name>
     <description>CoWIN Vaccine Alerts</description>
     <properties>
         <java.version>11</java.version>
-        <spring-cloud.version>2020.0.4</spring-cloud.version>
-        <spring-cloud-sleuth-otel.version>1.0.0-M10</spring-cloud-sleuth-otel.version>
+        <spring-cloud.version>2021.0.0-M2</spring-cloud.version>
+        <spring-cloud-sleuth-otel.version>1.1.0-M2</spring-cloud-sleuth-otel.version>
         <opentelemetry-exporter-otlp>1.7.0</opentelemetry-exporter-otlp>
         <grpc-netty-shaded>1.41.0</grpc-netty-shaded>
     </properties>
@@ -28,7 +28,7 @@
             <dependency>
                 <groupId>com.amazonaws</groupId>
                 <artifactId>aws-java-sdk-bom</artifactId>
-                <version>1.11.1025</version>
+                <version>1.12.99</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -101,6 +101,7 @@
         <dependency>
             <groupId>com.nimbusds</groupId>
             <artifactId>nimbus-jose-jwt</artifactId>
+            <version>9.10.1</version>
         </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>
