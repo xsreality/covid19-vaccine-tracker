@@ -10,6 +10,8 @@ import org.covid19.vaccinetracker.userrequests.model.Vaccine;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.BeansException;
+import org.springframework.cloud.sleuth.annotation.NewSpan;
+import org.springframework.cloud.sleuth.annotation.SpanTag;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -157,26 +159,31 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                         String chatId = getChatId(ctx.update());
                         String firstName = getFirstName(ctx.update());
 
-                        this.botBackend.acceptUserRequest(chatId, pincodesAsList);
-                        State state = this.stateRepository.findByPincode(pincodesAsList.get(0));
-
-                        String localizedAckMessage = Utils.localizedAckText(state);
-                        silent.send(String.format("Okay %s! I will notify you when vaccine is available in centers near your location.\n" +
-                                "You can set multiple pincodes by sending them together separated by comma (,). Maximum 5 pincodes are allowed.\n" +
-                                "Make sure notification is turned on for this bot so you don't miss any alerts!\n\n" +
-                                "Send /age to set your age preference.\n\n" +
-                                "Send /dose to set your dose preference.\n\n" +
-                                "Send /vaccine to set your vaccine preference.\n\n" +
-                                "Send /subscriptions to view your current subscription.\n\n" +
-                                "Send /about to see more information about this bot.\n\n" +
-                                localizedAckMessage, firstName), ctx.chatId());
-
-                        // send an update to Bot channel
-                        notifyOwner(String.format("%s (%s, %s) set notification preference for pincode(s) %s",
-                                Utils.translateName(ctx.update().getMessage().getChat()), chatId, getUserName(ctx), pincodes));
+                        handleTGUserRequest(ctx, pincodes, pincodesAsList, chatId, firstName);
                     }
                 })
                 .build();
+    }
+
+    @NewSpan("HandleTelegramUserRequest")
+    public void handleTGUserRequest(MessageContext ctx, @SpanTag("pincodes") String pincodes, List<String> pincodesAsList, @SpanTag("chat-id") String chatId, @SpanTag("first-name") String firstName) {
+        this.botBackend.acceptUserRequest(chatId, pincodesAsList);
+        State state = this.stateRepository.findByPincode(pincodesAsList.get(0));
+
+        String localizedAckMessage = Utils.localizedAckText(state);
+        silent.send(String.format("Okay %s! I will notify you when vaccine is available in centers near your location.\n" +
+                "You can set multiple pincodes by sending them together separated by comma (,). Maximum 5 pincodes are allowed.\n" +
+                "Make sure notification is turned on for this bot so you don't miss any alerts!\n\n" +
+                "Send /age to set your age preference.\n\n" +
+                "Send /dose to set your dose preference.\n\n" +
+                "Send /vaccine to set your vaccine preference.\n\n" +
+                "Send /subscriptions to view your current subscription.\n\n" +
+                "Send /about to see more information about this bot.\n\n" +
+                localizedAckMessage, firstName), ctx.chatId());
+
+        // send an update to Bot channel
+        notifyOwner(String.format("%s (%s, %s) set notification preference for pincode(s) %s",
+                Utils.translateName(ctx.update().getMessage().getChat()), chatId, getUserName(ctx), pincodes));
     }
 
     public ReplyFlow ageSelectionFlow() {
