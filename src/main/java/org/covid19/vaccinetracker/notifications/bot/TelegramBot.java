@@ -178,20 +178,30 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
         this.botBackend.acceptUserRequest(chatId, pincodesAsList);
         State state = this.stateRepository.findByPincode(pincodesAsList.get(0));
 
-        String localizedAckMessage = Utils.localizedAckText(state);
-        silent.send(String.format("Okay %s! I will notify you when vaccine is available in centers near your location.\n" +
-                "You can set multiple pincodes by sending them together separated by comma (,). Maximum 5 pincodes are allowed.\n" +
-                "Make sure notification is turned on for this bot so you don't miss any alerts!\n\n" +
-                "Send /age to set your age preference.\n\n" +
-                "Send /dose to set your dose preference.\n\n" +
-                "Send /vaccine to set your vaccine preference.\n\n" +
-                "Send /subscriptions to view your current subscription.\n\n" +
-                "Send /about to see more information about this bot.\n\n" +
-                localizedAckMessage, firstName), ctx.chatId());
+        Span replyTGSpan = this.tracer.nextSpan().name("sendTelegramReply");
+        try (Tracer.SpanInScope ws = this.tracer.withSpan(replyTGSpan.start())) {
+            String localizedAckMessage = Utils.localizedAckText(state);
+            silent.send(String.format("Okay %s! I will notify you when vaccine is available in centers near your location.\n" +
+                    "You can set multiple pincodes by sending them together separated by comma (,). Maximum 5 pincodes are allowed.\n" +
+                    "Make sure notification is turned on for this bot so you don't miss any alerts!\n\n" +
+                    "Send /age to set your age preference.\n\n" +
+                    "Send /dose to set your dose preference.\n\n" +
+                    "Send /vaccine to set your vaccine preference.\n\n" +
+                    "Send /subscriptions to view your current subscription.\n\n" +
+                    "Send /about to see more information about this bot.\n\n" +
+                    localizedAckMessage, firstName), ctx.chatId());
+        } finally {
+            replyTGSpan.end();
+        }
 
-        // send an update to Bot channel
-        notifyOwner(String.format("%s (%s, %s) set notification preference for pincode(s) %s",
-                Utils.translateName(ctx.update().getMessage().getChat()), chatId, getUserName(ctx), pincodes));
+        Span notifyBotOwnerSpan = this.tracer.nextSpan().name("notifyBotOwner");
+        try (Tracer.SpanInScope ws = this.tracer.withSpan(notifyBotOwnerSpan.start())) {
+            // send an update to Bot channel
+            notifyOwner(String.format("%s (%s, %s) set notification preference for pincode(s) %s",
+                    Utils.translateName(ctx.update().getMessage().getChat()), chatId, getUserName(ctx), pincodes));
+        } finally {
+            notifyBotOwnerSpan.end();
+        }
     }
 
     public ReplyFlow ageSelectionFlow() {
