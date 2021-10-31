@@ -42,9 +42,11 @@ spring:
     properties:
       "application.id": "org.covid19.vaccine-tracker"
       "client.id": "org.covid19.vaccine-tracker"
-
-honeycomb:
-  beeline:
-    service-name: covid19-vaccine-tracker
-    dataset: covid19
-
+  sleuth:
+    jdbc:
+      includes: query
+      datasource-proxy:
+        enabled: true
+    otel:
+      config:
+        trace-id-ratio-based: 1.0
