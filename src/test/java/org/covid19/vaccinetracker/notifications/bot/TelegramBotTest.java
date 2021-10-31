@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cloud.sleuth.Span;
+import org.springframework.cloud.sleuth.Tracer;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.telegram.abilitybots.api.db.DBContext;
 import org.telegram.abilitybots.api.db.MapDBContext;
@@ -49,6 +51,9 @@ public class TelegramBotTest {
     private StateRepository stateRepository;
 
     @Mock
+    private Tracer tracer;
+
+    @Mock
     private SilentSender silent;
 
     @BeforeEach
@@ -58,6 +63,7 @@ public class TelegramBotTest {
 
         ReflectionTestUtils.setField(bot, "botBackend", botBackend);
         ReflectionTestUtils.setField(bot, "stateRepository", stateRepository);
+        ReflectionTestUtils.setField(bot, "tracer", tracer);
         bot.setSilent(silent);
         bot.onRegister();
     }
@@ -108,6 +114,10 @@ public class TelegramBotTest {
         Update update = mockFullUpdate(bot, USER, "Random message");
         MessageContext context = MessageContext.newContext(update, USER, CHAT_ID, bot);
 
+        Span aSpan = mock(Span.class);
+        when(aSpan.name(any())).thenReturn(aSpan);
+        when(tracer.nextSpan()).thenReturn(aSpan);
+
         bot.catchAll().action().accept(context);
 
         verify(silent, times(1)).send("Send valid pincode to receive notification when vaccine becomes available in your area.\n" +
@@ -126,6 +136,10 @@ public class TelegramBotTest {
         Update update = mockFullUpdate(bot, USER, "110092, 110093, 110094, 110095, 110096, 110097");
         MessageContext context = MessageContext.newContext(update, USER, CHAT_ID, bot);
 
+        Span aSpan = mock(Span.class);
+        when(aSpan.name(any())).thenReturn(aSpan);
+        when(tracer.nextSpan()).thenReturn(aSpan);
+
         bot.catchAll().action().accept(context);
 
         verify(silent, times(1)).send("Maximum 5 pincodes can be notified.\n\n" +
@@ -138,6 +152,10 @@ public class TelegramBotTest {
         Chat chat = mock(Chat.class);
         when(chat.getFirstName()).thenReturn(USER.getFirstName());
         when(update.getMessage().getChat()).thenReturn(chat);
+
+        Span aSpan = mock(Span.class);
+        when(aSpan.name(any())).thenReturn(aSpan);
+        when(tracer.nextSpan()).thenReturn(aSpan);
 
         MessageContext context = MessageContext.newContext(update, USER, CHAT_ID, bot);
 

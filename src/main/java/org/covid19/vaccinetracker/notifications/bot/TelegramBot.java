@@ -10,8 +10,8 @@ import org.covid19.vaccinetracker.userrequests.model.Vaccine;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.BeansException;
-import org.springframework.cloud.sleuth.annotation.NewSpan;
-import org.springframework.cloud.sleuth.annotation.SpanTag;
+import org.springframework.cloud.sleuth.Span;
+import org.springframework.cloud.sleuth.Tracer;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -59,6 +59,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
     private BotBackend botBackend;
     private KafkaTemplate<String, UserRequest> userRequestKafkaTemplate;
     private StateRepository stateRepository;
+    private Tracer tracer;
 
     public TelegramBot(String botToken, String botUsername, DBContext db, String creatorId, String channelId) {
         super(botToken, botUsername, db);
@@ -145,28 +146,35 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                 .privacy(PUBLIC).locality(Locality.ALL)
                 .input(0)
                 .action(ctx -> {
-                    if (ctx.update().hasMessage() && ctx.update().getMessage().hasText()) {
-                        String pincodes = ctx.update().getMessage().getText();
-                        if (invalidPincodes(ctx, pincodes)) {
-                            return;
+                    Span newSpan = this.tracer.nextSpan().name("handleTelegramUserRequest");
+                    try (Tracer.SpanInScope ws = this.tracer.withSpan(newSpan.start())) {
+                        if (ctx.update().hasMessage() && ctx.update().getMessage().hasText()) {
+                            String pincodes = ctx.update().getMessage().getText();
+                            newSpan.tag("pincodes", pincodes);
+                            if (invalidPincodes(ctx, pincodes)) {
+                                return;
+                            }
+
+                            List<String> pincodesAsList = Utils.splitPincodes(pincodes);
+                            if (tooManyPincodes(ctx, pincodesAsList)) {
+                                return;
+                            }
+
+                            String chatId = getChatId(ctx.update());
+                            String firstName = getFirstName(ctx.update());
+                            newSpan.tag("chatId", chatId);
+                            newSpan.tag("firstName", firstName);
+
+                            handleTGUserRequest(ctx, pincodes, pincodesAsList, chatId, firstName);
                         }
-
-                        List<String> pincodesAsList = Utils.splitPincodes(pincodes);
-                        if (tooManyPincodes(ctx, pincodesAsList)) {
-                            return;
-                        }
-
-                        String chatId = getChatId(ctx.update());
-                        String firstName = getFirstName(ctx.update());
-
-                        handleTGUserRequest(ctx, pincodes, pincodesAsList, chatId, firstName);
+                    } finally {
+                        newSpan.end();
                     }
                 })
                 .build();
     }
 
-    @NewSpan("HandleTelegramUserRequest")
-    public void handleTGUserRequest(MessageContext ctx, @SpanTag("pincodes") String pincodes, List<String> pincodesAsList, @SpanTag("chat-id") String chatId, @SpanTag("first-name") String firstName) {
+    public void handleTGUserRequest(MessageContext ctx, String pincodes, List<String> pincodesAsList, String chatId, String firstName) {
         this.botBackend.acceptUserRequest(chatId, pincodesAsList);
         State state = this.stateRepository.findByPincode(pincodesAsList.get(0));
 
@@ -416,6 +424,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
     public void setApplicationContext(@NotNull ApplicationContext applicationContext) throws BeansException {
         this.botBackend = (BotBackend) applicationContext.getBean("botBackend");
         this.stateRepository = (StateRepository) applicationContext.getBean("stateRepository");
+        this.tracer = (Tracer) applicationContext.getBean(Tracer.class);
         TelegramConfig telegramConfig = (TelegramConfig) applicationContext.getBean("telegramConfig");
         if (telegramConfig.isEnabled()) {
             try {
