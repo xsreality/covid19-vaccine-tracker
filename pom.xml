@@ -12,7 +12,7 @@
 
     <groupId>com.abhinav.covid19</groupId>
     <artifactId>covid19-vaccine-tracker</artifactId>
-    <version>0.2.42-SNAPSHOT</version>
+    <version>0.2.43-SNAPSHOT</version>
     <name>covid19-vaccine-tracker</name>
     <description>CoWIN Vaccine Alerts</description>
     <properties>
@@ -145,12 +145,18 @@
             <artifactId>grpc-netty-shaded</artifactId>
             <version>${grpc-netty-shaded}</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/p6spy/p6spy -->
         <dependency>
-            <groupId>net.ttddyy</groupId>
-            <artifactId>datasource-proxy</artifactId>
-            <version>1.7</version>
-            <scope>runtime</scope>
+            <groupId>p6spy</groupId>
+            <artifactId>p6spy</artifactId>
+            <version>3.9.1</version>
         </dependency>
+        <!--        <dependency>-->
+<!--            <groupId>net.ttddyy</groupId>-->
+<!--            <artifactId>datasource-proxy</artifactId>-->
+<!--            <version>1.7</version>-->
+<!--            <scope>runtime</scope>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
