@@ -10,6 +10,8 @@ import org.covid19.vaccinetracker.userrequests.model.Vaccine;
 import org.covid19.vaccinetracker.utils.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.BeansException;
+import org.springframework.cloud.sleuth.Span;
+import org.springframework.cloud.sleuth.Tracer;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -57,6 +59,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
     private BotBackend botBackend;
     private KafkaTemplate<String, UserRequest> userRequestKafkaTemplate;
     private StateRepository stateRepository;
+    private Tracer tracer;
 
     public TelegramBot(String botToken, String botUsername, DBContext db, String creatorId, String channelId) {
         super(botToken, botUsername, db);
@@ -143,40 +146,62 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
                 .privacy(PUBLIC).locality(Locality.ALL)
                 .input(0)
                 .action(ctx -> {
-                    if (ctx.update().hasMessage() && ctx.update().getMessage().hasText()) {
-                        String pincodes = ctx.update().getMessage().getText();
-                        if (invalidPincodes(ctx, pincodes)) {
-                            return;
+                    Span newSpan = this.tracer.nextSpan().name("handleTelegramUserRequest");
+                    try (Tracer.SpanInScope ws = this.tracer.withSpan(newSpan.start())) {
+                        if (ctx.update().hasMessage() && ctx.update().getMessage().hasText()) {
+                            String pincodes = ctx.update().getMessage().getText();
+                            newSpan.tag("pincodes", pincodes);
+                            if (invalidPincodes(ctx, pincodes)) {
+                                return;
+                            }
+
+                            List<String> pincodesAsList = Utils.splitPincodes(pincodes);
+                            if (tooManyPincodes(ctx, pincodesAsList)) {
+                                return;
+                            }
+
+                            String chatId = getChatId(ctx.update());
+                            String firstName = getFirstName(ctx.update());
+                            newSpan.tag("chatId", chatId);
+                            newSpan.tag("firstName", firstName);
+
+                            handleTGUserRequest(ctx, pincodes, pincodesAsList, chatId, firstName);
                         }
-
-                        List<String> pincodesAsList = Utils.splitPincodes(pincodes);
-                        if (tooManyPincodes(ctx, pincodesAsList)) {
-                            return;
-                        }
-
-                        String chatId = getChatId(ctx.update());
-                        String firstName = getFirstName(ctx.update());
-
-                        this.botBackend.acceptUserRequest(chatId, pincodesAsList);
-                        State state = this.stateRepository.findByPincode(pincodesAsList.get(0));
-
-                        String localizedAckMessage = Utils.localizedAckText(state);
-                        silent.send(String.format("Okay %s! I will notify you when vaccine is available in centers near your location.\n" +
-                                "You can set multiple pincodes by sending them together separated by comma (,). Maximum 5 pincodes are allowed.\n" +
-                                "Make sure notification is turned on for this bot so you don't miss any alerts!\n\n" +
-                                "Send /age to set your age preference.\n\n" +
-                                "Send /dose to set your dose preference.\n\n" +
-                                "Send /vaccine to set your vaccine preference.\n\n" +
-                                "Send /subscriptions to view your current subscription.\n\n" +
-                                "Send /about to see more information about this bot.\n\n" +
-                                localizedAckMessage, firstName), ctx.chatId());
-
-                        // send an update to Bot channel
-                        notifyOwner(String.format("%s (%s, %s) set notification preference for pincode(s) %s",
-                                Utils.translateName(ctx.update().getMessage().getChat()), chatId, getUserName(ctx), pincodes));
+                    } finally {
+                        newSpan.end();
                     }
                 })
                 .build();
+    }
+
+    public void handleTGUserRequest(MessageContext ctx, String pincodes, List<String> pincodesAsList, String chatId, String firstName) {
+        this.botBackend.acceptUserRequest(chatId, pincodesAsList);
+        State state = this.stateRepository.findByPincode(pincodesAsList.get(0));
+
+        Span replyTGSpan = this.tracer.nextSpan().name("sendTelegramReply");
+        try (Tracer.SpanInScope ws = this.tracer.withSpan(replyTGSpan.start())) {
+            String localizedAckMessage = Utils.localizedAckText(state);
+            silent.send(String.format("Okay %s! I will notify you when vaccine is available in centers near your location.\n" +
+                    "You can set multiple pincodes by sending them together separated by comma (,). Maximum 5 pincodes are allowed.\n" +
+                    "Make sure notification is turned on for this bot so you don't miss any alerts!\n\n" +
+                    "Send /age to set your age preference.\n\n" +
+                    "Send /dose to set your dose preference.\n\n" +
+                    "Send /vaccine to set your vaccine preference.\n\n" +
+                    "Send /subscriptions to view your current subscription.\n\n" +
+                    "Send /about to see more information about this bot.\n\n" +
+                    localizedAckMessage, firstName), ctx.chatId());
+        } finally {
+            replyTGSpan.end();
+        }
+
+        Span notifyBotOwnerSpan = this.tracer.nextSpan().name("notifyBotOwner");
+        try (Tracer.SpanInScope ws = this.tracer.withSpan(notifyBotOwnerSpan.start())) {
+            // send an update to Bot channel
+            notifyOwner(String.format("%s (%s, %s) set notification preference for pincode(s) %s",
+                    Utils.translateName(ctx.update().getMessage().getChat()), chatId, getUserName(ctx), pincodes));
+        } finally {
+            notifyBotOwnerSpan.end();
+        }
     }
 
     public ReplyFlow ageSelectionFlow() {
@@ -409,6 +434,7 @@ public class TelegramBot extends AbilityBot implements BotService, ApplicationCo
     public void setApplicationContext(@NotNull ApplicationContext applicationContext) throws BeansException {
         this.botBackend = (BotBackend) applicationContext.getBean("botBackend");
         this.stateRepository = (StateRepository) applicationContext.getBean("stateRepository");
+        this.tracer = (Tracer) applicationContext.getBean(Tracer.class);
         TelegramConfig telegramConfig = (TelegramConfig) applicationContext.getBean("telegramConfig");
         if (telegramConfig.isEnabled()) {
             try {

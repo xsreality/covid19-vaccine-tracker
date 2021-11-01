@@ -42,3 +42,13 @@ spring:
     properties:
       "application.id": "org.covid19.vaccine-tracker"
       "client.id": "org.covid19.vaccine-tracker"
+  sleuth:
+    jdbc:
+      includes: query
+      p6spy:
+        enabled: true
+    otel:
+      config:
+        trace-id-ratio-based: 1.0
+    tx:
+      enabled: false
